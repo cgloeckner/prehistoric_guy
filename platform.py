@@ -186,8 +186,6 @@ class Platformer(object):
         actor.jump_ms += elapsed_ms
         actor.pos_y += delta_height
 
-        print(actor.pos_y)
-
         # check for collision
         platform = self.check_falling_collision(actor, last_pos)
         if platform is None:

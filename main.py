@@ -4,7 +4,7 @@ from platform import Platformer, Actor, Platform
 
 RESOLUTION_X: int = 320
 RESOLUTION_Y: int = 240
-WORLD_SCALE: int = RESOLUTION_X // 20
+WORLD_SCALE: int = RESOLUTION_X // 10
 
 
 def draw_actor(ctx: pygame.Surface, actor: Actor) -> None:
@@ -12,17 +12,21 @@ def draw_actor(ctx: pygame.Surface, actor: Actor) -> None:
     pygame.draw.circle(ctx, 'blue', pos, actor.radius * WORLD_SCALE)
 
 
-def draw_platform(ctx: pygame.Surface, platform: Platform, tiles: pygame.Surface) -> None:
-    x1 = platform.x * WORLD_SCALE
-    x2 = (platform.x + platform.width) * WORLD_SCALE
-    y1 = ctx.get_height() - platform.y * WORLD_SCALE
-    y2 = ctx.get_height() - (platform.y - platform.height) * WORLD_SCALE
+def draw_platform(ctx: pygame.Surface, platform: Platform, tile: pygame.Surface) -> None:
+    x = platform.x * WORLD_SCALE
+    y = ctx.get_height() - platform.y * WORLD_SCALE
 
-    pygame.draw.line(ctx, 'red', (x1, y1), (x2, y1), 4)
-    pygame.draw.line(ctx, 'red', (x1, y1), (x1, y2), 4)
-    pygame.draw.line(ctx, 'red', (x2, y1), (x2, y2), 4)
+    for i in range(int(platform.width)):
+        ctx.blit(tile, (x + i * WORLD_SCALE, y), (0, 0, WORLD_SCALE, WORLD_SCALE))
+        for j in range(int(platform.height)):
+            ctx.blit(tile, (x + i * WORLD_SCALE, y + (j+1) * WORLD_SCALE), (0, WORLD_SCALE, WORLD_SCALE, WORLD_SCALE))
 
-    # ctx.blit(tiles, (x1, y), (256, 0, 256, 256))
+    # FIXME: remove debug drawing
+    # x2 = (platform.x + platform.width) * WORLD_SCALE
+    # y2 = ctx.get_height() - (platform.y - platform.height) * WORLD_SCALE
+    # pygame.draw.line(ctx, 'red', (x, y), (x2, y), 4)
+    # pygame.draw.line(ctx, 'red', (x, y), (x, y2), 4)
+    # pygame.draw.line(ctx, 'red', (x2, y), (x2, y2), 4)
 
 
 def main():
@@ -42,7 +46,8 @@ def main():
     screen = pygame.display.set_mode((window_width, window_height))
     buffer = pygame.Surface((RESOLUTION_X, RESOLUTION_Y))
 
-    tiles = pygame.image.load('data/platforms.png')
+    background = pygame.image.load('data/background.png')
+    tile = pygame.image.load('data/tile.png')
 
     def on_landed(actor: Actor, platform: Platform) -> None:
         # print(f'landing of\n\t{actor}\n\ton {platform}')
@@ -57,21 +62,17 @@ def main():
         pass
 
     plat = Platformer(on_landed, on_collision, on_touch)
-    plat.actors.append(Actor(2.5, 5.5))
-    plat.actors.append(Actor(14.5, 8.5))
+    plat.actors.append(Actor(1.5, 3.5))
+    plat.actors.append(Actor(7.5, 4.5))
 
     # horizontal platforms
-    plat.platforms.append(Platform(-4.0, 0.5, 4.0, 0.25))
-    plat.platforms.append(Platform(0.0, 0.5, 4.0, 0.25))
-    plat.platforms.append(Platform(4.0, 0.5, 4.0, 0.25))
-    plat.platforms.append(Platform(8.0, 0.5, 4.0, 0.25))
-    plat.platforms.append(Platform(16.0, 0.5, 4.0, 0.25))
-
-    plat.platforms.append(Platform(6.0, 2.0, 4.0, 2.1))
-    plat.platforms.append(Platform(7.0, 4.0, 2.0, 0.1))
-    plat.platforms.append(Platform(14.0, 5.5, 4.0, 0.1))
-
-    plat.platforms.append(Platform(11.0, 6.0, 2.0, 6.0))
+    plat.platforms.append(Platform(0.0, 1.0, 4.0, 0.5))
+    plat.platforms.append(Platform(3.0, 1.5, 2.0, 1.5))
+    plat.platforms.append(Platform(3.5, 2.0, 1.0, 2.0))
+    plat.platforms.append(Platform(4.0, 3.0, 1.0, 3.0))
+    plat.platforms.append(Platform(6.0, 2.5, 4.0, 2.5))
+    plat.platforms.append(Platform(7.0, 3.5, 2.0, 0.25))
+    plat.platforms.append(Platform(1.0, 5.5, RESOLUTION_X // WORLD_SCALE - 2.0, 0.5))
 
     clock = pygame.time.Clock()
     running = True
@@ -107,15 +108,17 @@ def main():
         buffer.fill('black')
 
         # tiled background
-        num_w = RESOLUTION_X // 256 + 1
-        num_h = RESOLUTION_Y // 256 + 1
+        bg_size = background.get_size()
+        num_w = RESOLUTION_X // bg_size[0] + 1
+        num_h = RESOLUTION_Y // bg_size[1] + 1
         for y in range(num_h):
             for x in range(num_w):
-                buffer.blit(tiles, (x * 256, y * 256), (0, 0, 256, 256))
+                buffer.blit(background, (x * bg_size[0], y * bg_size[1]), (0, 0, bg_size[0], bg_size[1]))
 
         # foreground
+        plat.platforms.sort(key=lambda plat: plat.y)
         for p in plat.platforms:
-            draw_platform(buffer, p, tiles)
+            draw_platform(buffer, p, tile)
         for a in plat.actors:
             draw_actor(buffer, a)
 
