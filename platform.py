@@ -14,6 +14,8 @@ class Actor:
     force_x: float = 0.0
     force_y: float = 0.0
     jump_ms: int = 0
+    # collision data
+    radius: float = 0.25
 
 
 @dataclass
