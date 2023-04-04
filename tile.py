@@ -82,9 +82,9 @@ class Tiling(object):
             pygame.draw.line(self.surface, 'red', (x, y), (x, y2), 4)
             pygame.draw.line(self.surface, 'red', (x2, y), (x2, y2), 4)
 
-    def draw(self, platformer: Platformer) -> None:
+    def draw(self, platformer: Platformer, bg_col: int) -> None:
         # background
-        self.surface.blit(self.background, (0, 0))
+        self.surface.blit(self.background, (0, 0), (bg_col * RESOLUTION_X, 0, RESOLUTION_X, RESOLUTION_Y))
 
         # foreground
         platformer.platforms.sort(key=lambda plat: plat.y)

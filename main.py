@@ -104,7 +104,7 @@ def main():
             plat.actors[1].pos_y += RESOLUTION_Y // WORLD_SCALE
 
         buffer.fill('black')
-        render.draw(plat)
+        render.draw(plat, 0)
         screen.blit(pygame.transform.scale_by(buffer, ui_scale_factor), (0, 0))
         pygame.display.flip()
 
