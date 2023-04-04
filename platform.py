@@ -25,8 +25,9 @@ class Actor:
     jump_ms: int = 0
     # collision data
     radius: float = 0.25
-    # prevents another horizontal movement after a collision got triggered
-    horizontal_collision_cooldown: int = 0
+    # prevents another collision/touch event for a couple of ms
+    collision_repeat_cooldown: int = 0
+    touch_repeat_cooldown: int = 0
 
 
 @dataclass
@@ -73,7 +74,7 @@ def is_inside_platform(actor: Actor, platform: Platform) -> bool:
 def did_traverse_above(actor: Actor, last_pos: pygame.math.Vector2, platform: Platform) -> bool:
     """Test whether the actor moved through the top of the platform.
     """
-    return actor.pos_y < platform.y < last_pos.y
+    return actor.pos_y <= platform.y < last_pos.y
 
 
 def get_falling_distance(elapsed_ms: int, delta_ms: int) -> float:
@@ -97,12 +98,13 @@ class Platformer(object):
     """Manages physics simulation for the platforming scene.
     It holds actors and platforms, which have to be registered by appending them to the corresponding lists.
     """
-    def __init__(self, on_landed: callable, on_collision: callable):
+    def __init__(self, on_landed: callable, on_collision: callable, on_touch: callable):
         self.actors = list()
         self.platforms = list()
 
         self.on_landed = on_landed
         self.on_collision = on_collision
+        self.on_touch = on_touch
 
     def is_falling(self, actor: Actor) -> bool:
         """The actor is falling if he does not stand on any platform.
@@ -184,6 +186,8 @@ class Platformer(object):
         actor.jump_ms += elapsed_ms
         actor.pos_y += delta_height
 
+        print(actor.pos_y)
+
         # check for collision
         platform = self.check_falling_collision(actor, last_pos)
         if platform is None:
@@ -201,7 +205,7 @@ class Platformer(object):
 
     def handle_movement(self, actor: Actor, elapsed_ms: int) -> None:
         """This handles the actor's horizontal movement. Collision is detected and handled. More collision handling
-        can be achieved via on_collision.
+        can be achieved via on_collision. Multiple calls are delayed with COLLISION_REPEAT_DELAY
         """
         delta_x = actor.force_x * elapsed_ms * 0.0075
         if delta_x == 0.0:
@@ -220,13 +224,33 @@ class Platformer(object):
         actor.pos_x, actor.pos_y = last_pos
 
         # trigger event
-        actor.horizontal_collision_cooldown -= elapsed_ms
-        if actor.horizontal_collision_cooldown <= 0:
-            actor.horizontal_collision_cooldown = COLLISION_REPEAT_DELAY
+        actor.touch_repeat_cooldown -= elapsed_ms
+        if actor.touch_repeat_cooldown <= 0:
+            actor.touch_repeat_cooldown = COLLISION_REPEAT_DELAY
             self.on_collision(actor, platform)
 
         # reset movement force
         actor.force_x = 0
+
+    def check_actor_collision(self, actor: Actor, elapsed_ms: int) -> None:
+        """This checks for collisions between the actor and other actors in mutual distance. For each such collision,
+        the callback on_touch is triggered. Multiple calls are delayed with COLLISION_REPEAT_DELAY.
+        """
+        pos = pygame.math.Vector2(actor.pos_x, actor.pos_y)
+
+        for other in self.actors:
+            if actor == other:
+                continue
+
+            distance = pygame.math.Vector2(other.pos_x, other.pos_y).distance_squared_to(pos)
+            if distance > (actor.radius + other.radius) ** 2:
+                continue
+
+            # trigger event
+            actor.touch_repeat_cooldown -= elapsed_ms
+            if actor.touch_repeat_cooldown <= 0:
+                actor.touch_repeat_cooldown = COLLISION_REPEAT_DELAY
+                self.on_touch(actor, other)
 
     def update(self, elapsed_ms: int) -> None:
         """Update all actors' physics (jumping and falling) within the past view elapsed_ms.
@@ -234,6 +258,7 @@ class Platformer(object):
         for actor in self.actors:
             self.simulate_gravity(actor, elapsed_ms)
             self.handle_movement(actor, elapsed_ms)
+            self.check_actor_collision(actor, elapsed_ms)
 
 
 if __name__ == '__main__':

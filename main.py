@@ -45,13 +45,20 @@ def main():
     tiles = pygame.image.load('data/platforms.png')
 
     def on_landed(actor: Actor, platform: Platform) -> None:
-        print(f'landed on {platform}')
+        # print(f'landing of\n\t{actor}\n\ton {platform}')
+        pass
 
     def on_collision(actor: Actor, platform: Platform) -> None:
-        print(f'collided with {platform}')
+        # print(f'collision between\n\t{actor}\n\tand {platform}')
+        pass
 
-    plat = Platformer(on_landed, on_collision)
+    def on_touch(actor: Actor, other: Actor) -> None:
+        # print(f'touch between\n\t{actor}\n\tand {other}')
+        pass
+
+    plat = Platformer(on_landed, on_collision, on_touch)
     plat.actors.append(Actor(2.5, 5.5))
+    plat.actors.append(Actor(14.5, 8.5))
 
     # horizontal platforms
     plat.platforms.append(Platform(-4.0, 0.5, 4.0, 0.25))
@@ -81,8 +88,7 @@ def main():
         keys = pygame.key.get_pressed()
 
         if keys[pygame.K_w]:
-            for a in plat.actors:
-                a.force_y = 1
+            plat.actors[0].force_y = 1
 
         delta_x = 0.0
         if keys[pygame.K_a]:
