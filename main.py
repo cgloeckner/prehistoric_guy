@@ -1,5 +1,4 @@
 import pygame
-import time
 
 from platform import Platformer, Actor, Platform
 
@@ -95,7 +94,7 @@ def main():
         plat.update(elapsed)
 
         # limit pos to screen
-        plat.actors[0].pos_x = max(0, min(plat.actors[0].pos_x, RESOLUTION_Y))
+        plat.actors[0].pos_x = max(0, min(plat.actors[0].pos_x, RESOLUTION_X // WORLD_SCALE))
         if plat.actors[0].pos_y < 0:
             plat.actors[0].pos_y += RESOLUTION_Y // WORLD_SCALE
 
