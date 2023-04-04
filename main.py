@@ -47,10 +47,10 @@ def main():
     def on_landed(actor: Actor, platform: Platform) -> None:
         print(f'landed on {platform}')
 
-    def on_stopped(actor: Actor, platform: Platform) -> None:
-        print(f'ran into {platform}')
+    def on_collision(actor: Actor, platform: Platform) -> None:
+        print(f'collided with {platform}')
 
-    plat = Platformer(on_landed, on_stopped)
+    plat = Platformer(on_landed, on_collision)
     plat.actors.append(Actor(2.5, 5.5))
 
     # horizontal platforms

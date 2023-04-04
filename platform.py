@@ -5,6 +5,15 @@ from dataclasses import dataclass
 from typing import Tuple, Optional
 
 
+GRAVITY: float = 9.81
+
+# duration until the jump leads to falling
+JUMP_DURATION: int = 500
+
+# duration until another collision event is triggered
+COLLISION_REPEAT_DELAY: int = 500
+
+
 @dataclass
 class Actor:
     # current position
@@ -16,6 +25,8 @@ class Actor:
     jump_ms: int = 0
     # collision data
     radius: float = 0.25
+    # prevents another horizontal movement after a collision got triggered
+    horizontal_collision_cooldown: int = 0
 
 
 @dataclass
@@ -65,11 +76,6 @@ def did_traverse_above(actor: Actor, last_pos: pygame.math.Vector2, platform: Pl
     return actor.pos_y < platform.y < last_pos.y
 
 
-# duration until the jump leads to falling
-JUMP_DURATION: int = 500
-GRAVITY: float = 9.81
-
-
 def get_falling_distance(elapsed_ms: int, delta_ms: int) -> float:
     """Calculates falling distances using
     f(x) = -a * (t - 0.5s) ^ 2 + a * 0.25
@@ -91,12 +97,12 @@ class Platformer(object):
     """Manages physics simulation for the platforming scene.
     It holds actors and platforms, which have to be registered by appending them to the corresponding lists.
     """
-    def __init__(self, on_landed: callable, on_stopped: callable):
+    def __init__(self, on_landed: callable, on_collision: callable):
         self.actors = list()
         self.platforms = list()
 
         self.on_landed = on_landed
-        self.on_stopped = on_stopped
+        self.on_collision = on_collision
 
     def is_falling(self, actor: Actor) -> bool:
         """The actor is falling if he does not stand on any platform.
@@ -195,7 +201,7 @@ class Platformer(object):
 
     def handle_movement(self, actor: Actor, elapsed_ms: int) -> None:
         """This handles the actor's horizontal movement. Collision is detected and handled. More collision handling
-        can be achieved via on_stopped.
+        can be achieved via on_collision.
         """
         delta_x = actor.force_x * elapsed_ms * 0.0075
         if delta_x == 0.0:
@@ -214,7 +220,10 @@ class Platformer(object):
         actor.pos_x, actor.pos_y = last_pos
 
         # trigger event
-        self.on_stopped(actor, platform)
+        actor.horizontal_collision_cooldown -= elapsed_ms
+        if actor.horizontal_collision_cooldown <= 0:
+            actor.horizontal_collision_cooldown = COLLISION_REPEAT_DELAY
+            self.on_collision(actor, platform)
 
         # reset movement force
         actor.force_x = 0
