@@ -1,11 +1,11 @@
 import pygame
-import random
 
 from platform import Platformer, Actor, Platform
 
 RESOLUTION_X: int = 320
 RESOLUTION_Y: int = 240
 WORLD_SCALE: int = RESOLUTION_X // 20
+
 
 def draw_actor(ctx: pygame.Surface, actor: Actor) -> None:
     pos = (actor.pos_x * WORLD_SCALE, ctx.get_height() - actor.pos_y * WORLD_SCALE - actor.radius * WORLD_SCALE)
@@ -17,7 +17,7 @@ def draw_platform(ctx: pygame.Surface, platform: Platform, tiles: pygame.Surface
     y = ctx.get_height() - platform.bottom * WORLD_SCALE
     x2 = (platform.left + platform.width) * WORLD_SCALE
     pygame.draw.line(ctx, 'red', (x1, y), (x2, y), 4)
-    #ctx.blit(tiles, (x1, y), (256, 0, 256, 256))
+    # ctx.blit(tiles, (x1, y), (256, 0, 256, 256))
 
 
 def main():
@@ -26,9 +26,7 @@ def main():
     native_width, native_height = pygame.display.get_desktop_sizes()[0]
     native_width //= RESOLUTION_X
     native_height //= RESOLUTION_Y
-    ui_scale_factor = min(native_width, native_height)
-    if ui_scale_factor == 0:
-        ui_scale_factor = 1
+    ui_scale_factor = max(1, min(native_width, native_height))
 
     # override it for debugging purpose
     ui_scale_factor = 2
@@ -52,8 +50,8 @@ def main():
     plat.platforms.append(Platform(10.5, 4.0, 2.0))
     plat.platforms.append(Platform(13.0, 4.0, 0.25))
     plat.platforms.append(Platform(14.0, 5.5, 4.0))
-    #for i in range(10):
-    #    plat.platforms.append(Platform(8.0, 7.0, 4.0))
+    for i in range(10):
+        plat.platforms.append(Platform(8.0, 7.0, 4.0))
 
     plat.platforms.sort(key=lambda p: -p.bottom)
 

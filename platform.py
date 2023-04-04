@@ -54,12 +54,17 @@ JUMP_DURATION: int = 500
 GRAVITY: float = 9.81
 
 
-def get_falling_distance(total_elapsed_ms: int) -> float:
-    """Calculates falling distances using the 1st derivation of
-    f(x) = -a * (t - 0.5s) ^2 + a
+def get_falling_distance(elapsed_ms: int, delta_ms: int) -> float:
+    """Calculates falling distances using
+    f(x) = -a * (t - 0.5s) ^ 2 + a * 0.25
     where a full jump lasts 1s
     """
-    return -GRAVITY * total_elapsed_ms / JUMP_DURATION + GRAVITY
+    def f(x):
+        return -GRAVITY * (x / JUMP_DURATION - 0.5) ** 2 + GRAVITY * 0.25
+
+    old_h = f(elapsed_ms)
+    new_h = f(elapsed_ms + delta_ms)
+    return new_h - old_h
 
 
 class Platformer(object):
@@ -81,11 +86,11 @@ class Platformer(object):
                 actor.jump_ms = JUMP_DURATION
 
             # calculate movement vector
-            move = pygame.math.Vector2(actor.force_x, actor.force_y * 3) * elapsed_ms * 0.005
+            move = pygame.math.Vector2(actor.force_x, actor.force_y * 3) * elapsed_ms * 0.0075
             if move.y != 0.0:
                 # continue jump and calculate y-speed
+                move.y = get_falling_distance(actor.jump_ms, elapsed_ms)
                 actor.jump_ms += elapsed_ms
-                move.y = get_falling_distance(actor.jump_ms) * 3 * 0.005
 
             # apply forces
             last_pos = pygame.math.Vector2(actor.pos_x, actor.pos_y)
