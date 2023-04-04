@@ -46,8 +46,8 @@ def main():
     screen = pygame.display.set_mode((window_width, window_height))
     buffer = pygame.Surface((RESOLUTION_X, RESOLUTION_Y))
 
-    background = pygame.image.load('data/background.png')
-    tile = pygame.image.load('data/tile.png')
+    background = pygame.image.load('data/night.png')
+    tile = pygame.image.load('data/dirt.png')
 
     def on_landed(actor: Actor, platform: Platform) -> None:
         # print(f'landing of\n\t{actor}\n\ton {platform}')
@@ -72,7 +72,9 @@ def main():
     plat.platforms.append(Platform(4.0, 3.0, 1.0, 3.0))
     plat.platforms.append(Platform(6.0, 2.5, 4.0, 2.5))
     plat.platforms.append(Platform(7.0, 3.5, 2.0, 0.25))
-    plat.platforms.append(Platform(1.0, 5.5, RESOLUTION_X // WORLD_SCALE - 2.0, 0.5))
+
+    # NOTE: h=0.01 necessary to avoid collisions when jumping "into" the platform
+    plat.platforms.append(Platform(1.0, 5.5, RESOLUTION_X // WORLD_SCALE - 2.0, 0.01))
 
     clock = pygame.time.Clock()
     running = True
@@ -98,12 +100,25 @@ def main():
             delta_x += 1.0
         plat.actors[0].force_x = delta_x
 
+        if keys[pygame.K_UP]:
+            plat.actors[1].force_y = 1
+
+        delta_x = 0.0
+        if keys[pygame.K_LEFT]:
+            delta_x -= 1.0
+        if keys[pygame.K_RIGHT]:
+            delta_x += 1.0
+        plat.actors[1].force_x = delta_x
+
         plat.update(elapsed)
 
         # limit pos to screen
         plat.actors[0].pos_x = max(0, min(plat.actors[0].pos_x, RESOLUTION_X // WORLD_SCALE))
         if plat.actors[0].pos_y < 0:
             plat.actors[0].pos_y += RESOLUTION_Y // WORLD_SCALE
+        plat.actors[1].pos_x = max(0, min(plat.actors[1].pos_x, RESOLUTION_X // WORLD_SCALE))
+        if plat.actors[1].pos_y < 0:
+            plat.actors[1].pos_y += RESOLUTION_Y // WORLD_SCALE
 
         buffer.fill('black')
 
