@@ -1,4 +1,5 @@
 import pygame
+import random
 
 from platform import Platformer, Actor, Platform
 
@@ -6,6 +7,10 @@ from platform import Platformer, Actor, Platform
 RESOLUTION_X: int = 320
 RESOLUTION_Y: int = 240
 WORLD_SCALE: int = RESOLUTION_X // 10
+
+# row offsets within tileset
+PLATFORM_ROW: int = 0
+TEXTURE_ROW: int = 2
 
 
 class Tiling(object):
@@ -16,10 +21,12 @@ class Tiling(object):
         self.clock = clock
         self.debug_render = debug_render
 
+        self.x = 0
+
         # load resources
         self.font = pygame.font.SysFont(pygame.font.get_default_font(), 18)
-        self.background = pygame.image.load('data/day.png')
-        self.tile = pygame.image.load('data/dirt.png')
+        self.background = pygame.image.load('data/background.png')
+        self.tiles = pygame.image.load('data/tiles.png')
 
     def draw_actor(self, actor: Actor) -> None:
         # FIXME: replace debug rendering
@@ -27,15 +34,46 @@ class Tiling(object):
                self.surface.get_height() - actor.pos_y * WORLD_SCALE - actor.radius * WORLD_SCALE)
         pygame.draw.circle(self.surface, 'blue', pos, actor.radius * WORLD_SCALE)
 
-    def draw_platform(self, platform: Platform) -> None:
+    def draw_platform(self, platform: Platform, tileset_col: int) -> None:
         x = platform.x * WORLD_SCALE
         y = self.surface.get_height() - platform.y * WORLD_SCALE
 
+        set_col = 0
         for i in range(int(platform.width)):
-            self.surface.blit(self.tile, (x + i * WORLD_SCALE, y), (0, 0, WORLD_SCALE, WORLD_SCALE))
+            # draw texture below
             for j in range(int(platform.height)):
-                self.surface.blit(self.tile, (x + i * WORLD_SCALE,
-                                              y + (j+1) * WORLD_SCALE), (0, WORLD_SCALE, WORLD_SCALE, WORLD_SCALE))
+                self.surface.blit(self.tiles,
+                                  (x + i * WORLD_SCALE, y + j * WORLD_SCALE),
+                                  ((3 * tileset_col+1) * WORLD_SCALE, TEXTURE_ROW * WORLD_SCALE,
+                                   WORLD_SCALE, WORLD_SCALE))
+
+            # draw platform on top
+            self.surface.blit(self.tiles,
+                              (x + i * WORLD_SCALE, y - WORLD_SCALE),
+                              ((3 * tileset_col+1) * WORLD_SCALE, PLATFORM_ROW * WORLD_SCALE,
+                               WORLD_SCALE, WORLD_SCALE * 2))
+
+        if platform.height > 0.0:
+            # draw texture edges
+            for j in range(int(platform.height)):
+                self.surface.blit(self.tiles,
+                                  (x - WORLD_SCALE, y + j * WORLD_SCALE),
+                                  (3 * tileset_col * WORLD_SCALE, TEXTURE_ROW * WORLD_SCALE,
+                                   WORLD_SCALE, WORLD_SCALE))
+                self.surface.blit(self.tiles,
+                                  (x + int(platform.width) * WORLD_SCALE, y + j * WORLD_SCALE),
+                                  ((3 * tileset_col + 2) * WORLD_SCALE, TEXTURE_ROW * WORLD_SCALE,
+                                   WORLD_SCALE, WORLD_SCALE))
+
+        # draw platform edges
+        self.surface.blit(self.tiles,
+                          (x - WORLD_SCALE, y - WORLD_SCALE),
+                          (3 * tileset_col * WORLD_SCALE, PLATFORM_ROW * WORLD_SCALE,
+                           WORLD_SCALE, WORLD_SCALE * 2))
+        self.surface.blit(self.tiles,
+                          (x + int(platform.width) * WORLD_SCALE, y - WORLD_SCALE),
+                          ((3 * tileset_col + 2) * WORLD_SCALE, PLATFORM_ROW * WORLD_SCALE,
+                           WORLD_SCALE, WORLD_SCALE * 2))
 
         if self.debug_render:
             x2 = (platform.x + platform.width) * WORLD_SCALE
@@ -45,22 +83,16 @@ class Tiling(object):
             pygame.draw.line(self.surface, 'red', (x2, y), (x2, y2), 4)
 
     def draw(self, platformer: Platformer) -> None:
-        # tiled background
-        bg_size = self.background.get_size()
-        num_w = RESOLUTION_X // bg_size[0] + 1
-        num_h = RESOLUTION_Y // bg_size[1] + 1
-        for y in range(num_h):
-            for x in range(num_w):
-                self.surface.blit(self.background, (x * bg_size[0], y * bg_size[1]), (0, 0, bg_size[0], bg_size[1]))
+        # background
+        self.surface.blit(self.background, (0, 0))
 
         # foreground
         platformer.platforms.sort(key=lambda plat: plat.y)
         for p in platformer.platforms:
-            self.draw_platform(p)
+            self.draw_platform(p, 0)
         for a in platformer.actors:
             self.draw_actor(a)
 
         # draw FPS
-        if self.debug_render:
-            fps_surface = self.font.render(f'FPS: {int(self.clock.get_fps()):02d}', False, 'white')
-            self.surface.blit(fps_surface, (0, self.surface.get_height() - fps_surface.get_height()))
+        fps_surface = self.font.render(f'FPS: {int(self.clock.get_fps()):02d}', False, 'white')
+        self.surface.blit(fps_surface, (0, self.surface.get_height() - fps_surface.get_height()))

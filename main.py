@@ -24,15 +24,16 @@ def populate_demo_scene(plat: Platformer) -> None:
     plat.actors.append(Actor(7.5, 4.5))
 
     # horizontal platforms
-    plat.platforms.append(Platform(0.0, 1.0, 4.0, 0.5))
-    plat.platforms.append(Platform(3.0, 1.5, 2.0, 1.5))
-    plat.platforms.append(Platform(3.5, 2.0, 1.0, 2.0))
-    plat.platforms.append(Platform(4.0, 3.0, 1.0, 3.0))
-    plat.platforms.append(Platform(6.0, 2.5, 4.0, 2.5))
-    plat.platforms.append(Platform(7.0, 3.5, 2.0, 0.25))
+    plat.platforms.append(Platform(0, 1.0, 3, 2))
+    plat.platforms.append(Platform(3, 2.0, 1, 2))
+    plat.platforms.append(Platform(3, 2.0, 1, 2))
+    plat.platforms.append(Platform(4, 3.0, 1, 3))
+    plat.platforms.append(Platform(6, 3.0, 4, 3))
+    plat.platforms.append(Platform(7, 4.0, 1, 3))
+    plat.platforms.append(Platform(7, 3.0, 2, 0))
 
-    # NOTE: h=0.01 necessary to avoid collisions when jumping "into" the platform
-    plat.platforms.append(Platform(1.0, 5.5, RESOLUTION_X // WORLD_SCALE - 2.0, 0.01))
+    # NOTE: h=0 necessary to avoid collisions when jumping "into" the platform
+    plat.platforms.append(Platform(1.0, 5.5, RESOLUTION_X // WORLD_SCALE - 2.0, 0.0))
 
 
 def main():
@@ -57,7 +58,7 @@ def main():
     plat = Platformer(on_landed, on_collision, on_touch)
     populate_demo_scene(plat)
 
-    render = Tiling(buffer, clock, True)
+    render = Tiling(buffer, clock, False)
 
     running = True
     elapsed = 0
