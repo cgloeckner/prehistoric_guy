@@ -1,4 +1,5 @@
 import pygame
+import time
 
 from platform import Platformer, Actor, Platform
 
@@ -13,10 +14,15 @@ def draw_actor(ctx: pygame.Surface, actor: Actor) -> None:
 
 
 def draw_platform(ctx: pygame.Surface, platform: Platform, tiles: pygame.Surface) -> None:
-    x1 = platform.left * WORLD_SCALE
-    y = ctx.get_height() - platform.bottom * WORLD_SCALE
-    x2 = (platform.left + platform.width) * WORLD_SCALE
-    pygame.draw.line(ctx, 'red', (x1, y), (x2, y), 4)
+    x1 = platform.x * WORLD_SCALE
+    x2 = (platform.x + platform.width) * WORLD_SCALE
+    y1 = ctx.get_height() - platform.y * WORLD_SCALE
+    y2 = ctx.get_height() - (platform.y - platform.height) * WORLD_SCALE
+
+    pygame.draw.line(ctx, 'red', (x1, y1), (x2, y1), 4)
+    pygame.draw.line(ctx, 'red', (x1, y1), (x1, y2), 4)
+    pygame.draw.line(ctx, 'red', (x2, y1), (x2, y2), 4)
+
     # ctx.blit(tiles, (x1, y), (256, 0, 256, 256))
 
 
@@ -39,21 +45,27 @@ def main():
 
     tiles = pygame.image.load('data/platforms.png')
 
-    plat = Platformer()
-    plat.actors.append(Actor(2.5, 1.0))
-    plat.platforms.append(Platform(-4.0, 0.5, 4.0))
-    plat.platforms.append(Platform(0.0, 0.5, 4.0))
-    plat.platforms.append(Platform(4.0, 0.5, 4.0))
-    plat.platforms.append(Platform(8.0, 0.5, 4.0))
-    plat.platforms.append(Platform(16.0, 0.5, 4.0))
-    plat.platforms.append(Platform(6.0, 2.0, 4.0))
-    plat.platforms.append(Platform(10.5, 4.0, 2.0))
-    plat.platforms.append(Platform(13.0, 4.0, 0.25))
-    plat.platforms.append(Platform(14.0, 5.5, 4.0))
-    for i in range(10):
-        plat.platforms.append(Platform(8.0, 7.0, 4.0))
+    def on_landed(actor: Actor, platform: Platform) -> None:
+        print(f'landed on {platform}')
 
-    plat.platforms.sort(key=lambda p: -p.bottom)
+    def on_stopped(actor: Actor, platform: Platform) -> None:
+        print(f'ran into {platform}')
+
+    plat = Platformer(on_landed, on_stopped)
+    plat.actors.append(Actor(2.5, 5.5))
+
+    # horizontal platforms
+    plat.platforms.append(Platform(-4.0, 0.5, 4.0, 0.25))
+    plat.platforms.append(Platform(0.0, 0.5, 4.0, 0.25))
+    plat.platforms.append(Platform(4.0, 0.5, 4.0, 0.25))
+    plat.platforms.append(Platform(8.0, 0.5, 4.0, 0.25))
+    plat.platforms.append(Platform(16.0, 0.5, 4.0, 0.25))
+
+    plat.platforms.append(Platform(6.0, 2.0, 4.0, 2.1))
+    plat.platforms.append(Platform(7.0, 4.0, 2.0, 0.1))
+    plat.platforms.append(Platform(14.0, 5.5, 4.0, 0.1))
+
+    plat.platforms.append(Platform(11.0, 6.0, 2.0, 6.0))
 
     clock = pygame.time.Clock()
     running = True
@@ -62,7 +74,8 @@ def main():
         for event in pygame.event.get():
             if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
                 running = False
-            if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN and pygame.key.get_mods() & pygame.KMOD_ALT:
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN and \
+                    pygame.key.get_mods() & pygame.KMOD_ALT:
                 # FIXME: pygame.display.toggle_fullscreen() does not work correctly when leaving fullscreen
                 pass
 

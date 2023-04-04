@@ -20,9 +20,12 @@ class Actor:
 
 @dataclass
 class Platform:
-    left: float
-    bottom: float
+    # topleft position
+    x: float
+    y: float
+    # size
     width: float
+    height: float
 
 
 def test_line_intersection(x1: float, y1: float, x2: float, y2: float, x3: float, y3: float,
@@ -49,6 +52,19 @@ def test_line_intersection(x1: float, y1: float, x2: float, y2: float, x3: float
     return x, y
 
 
+def is_inside_platform(actor: Actor, platform: Platform) -> bool:
+    """Test whether the actor is inside the platform.
+    """
+    return platform.x <= actor.pos_x < platform.x + platform.width and\
+        platform.y - platform.height < actor.pos_y < platform.y
+
+
+def did_traverse_above(actor: Actor, last_pos: pygame.math.Vector2, platform: Platform) -> bool:
+    """Test whether the actor moved through the top of the platform.
+    """
+    return actor.pos_y < platform.y < last_pos.y
+
+
 # duration until the jump leads to falling
 JUMP_DURATION: int = 500
 GRAVITY: float = 9.81
@@ -62,6 +78,10 @@ def get_falling_distance(elapsed_ms: int, delta_ms: int) -> float:
     def f(x):
         return -GRAVITY * (x / JUMP_DURATION - 0.5) ** 2 + GRAVITY * 0.25
 
+    # cap maximum falling speed
+    if elapsed_ms > 2000:
+        elapsed_ms = 2000
+
     old_h = f(elapsed_ms)
     new_h = f(elapsed_ms + delta_ms)
     return new_h - old_h
@@ -71,42 +91,14 @@ class Platformer(object):
     """Manages physics simulation for the platforming scene.
     It holds actors and platforms, which have to be registered by appending them to the corresponding lists.
     """
-    def __init__(self):
+    def __init__(self, on_landed: callable, on_stopped: callable):
         self.actors = list()
         self.platforms = list()
 
-    def update(self, elapsed_ms: int) -> None:
-        """Update all actors' physics (jumping and falling) within the past view elapsed_ms.
-        """
-        for actor in self.actors:
-            # trigger free fall if necessary
-            if self.check_falling(actor):
-                # as if at the highest point of a jump
-                actor.force_y = -1.0
-                actor.jump_ms = JUMP_DURATION
+        self.on_landed = on_landed
+        self.on_stopped = on_stopped
 
-            # calculate movement vector
-            move = pygame.math.Vector2(actor.force_x, actor.force_y * 3) * elapsed_ms * 0.0075
-            if move.y != 0.0:
-                # continue jump and calculate y-speed
-                move.y = get_falling_distance(actor.jump_ms, elapsed_ms)
-                actor.jump_ms += elapsed_ms
-
-            # apply forces
-            last_pos = pygame.math.Vector2(actor.pos_x, actor.pos_y)
-            actor.pos_x += move.x
-            actor.pos_y += move.y
-
-            if move.y < 0:
-                # while falling, check for collision against all platforms and pick the closest collision point
-                stop_pos = self.check_collision(actor, last_pos)
-
-                if stop_pos is not None:
-                    actor.pos_x, actor.pos_y = stop_pos
-                    actor.force_y = 0
-                    actor.jump_ms = 0
-
-    def check_falling(self, actor: Actor) -> bool:
+    def is_falling(self, actor: Actor) -> bool:
         """The actor is falling if he does not stand on any platform.
         If the actor is jumping (force_y > 0) or already falling (force_y < 0), he is not falling.
         Returns True if he is falling.
@@ -115,30 +107,124 @@ class Platformer(object):
             return False
 
         for platform in self.platforms:
-            right = platform.left + platform.width
-            if actor.pos_y - platform.bottom == 0.0 and platform.left <= actor.pos_x <= right:
+            right = platform.x + platform.width
+            if actor.pos_y - platform.y == 0.0 and platform.x <= actor.pos_x <= right:
                 # actor stands on platform
                 return False
 
         return True
 
-    def check_collision(self, actor: Actor, last_pos: pygame.math.Vector2) -> Optional[pygame.math.Vector2]:
-        """The actor's movement since his last_pos may collide with a platform.
-        Returns the intersection point or None.
+    def check_falling_collision(self, actor: Actor, last_pos: pygame.math.Vector2) -> Optional[Platform]:
+        """The actor has fallen from his last_pos and may have collided with the top of a platform. If such a platform
+        is found, the actor is automatically adjusted to his landing point on top of that platform.
+        Returns a platform or None.
         """
         stop_pos = None
         stop_dist = None
-        for platform in self.platforms:
-            right = platform.left + platform.width
-            pos = test_line_intersection(last_pos.x, last_pos.y, actor.pos_x, actor.pos_y,
-                                         platform.left, platform.bottom, right, platform.bottom)
-            if pos is not None:
-                dist = pygame.math.Vector2(pos).distance_squared_to(last_pos)
-                if stop_dist is None or dist < stop_dist:
-                    stop_pos = pos
-                    stop_dist = dist
+        stop_platform = None
 
-        return stop_pos
+        # check for platform traversal via line intersections
+        for platform in (p for p in self.platforms if did_traverse_above(actor, last_pos, p)):
+            # create relevant lines from platform's vertices
+            top_left = (platform.x, platform.y)
+            top_right = (platform.x + platform.width, platform.y)
+
+            pos = test_line_intersection(last_pos.x, last_pos.y, actor.pos_x, actor.pos_y, *top_left, *top_right)
+            if pos is None:
+                continue
+
+            dist = pygame.math.Vector2(pos).distance_squared_to(last_pos)
+            if stop_dist is None or dist < stop_dist:
+                stop_pos = pos
+                stop_dist = dist
+                stop_platform = platform
+
+        # reset position
+        if stop_pos is not None:
+            actor.pos_x, actor.pos_y = stop_pos
+
+        return stop_platform
+
+    def check_movement_collision(self, actor: Actor, last_pos: pygame.math.Vector2) -> Platform:
+        """The actor has moved from last_pos horizontally. Meanwhile, he may have collided with a platform. If such a
+        platform is found, the actor's position is automatically reset to the last_pos.
+        Returns a platform or None.
+        """
+        for platform in self.platforms:
+            if not is_inside_platform(actor, platform):
+                continue
+
+            # reset position
+            actor.pos_x, actor.pos_y = last_pos
+
+            return platform
+
+    def simulate_gravity(self, actor: Actor, elapsed_ms: int) -> None:
+        """This simulates the effect of gravity to an actor. This means adjusting the y-position by jumping and falling.
+        Collision detection and handling is performed here. Further collision handling can be done using the on_landed
+        callback.
+        """
+        if self.is_falling(actor):
+            # as if at the highest point of a jump
+            actor.force_y = -1.0
+            actor.jump_ms = JUMP_DURATION
+
+        if actor.force_y == 0:
+            return
+
+        # calculate new height
+        last_pos = pygame.math.Vector2(actor.pos_x, actor.pos_y)
+        delta_height = get_falling_distance(actor.jump_ms, elapsed_ms)
+        actor.jump_ms += elapsed_ms
+        actor.pos_y += delta_height
+
+        # check for collision
+        platform = self.check_falling_collision(actor, last_pos)
+        if platform is None:
+            # no collision detected
+            return
+
+        # reset position and jump
+        actor.jump_ms = 0
+
+        # trigger event
+        self.on_landed(actor, platform)
+
+        # reset vertical force
+        actor.force_y = 0
+
+    def handle_movement(self, actor: Actor, elapsed_ms: int) -> None:
+        """This handles the actor's horizontal movement. Collision is detected and handled. More collision handling
+        can be achieved via on_stopped.
+        """
+        delta_x = actor.force_x * elapsed_ms * 0.0075
+        if delta_x == 0.0:
+            return
+
+        # apply horizontal force
+        last_pos = pygame.math.Vector2(actor.pos_x, actor.pos_y)
+        actor.pos_x += delta_x
+
+        # check for collision against all platforms and pick the closest collision point
+        platform = self.check_movement_collision(actor, last_pos)
+        if platform is None:
+            return
+
+        # reset position
+        actor.pos_x, actor.pos_y = last_pos
+
+        # trigger event
+        self.on_stopped(actor, platform)
+
+        # reset movement force
+        actor.force_x = 0
+
+    def update(self, elapsed_ms: int) -> None:
+        """Update all actors' physics (jumping and falling) within the past view elapsed_ms.
+        """
+        for actor in self.actors:
+            self.simulate_gravity(actor, elapsed_ms)
+            self.handle_movement(actor, elapsed_ms)
 
 
 if __name__ == '__main__':
