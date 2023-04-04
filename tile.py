@@ -1,7 +1,7 @@
 import pygame
 import random
 
-from platform import Platformer, Actor, Platform
+from platform import Platformer, Actor, Object, Platform
 
 
 RESOLUTION_X: int = 320
@@ -33,6 +33,12 @@ class Tiling(object):
         pos = (actor.pos_x * WORLD_SCALE,
                self.surface.get_height() - actor.pos_y * WORLD_SCALE - actor.radius * WORLD_SCALE)
         pygame.draw.circle(self.surface, 'blue', pos, actor.radius * WORLD_SCALE)
+
+    def draw_object(self, obj: Object) -> None:
+        # FIXME: replace debug rendering
+        pos = (obj.pos_x * WORLD_SCALE,
+               self.surface.get_height() - obj.pos_y * WORLD_SCALE)
+        pygame.draw.circle(self.surface, 'gold', pos, 0.25 * WORLD_SCALE)
 
     def draw_platform(self, platform: Platform, tileset_col: int) -> None:
         x = platform.x * WORLD_SCALE
@@ -88,8 +94,13 @@ class Tiling(object):
 
         # foreground
         platformer.platforms.sort(key=lambda plat: plat.y)
+
         for p in platformer.platforms:
             self.draw_platform(p, 0)
+
+        for o in platformer.objects:
+            self.draw_object(o)
+
         for a in platformer.actors:
             self.draw_actor(a)
 

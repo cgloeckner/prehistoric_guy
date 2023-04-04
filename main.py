@@ -1,6 +1,7 @@
 import pygame
+import random
 
-from platform import Platformer, Actor, Platform
+from platform import Platformer, Actor, Object, Platform
 from tile import Tiling, RESOLUTION_X, RESOLUTION_Y, WORLD_SCALE
 
 
@@ -19,9 +20,30 @@ def on_touch(actor: Actor, other: Actor) -> None:
     pass
 
 
+score = 0
+plat = None
+
+
+def on_reach(actor: Actor, other: Object) -> None:
+    global score
+    global plat
+    score += 1
+    plat.objects.remove(other)
+
+    plat.objects.append(Object(random.randrange(RESOLUTION_X // WORLD_SCALE),
+                               random.randrange(RESOLUTION_Y // WORLD_SCALE // 2) + RESOLUTION_Y // WORLD_SCALE // 2,
+                                0))
+
+
 def populate_demo_scene(plat: Platformer) -> None:
     plat.actors.append(Actor(1.5, 3.5))
     plat.actors.append(Actor(7.5, 4.5))
+
+    for i in range(10):
+        plat.objects.append(Object(random.randrange(RESOLUTION_X // WORLD_SCALE) + 0.5,
+                                   random.randrange(
+                                       RESOLUTION_Y // WORLD_SCALE // 2) + RESOLUTION_Y // WORLD_SCALE // 2 + 0.5,
+                                   0))
 
     # horizontal platforms
     plat.platforms.append(Platform(0, 1.0, 3, 2))
@@ -37,6 +59,9 @@ def populate_demo_scene(plat: Platformer) -> None:
 
 
 def main():
+    global score
+    global plat
+
     pygame.init()
 
     # get native resolution and factor for scaling
@@ -55,7 +80,7 @@ def main():
     buffer = pygame.Surface((RESOLUTION_X, RESOLUTION_Y))
     clock = pygame.time.Clock()
 
-    plat = Platformer(on_landed, on_collision, on_touch)
+    plat = Platformer(on_landed, on_collision, on_touch, on_reach)
     populate_demo_scene(plat)
 
     render = Tiling(buffer, clock, False)
@@ -98,6 +123,9 @@ def main():
         # limit pos to screen
         plat.actors[0].pos_x = max(0, min(plat.actors[0].pos_x, RESOLUTION_X // WORLD_SCALE))
         if plat.actors[0].pos_y < 0:
+            score -= 3
+            if score < 0:
+                score = 0
             plat.actors[0].pos_y += RESOLUTION_Y // WORLD_SCALE
         plat.actors[1].pos_x = max(0, min(plat.actors[1].pos_x, RESOLUTION_X // WORLD_SCALE))
         if plat.actors[1].pos_y < 0:
@@ -105,6 +133,10 @@ def main():
 
         buffer.fill('black')
         render.draw(plat, 0)
+
+        score_surface = render.font.render(f'SCORE: {score}', False, 'black')
+        buffer.blit(score_surface, (0, 0))
+
         screen.blit(pygame.transform.scale_by(buffer, ui_scale_factor), (0, 0))
         pygame.display.flip()
 

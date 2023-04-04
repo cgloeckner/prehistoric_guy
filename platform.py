@@ -11,7 +11,7 @@ GRAVITY: float = 9.81
 JUMP_DURATION: int = 500
 
 # duration until another collision event is triggered
-COLLISION_REPEAT_DELAY: int = 500
+COLLISION_REPEAT_DELAY: int = 150
 
 
 @dataclass
@@ -28,6 +28,15 @@ class Actor:
     # prevents another collision/touch event for a couple of ms
     collision_repeat_cooldown: int = 0
     touch_repeat_cooldown: int = 0
+
+
+@dataclass
+class Object:
+    # position
+    pos_x: float
+    pos_y: float
+    # object type id
+    object_type: int
 
 
 @dataclass
@@ -98,13 +107,15 @@ class Platformer(object):
     """Manages physics simulation for the platforming scene.
     It holds actors and platforms, which have to be registered by appending them to the corresponding lists.
     """
-    def __init__(self, on_landed: callable, on_collision: callable, on_touch: callable):
+    def __init__(self, on_landed: callable, on_collision: callable, on_touch: callable, on_reach: callable):
         self.actors = list()
         self.platforms = list()
+        self.objects = list()
 
         self.on_landed = on_landed
         self.on_collision = on_collision
         self.on_touch = on_touch
+        self.on_reach = on_reach
 
     def is_falling(self, actor: Actor) -> bool:
         """The actor is falling if he does not stand on any platform.
@@ -250,6 +261,23 @@ class Platformer(object):
                 actor.touch_repeat_cooldown = COLLISION_REPEAT_DELAY
                 self.on_touch(actor, other)
 
+    def check_object_collision(self, actor: Actor, elapsed_ms: int) -> None:
+        """This checks for collisions between the actor and other actors in mutual distance. For each such collision,
+        the callback on_reach is triggered.
+        """
+        pos = pygame.math.Vector2(actor.pos_x, actor.pos_y + actor.radius)
+
+        for other in self.objects:
+            if actor == other:
+                continue
+
+            distance = pygame.math.Vector2(other.pos_x, other.pos_y).distance_squared_to(pos)
+            if distance > (actor.radius * 2) ** 2:
+                continue
+
+            # trigger event
+            self.on_reach(actor, other)
+
     def update(self, elapsed_ms: int) -> None:
         """Update all actors' physics (jumping and falling) within the past view elapsed_ms.
         """
@@ -257,6 +285,7 @@ class Platformer(object):
             self.simulate_gravity(actor, elapsed_ms)
             self.handle_movement(actor, elapsed_ms)
             self.check_actor_collision(actor, elapsed_ms)
+            self.check_object_collision(actor, elapsed_ms)
 
 
 if __name__ == '__main__':
