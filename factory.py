@@ -1,3 +1,5 @@
+import pygame
+
 import platforms
 import animations
 import tiles
@@ -7,12 +9,14 @@ class ObjectManager(object):
     """Factory for creating game objects.
     Creation and deletion of objects considers all relevant systems.
     """
-    def __init__(self, physics: platforms.Physics, animation: animations.Animation, renderer: tiles.Renderer):
+    def __init__(self, physics: platforms.Physics, animation: animations.Animating, renderer: tiles.Renderer):
         """Register all known systems that deal with game objects of any kind.
         """
         self.physics = physics
         self.animation = animation
         self.renderer = renderer
+
+        self.flipped_cache = dict()
 
     def create_platform(self, **kwargs) -> platforms.Platform:
         """Create a new platform.
@@ -39,14 +43,27 @@ class ObjectManager(object):
         """Remove an existing, static object."""
         self.physics.objects.remove(obj)
 
-    def create_actor(self, **kwargs) -> platforms.Actor:
+    def create_actor(self, sprite_sheet: pygame.Surface, **kwargs) -> tiles.Sprite:
         """Create an actor object such as player or enemy characters.
+        Returns a sprite which links to the actor and its animations.
         """
-        actor = platforms.Actor(**kwargs)
-        self.physics.actors.append(actor)
-        # FIXME: introduce sprites for rendering actors in non-debug-mode
-        return actor
+        if sprite_sheet not in self.flipped_cache:
+            self.flipped_cache[sprite_sheet] = animations.flip_sprite_sheet(sprite_sheet, tiles.WORLD_SCALE)
+        flipped_sheet = self.flipped_cache[sprite_sheet]
 
-    def destroy_actor(self, actor: platforms.Actor) -> None:
-        self.physics.actors.remove(actor)
-        # FIXME: adjust for sprite removal using the rendering system
+        actor = platforms.Actor(**kwargs)
+        animation = animations.Animation()
+        # FIXME: bad position to upscale
+        sprite = tiles.Sprite(sprite_sheet=pygame.transform.scale2x(sprite_sheet),
+                              flipped_sheet=pygame.transform.scale2x(flipped_sheet), actor=actor, animation=animation)
+        self.physics.actors.append(actor)
+        self.animation.animations.append(animation)
+        self.renderer.sprites.append(sprite)
+        return sprite
+
+    def destroy_actor(self, sprite: tiles.Sprite) -> None:
+        """Remove an actor (as well as its animation) from by using the related sprite object.
+        """
+        self.physics.actors.remove(sprite.actor)
+        self.animation.animations.remove(sprite.animation)
+        self.renderer.sprites.remove(sprite)

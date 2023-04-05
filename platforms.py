@@ -11,6 +11,9 @@ JUMP_DURATION: int = 500
 # duration until another collision event is triggered
 COLLISION_REPEAT_DELAY: int = 150
 
+MOVE_SPEED_FACTOR: float = 3.5
+JUMP_SPEED_FACTOR: float = 0.5
+
 
 @dataclass
 class Actor:
@@ -18,9 +21,11 @@ class Actor:
     pos_x: float
     pos_y: float
     # movement vector
+    face_x: float = 0.0
     force_x: float = 0.0
     force_y: float = 0.0
     jump_ms: int = 0
+    max_jump_y: float = 0.0
     # collision data
     radius: float = 0.25
     # prevents another collision/touch event for a couple of ms
@@ -185,13 +190,14 @@ class Physics(object):
             # as if at the highest point of a jump
             actor.force_y = -1.0
             actor.jump_ms = JUMP_DURATION
+            actor.max_jump_y = actor.pos_y
 
         if actor.force_y == 0:
             return
 
         # calculate new height
         last_pos = pygame.math.Vector2(actor.pos_x, actor.pos_y)
-        delta_height = get_falling_distance(actor.jump_ms, elapsed_ms)
+        delta_height = get_falling_distance(actor.jump_ms, elapsed_ms) * JUMP_SPEED_FACTOR
         actor.jump_ms += elapsed_ms
         actor.pos_y += delta_height
 
@@ -214,7 +220,11 @@ class Physics(object):
         """This handles the actor's horizontal movement. Collision is detected and handled. More collision handling
         can be achieved via on_collision. Multiple calls are delayed with COLLISION_REPEAT_DELAY
         """
-        delta_x = actor.force_x * elapsed_ms * 0.0075
+        # look into current x-direction
+        if actor.force_x != 0.0:
+            actor.face_x = actor.force_x
+
+        delta_x = actor.force_x * elapsed_ms * MOVE_SPEED_FACTOR / 1000
         if delta_x == 0.0:
             return
 

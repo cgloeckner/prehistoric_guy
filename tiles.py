@@ -1,6 +1,8 @@
 import pygame
+from dataclasses import dataclass
 
 import platforms
+import animations
 from constants import *
 
 
@@ -8,6 +10,14 @@ from constants import *
 PLATFORM_ROW: int = 0
 TEXTURE_ROW: int = 2
 STAIRS_ROW: int = 3
+
+
+@dataclass
+class Sprite:
+    sprite_sheet: pygame.Surface
+    flipped_sheet: pygame.Surface
+    actor: platforms.Actor
+    animation: animations.Animation
 
 
 class Renderer(object):
@@ -19,6 +29,7 @@ class Renderer(object):
         self.debug_render = debug_render
 
         self.x = 0
+        self.sprites = list()
 
         # load resources
         self.font = pygame.font.SysFont(pygame.font.get_default_font(), 18)
@@ -27,26 +38,37 @@ class Renderer(object):
         self.objects = pygame.image.load('data/objects.png')
 
     def draw_object(self, obj: platforms.Object) -> None:
-        if self.debug_render:
-            pos = (obj.pos_x * WORLD_SCALE,
-                   self.surface.get_height() - obj.pos_y * WORLD_SCALE)
-            pygame.draw.circle(self.surface, 'gold', pos, 0.25 * WORLD_SCALE)
-
         x = obj.pos_x * WORLD_SCALE
         y = self.surface.get_height() - obj.pos_y * WORLD_SCALE
 
-        variation_col = 0
-        self.surface.blit(self.objects,
-                          (x, y),
-                          (variation_col * OBJECT_SCALE, obj.object_type * OBJECT_SCALE,
-                           OBJECT_SCALE, OBJECT_SCALE))
+        if self.debug_render:
+            pygame.draw.circle(self.surface, 'gold', (x, y), 0.25 * WORLD_SCALE)
 
-    def draw_actor(self, actor: platforms.Actor) -> None:
+        variation_col = 0
+        clip = (variation_col * OBJECT_SCALE, obj.object_type * OBJECT_SCALE, OBJECT_SCALE, OBJECT_SCALE)
+        self.surface.blit(self.objects, (x, y), clip)
+
+    def draw_actor(self, sprite: Sprite) -> None:
+        x = sprite.actor.pos_x * WORLD_SCALE
+        y = self.surface.get_height() - sprite.actor.pos_y * WORLD_SCALE
+
         # FIXME: add regular rendering
-        # if self.debug_render:
-        pos = (actor.pos_x * WORLD_SCALE,
-               self.surface.get_height() - actor.pos_y * WORLD_SCALE - actor.radius * WORLD_SCALE)
-        pygame.draw.circle(self.surface, 'blue', pos, actor.radius * WORLD_SCALE)
+        if self.debug_render:
+            pygame.draw.circle(self.surface, 'blue',
+                               (x, y - sprite.actor.radius * WORLD_SCALE),
+                               sprite.actor.radius * WORLD_SCALE)
+
+        x -= WORLD_SCALE#  // 2
+        y -= WORLD_SCALE * 2
+        clip = animations.get_frame_rect(sprite.animation)
+        clip.x *= 2
+        clip.y *= 2
+        clip.width *= 2
+        clip.height *= 2
+        sprite_sheet = sprite.sprite_sheet
+        if sprite.actor.face_x < 0:
+            sprite_sheet = sprite.flipped_sheet
+        self.surface.blit(sprite_sheet, (x, y), clip)
 
     def draw_platform(self, platform: platforms.Platform, tileset_col: int) -> None:
         x = platform.x * WORLD_SCALE
@@ -108,8 +130,8 @@ class Renderer(object):
         for o in platformer.objects:
             self.draw_object(o)
 
-        for a in platformer.actors:
-            self.draw_actor(a)
+        for s in self.sprites:
+            self.draw_actor(s)
 
         # draw FPS
         fps_surface = self.font.render(f'FPS: {int(self.clock.get_fps()):02d}', False, 'white')
