@@ -24,23 +24,43 @@ class Animation:
     frame_time_ms: int = 0
 
 
+def flip_sprite_sheet(src: pygame.Surface) -> pygame.Surface:
+    """Splits all sprite frames but keeps the logical order of the entire sprite sheet.
+    """
+    size = src.get_size()
+    mirrored = pygame.transform.flip(src, flip_x=True, flip_y=False)
+    dst = pygame.Surface(size, flags=pygame.SRCALPHA)
+
+    for column in range(src.get_width() // WORLD_SCALE):
+        dst.blit(mirrored, (column * WORLD_SCALE, 0), (size[0] - (column + 1) * WORLD_SCALE, 0, WORLD_SCALE, size[1]))
+
+    return dst
+
+
 def start_animation(ani: Animation, action_id: int) -> None:
+    """Resets the animation with the given action.
+    """
     ani.action_id = action_id
     ani.frame_id = 0
     ani.frame_time_ms = 0
 
 
 def get_frame_rect(ani: Animation) -> pygame.Rect:
+    """Returns the clipping rectangle for the animation's current frame.
+    """
     return pygame.Rect(ani.frame_id * WORLD_SCALE, ani.action_id * WORLD_SCALE, WORLD_SCALE, WORLD_SCALE)
 
 
 class Animating(object):
-    """Handles all frameset animations.
+    """Handles all frame set animations.
     """
     def __init__(self):
         self.animations = list()
 
     def update(self, elapsed_ms: int) -> None:
+        """Updates all animations' frame durations. It automatically switches frames and loops/returns/freezes the
+        animation once finished.
+        """
         for ani in self.animations:
             # continue animation
             ani.frame_time_ms += elapsed_ms
@@ -81,6 +101,8 @@ def main():
     clock = pygame.time.Clock()
 
     guy = pygame.image.load('data/guy.png')
+    guy2 = flip_sprite_sheet(guy)
+    sprite_sheet = guy
 
     ani = Animating()
     ani.animations.append(Animation())
@@ -94,6 +116,10 @@ def main():
 
         keys = pygame.key.get_pressed()
 
+        if keys[pygame.K_a]:
+            sprite_sheet = guy2
+        if keys[pygame.K_d]:
+            sprite_sheet = guy
         if keys[pygame.K_1]:
             start_animation(ani.animations[0], IDLE_ACTION)
         if keys[pygame.K_2]:
@@ -108,7 +134,7 @@ def main():
         ani.update(elapsed)
 
         buffer.fill('lightblue')
-        buffer.blit(guy, (0, 0), get_frame_rect(ani.animations[0]))
+        buffer.blit(sprite_sheet, (0, 0), get_frame_rect(ani.animations[0]))
 
         screen.blit(pygame.transform.scale_by(buffer, ui_scale_factor), (0, 0))
         pygame.display.flip()
