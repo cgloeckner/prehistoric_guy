@@ -11,7 +11,8 @@ IDLE_ACTION: int = 0
 MOVE_ACTION: int = 1
 ATTACK_ACTION: int = 2
 JUMP_ACTION: int = 3
-DIE_ACTION: int = 4
+LANDING_ACTION: int = 4
+DIE_ACTION: int = 5
 
 
 @dataclass
@@ -72,10 +73,10 @@ class Animating(object):
 
                 # handle animation type (loop, reset, freeze)
                 if ani.frame_id == ANIMATION_NUM_FRAMES:
-                    if ani.action_id <= MOVE_ACTION:
+                    if ani.action_id in [IDLE_ACTION, MOVE_ACTION]:
                         # loop
                         ani.frame_id = 0
-                    elif ani.action_id == ATTACK_ACTION:
+                    elif ani.action_id in [ATTACK_ACTION, LANDING_ACTION]:
                         # reset to idle
                         ani.frame_id = 0
                         ani.action_id = IDLE_ACTION

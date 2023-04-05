@@ -25,12 +25,14 @@ def on_landed(actor: platforms.Actor, platform: platforms.Platform) -> None:
     # search corresponding animation
     for sprite in obj_man.renderer.sprites:
         if sprite.actor == actor:
-            action = animations.IDLE_ACTION
+            action = animations.LANDING_ACTION
             delta_h = actor.max_jump_y - sprite.actor.pos_y
             if delta_h > 2.5:
                 action = animations.DIE_ACTION
 
             animations.start(sprite.animation, action)
+
+            return
 
 
 def on_collision(actor: platforms.Actor, platform: platforms.Platform) -> None:
