@@ -1,7 +1,6 @@
 import pygame
 
 from dataclasses import dataclass
-
 from typing import Tuple, Optional
 
 
@@ -41,7 +40,7 @@ class Object:
 
 @dataclass
 class Platform:
-    # topleft position
+    # top left position
     x: float
     y: float
     # size
@@ -103,7 +102,7 @@ def get_falling_distance(elapsed_ms: int, delta_ms: int) -> float:
     return new_h - old_h
 
 
-class Platformer(object):
+class Physics(object):
     """Manages physics simulation for the platforming scene.
     It holds actors and platforms, which have to be registered by appending them to the corresponding lists.
     """
@@ -261,7 +260,7 @@ class Platformer(object):
                 actor.touch_repeat_cooldown = COLLISION_REPEAT_DELAY
                 self.on_touch(actor, other)
 
-    def check_object_collision(self, actor: Actor, elapsed_ms: int) -> None:
+    def check_object_collision(self, actor: Actor) -> None:
         """This checks for collisions between the actor and other actors in mutual distance. For each such collision,
         the callback on_reach is triggered.
         """
@@ -285,7 +284,7 @@ class Platformer(object):
             self.simulate_gravity(actor, elapsed_ms)
             self.handle_movement(actor, elapsed_ms)
             self.check_actor_collision(actor, elapsed_ms)
-            self.check_object_collision(actor, elapsed_ms)
+            self.check_object_collision(actor)
 
 
 if __name__ == '__main__':

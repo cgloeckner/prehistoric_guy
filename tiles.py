@@ -1,6 +1,6 @@
 import pygame
 
-from platform import Platformer, Actor, Object, Platform
+import platforms
 
 RESOLUTION_X: int = 320
 RESOLUTION_Y: int = 240
@@ -13,7 +13,7 @@ TEXTURE_ROW: int = 2
 STAIRS_ROW: int = 3
 
 
-class Tiling(object):
+class Renderer(object):
     """Handles drawing the tiled environment.
     """
     def __init__(self, surface: pygame.Surface, clock: pygame.time.Clock, debug_render: bool = False):
@@ -29,13 +29,7 @@ class Tiling(object):
         self.tiles = pygame.image.load('data/tiles.png')
         self.objects = pygame.image.load('data/objects.png')
 
-    def draw_actor(self, actor: Actor) -> None:
-        if self.debug_render:
-            pos = (actor.pos_x * WORLD_SCALE,
-                   self.surface.get_height() - actor.pos_y * WORLD_SCALE - actor.radius * WORLD_SCALE)
-            pygame.draw.circle(self.surface, 'blue', pos, actor.radius * WORLD_SCALE)
-
-    def draw_object(self, obj: Object) -> None:
+    def draw_object(self, obj: platforms.Object) -> None:
         if self.debug_render:
             pos = (obj.pos_x * WORLD_SCALE,
                    self.surface.get_height() - obj.pos_y * WORLD_SCALE)
@@ -50,11 +44,17 @@ class Tiling(object):
                           (variation_col * OBJECT_SCALE, obj.object_type * OBJECT_SCALE,
                            OBJECT_SCALE, OBJECT_SCALE))
 
-    def draw_platform(self, platform: Platform, tileset_col: int) -> None:
+    def draw_actor(self, actor: platforms.Actor) -> None:
+        # FIXME: add regular rendering
+        # if self.debug_render:
+        pos = (actor.pos_x * WORLD_SCALE,
+               self.surface.get_height() - actor.pos_y * WORLD_SCALE - actor.radius * WORLD_SCALE)
+        pygame.draw.circle(self.surface, 'blue', pos, actor.radius * WORLD_SCALE)
+
+    def draw_platform(self, platform: platforms.Platform, tileset_col: int) -> None:
         x = platform.x * WORLD_SCALE
         y = self.surface.get_height() - platform.y * WORLD_SCALE
 
-        set_col = 0
         for i in range(int(platform.width)):
             # draw texture below
             for j in range(int(platform.height)):
@@ -98,7 +98,7 @@ class Tiling(object):
             pygame.draw.line(self.surface, 'red', (x, y), (x, y2), 4)
             pygame.draw.line(self.surface, 'red', (x2, y), (x2, y2), 4)
 
-    def draw(self, platformer: Platformer, bg_col: int) -> None:
+    def draw(self, platformer: platforms.Physics, bg_col: int) -> None:
         # background
         self.surface.blit(self.background, (0, 0), (bg_col * RESOLUTION_X, 0, RESOLUTION_X, RESOLUTION_Y))
 
