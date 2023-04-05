@@ -130,6 +130,7 @@ def main():
         if render.sprites[0].animation.action_id != animations.DIE_ACTION:
             if keys[pygame.K_SPACE]:
                 animations.start(render.sprites[0].animation, animations.ATTACK_ACTION)
+                render.sprites[0].actor.force_x = 0
 
             else:
                 if keys[pygame.K_w]:
@@ -151,6 +152,8 @@ def main():
         if render.sprites[1].animation.action_id != animations.DIE_ACTION:
             if keys[pygame.K_RETURN]:
                 animations.start(render.sprites[1].animation, animations.ATTACK_ACTION)
+                render.sprites[1].actor.force_x = 0
+
             else:
                 if keys[pygame.K_UP]:
                     render.sprites[1].actor.force_y = 1
