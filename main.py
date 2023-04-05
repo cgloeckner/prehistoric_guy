@@ -27,7 +27,7 @@ def on_landed(actor: platforms.Actor, platform: platforms.Platform) -> None:
         if sprite.actor == actor:
             action = animations.IDLE_ACTION
             delta_h = actor.max_jump_y - sprite.actor.pos_y
-            if delta_h > 2.5 or actor.max_jump_y < sprite.actor.pos_y:
+            if delta_h > 2.5:
                 action = animations.DIE_ACTION
 
             animations.start(sprite.animation, action)
@@ -128,39 +128,46 @@ def main():
         keys = pygame.key.get_pressed()
 
         if render.sprites[0].animation.action_id != animations.DIE_ACTION:
-            if keys[pygame.K_w]:
-                render.sprites[0].actor.force_y = 1
-                animations.start(render.sprites[0].animation, animations.JUMP_ACTION)
+            if keys[pygame.K_SPACE]:
+                animations.start(render.sprites[0].animation, animations.ATTACK_ACTION)
 
-            delta_x = 0.0
-            if keys[pygame.K_a]:
-                delta_x -= 1.0
-            if keys[pygame.K_d]:
-                delta_x += 1.0
-            if render.sprites[0].animation.action_id in [animations.IDLE_ACTION, animations.MOVE_ACTION]:
-                if delta_x != 0.0:
-                    animations.start(render.sprites[0].animation, animations.MOVE_ACTION)
-                else:
-                    animations.start(render.sprites[0].animation, animations.IDLE_ACTION)
-            render.sprites[0].actor.force_x = delta_x
+            else:
+                if keys[pygame.K_w]:
+                    render.sprites[0].actor.force_y = 1
+                    animations.start(render.sprites[0].animation, animations.JUMP_ACTION)
+
+                delta_x = 0.0
+                if keys[pygame.K_a]:
+                    delta_x -= 1.0
+                if keys[pygame.K_d]:
+                    delta_x += 1.0
+                if render.sprites[0].animation.action_id in [animations.IDLE_ACTION, animations.MOVE_ACTION]:
+                    if delta_x != 0.0:
+                        animations.start(render.sprites[0].animation, animations.MOVE_ACTION)
+                    else:
+                        animations.start(render.sprites[0].animation, animations.IDLE_ACTION)
+                render.sprites[0].actor.force_x = delta_x
 
         if render.sprites[1].animation.action_id != animations.DIE_ACTION:
-            if keys[pygame.K_UP]:
-                render.sprites[1].actor.force_y = 1
-                animations.start(render.sprites[1].animation, animations.JUMP_ACTION)
+            if keys[pygame.K_RETURN]:
+                animations.start(render.sprites[1].animation, animations.ATTACK_ACTION)
+            else:
+                if keys[pygame.K_UP]:
+                    render.sprites[1].actor.force_y = 1
+                    animations.start(render.sprites[1].animation, animations.JUMP_ACTION)
 
-            delta_x = 0.0
-            if keys[pygame.K_LEFT]:
-                delta_x -= 1.0
-            if keys[pygame.K_RIGHT]:
-                delta_x += 1.0
+                delta_x = 0.0
+                if keys[pygame.K_LEFT]:
+                    delta_x -= 1.0
+                if keys[pygame.K_RIGHT]:
+                    delta_x += 1.0
 
-            if render.sprites[1].animation.action_id  in [animations.IDLE_ACTION, animations.MOVE_ACTION]:
-                if delta_x != 0.0:
-                    animations.start(render.sprites[1].animation, animations.MOVE_ACTION)
-                else:
-                    animations.start(render.sprites[1].animation, animations.IDLE_ACTION)
-            render.sprites[1].actor.force_x = delta_x
+                if render.sprites[1].animation.action_id  in [animations.IDLE_ACTION, animations.MOVE_ACTION]:
+                    if delta_x != 0.0:
+                        animations.start(render.sprites[1].animation, animations.MOVE_ACTION)
+                    else:
+                        animations.start(render.sprites[1].animation, animations.IDLE_ACTION)
+                render.sprites[1].actor.force_x = delta_x
 
         phys.update(elapsed)
 
