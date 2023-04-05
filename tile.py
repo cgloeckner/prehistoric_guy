@@ -7,8 +7,9 @@ from platform import Platformer, Actor, Object, Platform
 RESOLUTION_X: int = 320
 RESOLUTION_Y: int = 240
 WORLD_SCALE: int = RESOLUTION_X // 10
+OBJECT_SCALE: int = WORLD_SCALE // 2
 
-# row offsets within tileset
+# tiles row offsets
 PLATFORM_ROW: int = 0
 TEXTURE_ROW: int = 2
 
@@ -27,6 +28,7 @@ class Tiling(object):
         self.font = pygame.font.SysFont(pygame.font.get_default_font(), 18)
         self.background = pygame.image.load('data/background.png')
         self.tiles = pygame.image.load('data/tiles.png')
+        self.objects = pygame.image.load('data/objects.png')
 
     def draw_actor(self, actor: Actor) -> None:
         # FIXME: replace debug rendering
@@ -36,9 +38,19 @@ class Tiling(object):
 
     def draw_object(self, obj: Object) -> None:
         # FIXME: replace debug rendering
+        """"
         pos = (obj.pos_x * WORLD_SCALE,
                self.surface.get_height() - obj.pos_y * WORLD_SCALE)
         pygame.draw.circle(self.surface, 'gold', pos, 0.25 * WORLD_SCALE)
+        """
+        x = obj.pos_x * WORLD_SCALE
+        y = self.surface.get_height() - obj.pos_y * WORLD_SCALE
+
+        variation_col = 0
+        self.surface.blit(self.objects,
+                          (x, y),
+                          (variation_col * OBJECT_SCALE, obj.object_type * OBJECT_SCALE,
+                           OBJECT_SCALE, OBJECT_SCALE))
 
     def draw_platform(self, platform: Platform, tileset_col: int) -> None:
         x = platform.x * WORLD_SCALE

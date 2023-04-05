@@ -5,6 +5,13 @@ from platform import Platformer, Actor, Object, Platform
 from tile import Tiling, RESOLUTION_X, RESOLUTION_Y, WORLD_SCALE
 
 
+# objects row offsets
+FOOD_OBJ: int = 0
+DANGER_OBJ: int = 1
+BONUS_OBJ: int = 2
+WEAPON_OBJ: int = 3
+
+
 def on_landed(actor: Actor, platform: Platform) -> None:
     # print(f'landing of\n\t{actor}\n\ton {platform}')
     pass
@@ -24,26 +31,29 @@ score = 0
 plat = None
 
 
+def create_food() -> None:
+    global score
+
+    # pick random position on random platform
+    p = random.choice(plat.platforms)
+    x = random.randrange(p.width)
+
+    plat.objects.append(Object(p.x + x, p.y + 0.5, random.randrange(4)))
+
+
 def on_reach(actor: Actor, other: Object) -> None:
     global score
     global plat
     score += 1
     plat.objects.remove(other)
 
-    plat.objects.append(Object(random.randrange(RESOLUTION_X // WORLD_SCALE),
-                               random.randrange(RESOLUTION_Y // WORLD_SCALE // 2) + RESOLUTION_Y // WORLD_SCALE // 2,
-                                0))
+    create_food()
+
 
 
 def populate_demo_scene(plat: Platformer) -> None:
     plat.actors.append(Actor(1.5, 3.5))
     plat.actors.append(Actor(7.5, 4.5))
-
-    for i in range(10):
-        plat.objects.append(Object(random.randrange(RESOLUTION_X // WORLD_SCALE) + 0.5,
-                                   random.randrange(
-                                       RESOLUTION_Y // WORLD_SCALE // 2) + RESOLUTION_Y // WORLD_SCALE // 2 + 0.5,
-                                   0))
 
     # horizontal platforms
     plat.platforms.append(Platform(0, 1.0, 3, 2))
@@ -56,6 +66,9 @@ def populate_demo_scene(plat: Platformer) -> None:
 
     # NOTE: h=0 necessary to avoid collisions when jumping "into" the platform
     plat.platforms.append(Platform(1.0, 5.5, RESOLUTION_X // WORLD_SCALE - 2.0, 0.0))
+
+    for i in range(10):
+        create_food()
 
 
 def main():
@@ -70,7 +83,7 @@ def main():
     native_height //= RESOLUTION_Y
     ui_scale_factor = max(1, min(native_width, native_height))
     # override it for debugging purpose
-    ui_scale_factor = 2
+    #ui_scale_factor = 2
 
     # calculate window resolution and initialize screen
     window_width = RESOLUTION_X * ui_scale_factor
