@@ -3,6 +3,9 @@ import random
 
 import platforms
 import tiles
+import animations
+import factory
+from constants import *
 
 
 # objects row offsets
@@ -10,6 +13,7 @@ FOOD_OBJ: int = 0
 DANGER_OBJ: int = 1
 BONUS_OBJ: int = 2
 WEAPON_OBJ: int = 3
+
 
 
 def on_landed(actor: platforms.Actor, platform: platforms.Platform) -> None:
@@ -28,43 +32,44 @@ def on_touch(actor: platforms.Actor, other: platforms.Actor) -> None:
 
 
 score: int = 0
-plat: platforms.Physics = None
+obj_man: factory.ObjectManager = None
 
 
 def create_food() -> None:
     global score
+    global obj_man
 
     # pick random position on random platform
-    p = random.choice(plat.platforms)
+    p = random.choice(obj_man.physics.platforms)
     x = random.randrange(p.width)
 
-    plat.objects.append(platforms.Object(p.x + x, p.y + 0.5, DANGER_OBJ))
+    obj_man.create_object(pos_x=p.x + x, pos_y=p.y + 0.5, object_type=DANGER_OBJ)
 
 
 def on_reach(actor: platforms.Actor, other: platforms.Object) -> None:
     global score
-    global plat
+    global obj_man
     score += 1
-    plat.objects.remove(other)
+    obj_man.destroy_object(other)
 
     create_food()
 
 
-def populate_demo_scene(platformer: platforms.Physics) -> None:
-    platformer.actors.append(platforms.Actor(1.5, 3.5))
-    platformer.actors.append(platforms.Actor(7.5, 4.5))
+def populate_demo_scene(obj_manager: factory.ObjectManager) -> None:
+    obj_manager.create_actor(pos_x=1.5, pos_y=3.5)
+    obj_manager.create_actor(pos_x=7.5, pos_y=4.5)
 
     # horizontal platforms
-    platformer.platforms.append(platforms.Platform(0, 1.0, 3, 2))
-    platformer.platforms.append(platforms.Platform(3, 2.0, 1, 2))
-    platformer.platforms.append(platforms.Platform(3, 2.0, 1, 2))
-    platformer.platforms.append(platforms.Platform(4, 3.0, 1, 3))
-    platformer.platforms.append(platforms.Platform(6, 3.0, 4, 3))
-    platformer.platforms.append(platforms.Platform(7, 4.0, 1, 3))
-    platformer.platforms.append(platforms.Platform(7, 3.0, 2, 0))
+    obj_manager.create_platform(x=0, y=1.0, width=3, height=2)
+    obj_manager.create_platform(x=3, y=2.0, width=1, height=2)
+    obj_manager.create_platform(x=3, y=2.0, width=1, height=2)
+    obj_manager.create_platform(x=4, y=3.0, width=1, height=3)
+    obj_manager.create_platform(x=6, y=3.0, width=4, height=3)
+    obj_manager.create_platform(x=7, y=4.0, width=1, height=3)
+    obj_manager.create_platform(x=7, y=3.0, width=2, height=0)
 
     # NOTE: h=0 necessary to avoid collisions when jumping "into" the platform
-    platformer.platforms.append(platforms.Platform(1.0, 5.5, tiles.RESOLUTION_X // tiles.WORLD_SCALE - 2.0, 0.0))
+    obj_manager.create_platform(x=1.0, y=5.5, width=RESOLUTION_X // WORLD_SCALE - 2, height=0)
 
     for i in range(10):
         create_food()
@@ -72,30 +77,32 @@ def populate_demo_scene(platformer: platforms.Physics) -> None:
 
 def main():
     global score
-    global plat
+    global obj_man
 
     pygame.init()
 
     # get native resolution and factor for scaling
     native_width, native_height = pygame.display.get_desktop_sizes()[0]
-    native_width //= tiles.RESOLUTION_X
-    native_height //= tiles.RESOLUTION_Y
+    native_width //= RESOLUTION_X
+    native_height //= RESOLUTION_Y
     ui_scale_factor = max(1, min(native_width, native_height))
     # override it for debugging purpose
     ui_scale_factor //= 2
 
     # calculate window resolution and initialize screen
-    window_width = tiles.RESOLUTION_X * ui_scale_factor
-    window_height = tiles.RESOLUTION_Y * ui_scale_factor
+    window_width = RESOLUTION_X * ui_scale_factor
+    window_height = RESOLUTION_Y * ui_scale_factor
     print(f'Resolution: {window_width}x{window_height}; Resize: {ui_scale_factor}')
     screen = pygame.display.set_mode((window_width, window_height))
-    buffer = pygame.Surface((tiles.RESOLUTION_X, tiles.RESOLUTION_Y))
+    buffer = pygame.Surface((RESOLUTION_X, RESOLUTION_Y))
     clock = pygame.time.Clock()
 
     plat = platforms.Physics(on_landed, on_collision, on_touch, on_reach)
-    populate_demo_scene(plat)
-
+    anis = animations.Animation()
     render = tiles.Renderer(buffer, clock, False)
+
+    obj_man = factory.ObjectManager(plat, anis, render)
+    populate_demo_scene(obj_man)
 
     running = True
     elapsed = 0
@@ -133,15 +140,15 @@ def main():
         plat.update(elapsed)
 
         # limit pos to screen
-        plat.actors[0].pos_x = max(0, min(plat.actors[0].pos_x, tiles.RESOLUTION_X // tiles.WORLD_SCALE))
+        plat.actors[0].pos_x = max(0, min(plat.actors[0].pos_x, RESOLUTION_X // WORLD_SCALE))
         if plat.actors[0].pos_y < 0:
             score -= 3
             if score < 0:
                 score = 0
-            plat.actors[0].pos_y += tiles.RESOLUTION_Y // tiles.WORLD_SCALE
-        plat.actors[1].pos_x = max(0, min(plat.actors[1].pos_x, tiles.RESOLUTION_X // tiles.WORLD_SCALE))
+            plat.actors[0].pos_y += RESOLUTION_Y // WORLD_SCALE
+        plat.actors[1].pos_x = max(0, min(plat.actors[1].pos_x, RESOLUTION_X // WORLD_SCALE))
         if plat.actors[1].pos_y < 0:
-            plat.actors[1].pos_y += tiles.RESOLUTION_Y // tiles.WORLD_SCALE
+            plat.actors[1].pos_y += RESOLUTION_Y // WORLD_SCALE
 
         buffer.fill('black')
         render.draw(plat, 0)

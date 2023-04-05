@@ -1,8 +1,7 @@
 import pygame
-
 from dataclasses import dataclass
 
-from tiles import WORLD_SCALE
+from constants import WORLD_SCALE
 
 
 ANIMATION_FRAME_DURATION: int = 150

@@ -1,11 +1,8 @@
 import pygame
 
 import platforms
+from constants import *
 
-RESOLUTION_X: int = 320
-RESOLUTION_Y: int = 240
-WORLD_SCALE: int = RESOLUTION_X // 10
-OBJECT_SCALE: int = WORLD_SCALE // 2
 
 # tiles row offsets
 PLATFORM_ROW: int = 0

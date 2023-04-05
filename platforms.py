@@ -1,5 +1,4 @@
 import pygame
-
 from dataclasses import dataclass
 from typing import Tuple, Optional
 
@@ -44,8 +43,8 @@ class Platform:
     x: float
     y: float
     # size
-    width: float
-    height: float
+    width: int
+    height: int
 
 
 def test_line_intersection(x1: float, y1: float, x2: float, y2: float, x3: float, y3: float,
