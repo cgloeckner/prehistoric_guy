@@ -27,7 +27,7 @@ class Actor:
     jump_ms: int = 0
     max_jump_y: float = 0.0
     # collision data
-    radius: float = 0.25
+    radius: float = 0.5
     # prevents another collision/touch event for a couple of ms
     collision_repeat_cooldown: int = 0
     touch_repeat_cooldown: int = 0

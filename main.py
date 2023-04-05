@@ -109,7 +109,7 @@ def main():
 
     phys = platforms.Physics(on_landed, on_collision, on_touch, on_reach)
     anis = animations.Animating()
-    render = tiles.Renderer(buffer, clock, False)
+    render = tiles.Renderer(buffer, clock, True)
 
     obj_man = factory.ObjectManager(phys, anis, render)
     populate_demo_scene(obj_man, guy)
@@ -165,7 +165,7 @@ def main():
                 if keys[pygame.K_RIGHT]:
                     delta_x += 1.0
 
-                if render.sprites[1].animation.action_id  in [animations.IDLE_ACTION, animations.MOVE_ACTION]:
+                if render.sprites[1].animation.action_id in [animations.IDLE_ACTION, animations.MOVE_ACTION]:
                     if delta_x != 0.0:
                         animations.start(render.sprites[1].animation, animations.MOVE_ACTION)
                     else:

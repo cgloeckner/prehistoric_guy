@@ -1,4 +1,5 @@
 import pygame
+import pygame.gfxdraw
 from dataclasses import dataclass
 
 import platforms
@@ -42,23 +43,27 @@ class Renderer(object):
         y = self.surface.get_height() - obj.pos_y * WORLD_SCALE
 
         if self.debug_render:
-            pygame.draw.circle(self.surface, 'gold', (x, y), 0.25 * WORLD_SCALE)
+            # draw hit box
+            pygame.gfxdraw.circle(self.surface, int(x + WORLD_SCALE // 4), int(y + WORLD_SCALE // 4),
+                                  int(0.25 * WORLD_SCALE), pygame.Color('gold'))
 
         variation_col = 0
         clip = (variation_col * OBJECT_SCALE, obj.object_type * OBJECT_SCALE, OBJECT_SCALE, OBJECT_SCALE)
         self.surface.blit(self.objects, (x, y), clip)
 
     def draw_actor(self, sprite: Sprite) -> None:
+        """Draw an actor's sprite.
+        Note that all sprite sheet pixels are doubled.
+        """
         x = sprite.actor.pos_x * WORLD_SCALE
         y = self.surface.get_height() - sprite.actor.pos_y * WORLD_SCALE
 
-        # FIXME: add regular rendering
         if self.debug_render:
-            pygame.draw.circle(self.surface, 'blue',
-                               (x, y - sprite.actor.radius * WORLD_SCALE),
-                               sprite.actor.radius * WORLD_SCALE)
+            # draw hit box
+            pygame.gfxdraw.circle(self.surface, int(x), int(y - sprite.actor.radius * WORLD_SCALE),
+                                  int(sprite.actor.radius * WORLD_SCALE), pygame.Color('red'))
 
-        x -= WORLD_SCALE#  // 2
+        x -= WORLD_SCALE
         y -= WORLD_SCALE * 2
         clip = animations.get_frame_rect(sprite.animation)
         clip.x *= 2
@@ -111,11 +116,10 @@ class Renderer(object):
                            WORLD_SCALE, WORLD_SCALE * 2))
 
         if self.debug_render:
+            # draw hit box
             x2 = (platform.x + platform.width) * WORLD_SCALE
             y2 = self.surface.get_height() - (platform.y - platform.height) * WORLD_SCALE
-            pygame.draw.line(self.surface, 'red', (x, y), (x2, y), 4)
-            pygame.draw.line(self.surface, 'red', (x, y), (x, y2), 4)
-            pygame.draw.line(self.surface, 'red', (x2, y), (x2, y2), 4)
+            pygame.draw.lines(self.surface, 'red', False, ((x, y2), (x, y), (x2, y), (x2, y2)))
 
     def draw(self, platformer: platforms.Physics, bg_col: int) -> None:
         # background
