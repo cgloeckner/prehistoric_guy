@@ -38,7 +38,7 @@ def create_food() -> None:
     p = random.choice(plat.platforms)
     x = random.randrange(p.width)
 
-    plat.objects.append(Object(p.x + x, p.y + 0.5, random.randrange(4)))
+    plat.objects.append(Object(p.x + x, p.y + 0.5, DANGER_OBJ))
 
 
 def on_reach(actor: Actor, other: Object) -> None:

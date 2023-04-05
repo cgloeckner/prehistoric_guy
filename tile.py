@@ -12,6 +12,7 @@ OBJECT_SCALE: int = WORLD_SCALE // 2
 # tiles row offsets
 PLATFORM_ROW: int = 0
 TEXTURE_ROW: int = 2
+STAIRS_ROW: int = 3
 
 
 class Tiling(object):
