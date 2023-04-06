@@ -1,7 +1,7 @@
 import pygame
 import math
 from dataclasses import dataclass
-from typing import Tuple, Optional
+from typing import Tuple, Optional, List
 from abc import abstractmethod
 
 
@@ -36,10 +36,6 @@ class Platform:
     amplitude: float = 1.0
     hover_index: int = 0
 
-    # FIXME: niy
-    move_x: float = 0.0
-    move_y: float = 0.0
-
 
 @dataclass
 class Actor:
@@ -55,7 +51,7 @@ class Actor:
     fall_from_y: Optional[float] = None
     # collision data
     radius: float = 0.5
-    stands_on: Optional[Platform] = None
+    anchor: Optional[Platform] = None
     # prevents another collision/touch event for a couple of ms
     collision_repeat_cooldown: int = 0
     touch_repeat_cooldown: int = 0
@@ -124,6 +120,15 @@ def get_falling_distance(elapsed_ms: int, delta_ms: int) -> float:
     return new_h - old_h
 
 
+def does_stand_on(actor: Actor, platform: Platform) -> bool:
+    """Tests if the actor stands on the given platform or not.
+    """
+    if platform.y != actor.pos_y:
+        return False
+
+    return platform.x <= actor.pos_x <= platform.x + platform.width
+
+
 class PhysicsListener(object):
 
     @abstractmethod
@@ -142,6 +147,13 @@ class PhysicsListener(object):
     def on_colliding(self, actor: Actor, platform: Platform) -> None:
         """Triggered when the actor runs into a platform.
         """
+        pass
+
+    @abstractmethod
+    def on_switching(self, actor: Actor, platform: Platform) -> None:
+        """Triggered when the actor switches to the given platform as an anchor.
+        """
+        pass
 
     @abstractmethod
     def on_touching(self, actor: Actor, other: Actor) -> None:
@@ -167,6 +179,26 @@ class Physics(object):
 
         self.event_listener = event_listener
 
+    def get_supporting_platforms(self, actor: Actor) -> List[Platform]:
+        """Returns a list of all platforms that will support the actor's position.
+        """
+        return [platform for platform in self.platforms if does_stand_on(actor, platform)]
+
+    def anchor_actor(self, actor: Actor) -> None:
+        """Tries to (re-)anchor the actor on a supporting platform.
+        """
+        relevant = self.get_supporting_platforms(actor)
+        if len(relevant) == 0:
+            actor.anchor = None
+            return
+
+        # pick any platform
+        if actor.anchor == relevant[0]:
+            return
+
+        self.event_listener.on_switching(actor, relevant[0])
+        actor.anchor = relevant[0]
+
     def is_falling(self, actor: Actor) -> bool:
         """The actor is falling if he does not stand on any platform.
         If the actor is jumping (force_y > 0) or already falling (force_y < 0), he is not falling.
@@ -175,13 +207,7 @@ class Physics(object):
         if actor.force_y != 0:
             return False
 
-        for platform in self.platforms:
-            right = platform.x + platform.width
-            if actor.pos_y - platform.y == 0.0 and platform.x <= actor.pos_x <= right:
-                # actor stands on platform
-                return False
-
-        return True
+        return len(self.get_supporting_platforms(actor)) == 0
 
     def check_falling_collision(self, actor: Actor, last_pos: pygame.math.Vector2) -> Optional[Platform]:
         """The actor has fallen from his last_pos and may have collided with the top of a platform. If such a platform
@@ -263,7 +289,7 @@ class Physics(object):
         actor.jump_ms = 0
 
         # trigger event
-        actor.stands_on = platform
+        actor.anchor = platform
         self.event_listener.on_landing(actor, platform)
         actor.fall_from_y = None
 
@@ -274,6 +300,9 @@ class Physics(object):
         """This handles the actor's horizontal movement. Collision is detected and handled. More collision handling
         can be achieved via on_collision. Multiple calls are delayed with COLLISION_REPEAT_DELAY
         """
+        if actor.anchor is not None and actor.anchor.float_type == MOVE_X_PLATFORM:
+            self.anchor_actor(actor)
+
         # look into current x-direction
         if actor.force_x != 0.0:
             actor.face_x = actor.force_x
@@ -293,10 +322,7 @@ class Physics(object):
 
         # reset position
         actor.pos_x, actor.pos_y = last_pos
-
-        if actor.stands_on is not None:
-            # FIXME: find all platforms on which the actor could stand right now
-            pass
+        self.anchor_actor(actor)
 
         # trigger event
         actor.touch_repeat_cooldown -= elapsed_ms
@@ -361,7 +387,7 @@ class Physics(object):
 
         # update actors who stand on it
         for actor in self.actors:
-            if actor.stands_on == platform:
+            if actor.anchor == platform:
                 if platform.float_type == MOVE_X_PLATFORM:
                     actor.pos_x += delta
                 if platform.float_type == MOVE_Y_PLATFORM:

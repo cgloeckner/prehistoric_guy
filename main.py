@@ -80,6 +80,11 @@ class Game(platforms.PhysicsListener, animations.AnimationListener):
         """
         print('buff!')
 
+    def on_switching(self, actor: platforms.Actor, platform: platforms.Platform) -> None:
+        """Triggered when the actor switches to the given platform as an anchor.
+        """
+        print('wuuuhuu')
+
     def on_touching(self, actor: platforms.Actor, other: platforms.Actor) -> None:
         """Triggered when the actor touches another actor.
         """

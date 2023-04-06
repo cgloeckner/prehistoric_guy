@@ -73,15 +73,15 @@ class Animating(object):
     """
     def __init__(self, animation_listener: AnimationListener):
         self.animations = list()
-        self.animation_listener = animation_listener
+        self.event_listener = animation_listener
 
     def notify_animation(self, ani: Animation) -> None:
         """Notify about a finished animation.
         """
         if ani.action_id == MOVE_ACTION:
-            self.animation_listener.on_step(ani)
+            self.event_listener.on_step(ani)
         elif ani.action_id == ATTACK_ACTION:
-            self.animation_listener.on_attack(ani)
+            self.event_listener.on_attack(ani)
 
     def update(self, elapsed_ms: int) -> None:
         """Updates all animations' frame durations. It automatically switches frames and loops/returns/freezes the
