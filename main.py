@@ -1,13 +1,15 @@
 import pygame
 import random
 import math
+import imgui
 from typing import Optional, List
 
+from constants import *
 import platforms
 import tiles
 import animations
 import factory
-from constants import *
+from imgui_wrapper import OpenGlWrapper
 
 
 # objects row offsets
@@ -148,7 +150,12 @@ class Game(platforms.PhysicsListener, animations.AnimationListener):
         print('swing!')
 
 
+selected = None
+
+
 def main():
+    global selected
+
     pygame.init()
 
     # get native resolution and factor for scaling
@@ -163,8 +170,9 @@ def main():
     window_width = RESOLUTION_X * ui_scale_factor
     window_height = RESOLUTION_Y * ui_scale_factor
     print(f'Resolution: {window_width}x{window_height}; Resize: {ui_scale_factor}')
-    screen = pygame.display.set_mode((window_width, window_height))
+    screen = pygame.display.set_mode((window_width, window_height), OpenGlWrapper.get_display_flags())
     buffer = pygame.Surface((RESOLUTION_X, RESOLUTION_Y))
+    wrapper = OpenGlWrapper(screen)
     clock = pygame.time.Clock()
 
     guy = animations.flip_sprite_sheet(pygame.image.load('data/guy.png'), SPRITE_SCALE)
@@ -178,6 +186,42 @@ def main():
     game.obj_manager = factory.ObjectManager(phys, anis, render)
     game.populate_demo_scene(guy)
 
+    def demo_ui():
+        global selected
+
+        imgui.new_frame()
+
+        if selected is None:
+            return
+
+        imgui.begin(type(selected).__name__, False)
+
+        if isinstance(selected, platforms.Platform):
+            _, selected.x = imgui.input_float('x', selected.x, step=0.1)
+            _, selected.y = imgui.input_float('y', selected.y, step=0.1)
+            _, selected.width = imgui.input_float('width', selected.width, step=0.1)
+            _, selected.height = imgui.input_float('height', selected.height, step=0.1)
+            clicked, current = imgui.combo('float_x', 0, ['None', 'sin', '-sin', 'cos', '-cos'])
+            if clicked:
+                if current == 'None': selected.float_x = None
+                if current == 'sin': selected.float_x = math.sin
+                if current == '-sin': selected.float_x = lambda v: -math.sin(v)
+                if current == 'cos': selected.float_x = math.cos
+                if current == '-cos': selected.float_x = lambda v: -math.cos(v)
+            clicked, current = imgui.combo('float_y', 0, ['None', 'sin', '-sin', 'cos', '-cos'])
+            if clicked:
+                if current == 'None': selected.float_y = None
+                if current == 'sin': selected.float_y = math.sin
+                if current == '-sin': selected.float_y = lambda v: -math.sin(v)
+                if current == 'cos': selected.float_y = math.cos
+                if current == '-cos': selected.float_y = lambda v: -math.cos(v)
+            if imgui.button("Close"):
+                selected = None
+        else:
+            imgui.text('Not Implemented Yet')
+
+        imgui.end()
+
     running = True
     elapsed = 0
     while running:
@@ -188,6 +232,12 @@ def main():
                     pygame.key.get_mods() & pygame.KMOD_ALT:
                 # FIXME: pygame.display.toggle_fullscreen() does not work correctly when leaving fullscreen
                 pass
+
+            wrapper.process_event(event)
+
+        if pygame.mouse.get_pressed()[0]:
+            if len(render.hover) > 0 and selected is None:
+                selected = render.hover[0]
 
         render.hover = game.get_hovered(screen)
 
@@ -259,9 +309,13 @@ def main():
         # phys.draw(buffer)
 
         score_surface = render.font.render(f'SCORE: {game.score}', False, 'black')
-        buffer.blit(score_surface, (0, 0))
+        wrapper.buffer.blit(score_surface, (0, 0))
 
-        screen.blit(pygame.transform.scale_by(buffer, ui_scale_factor), (0, 0))
+        demo_ui()
+
+        wrapper.buffer.blit(pygame.transform.scale_by(buffer, ui_scale_factor), (0, 0))
+        wrapper.render()
+
         pygame.display.flip()
 
         pygame.display.set_caption('Prehistoric Guy')

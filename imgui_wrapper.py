@@ -174,7 +174,7 @@ class OpenGlWrapper(object):
         """Initialize OpenGL and ImGui.
         """
         self.screen = main_screen
-        self.size = screen.get_size()
+        self.size = main_screen.get_size()
         self.buffer = pygame.Surface(self.size)
 
         # Setup OpenGL Texture
@@ -250,27 +250,16 @@ class OpenGlWrapper(object):
 
 
 if __name__ == "__main__":
+    float_val = 0.4
+
     def demo_ui():
+        global float_val
+
         imgui.new_frame()
 
-        if imgui.begin_main_menu_bar():
-            if imgui.begin_menu("File", True):
-
-                clicked_quit, selected_quit = imgui.menu_item(
-                    "Quit", 'Cmd+Q', False, True
-                )
-
-                if clicked_quit:
-                    exit(1)
-
-                imgui.end_menu()
-            imgui.end_main_menu_bar()
-
-        imgui.show_test_window()
-
-        imgui.begin("Custom window", True)
-        imgui.text("Bar")
-        imgui.text_colored("Eggs", 0.2, 1., 0.)
+        imgui.begin("Custom window")
+        _, float_val = imgui.input_float('value', float_val, 0.1)
+        imgui.text(f'Value: {float_val}')
         imgui.end()
 
     pygame.init()
