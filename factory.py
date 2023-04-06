@@ -48,14 +48,13 @@ class ObjectManager(object):
         Returns a sprite which links to the actor and its animations.
         """
         if sprite_sheet not in self.flipped_cache:
-            self.flipped_cache[sprite_sheet] = animations.flip_sprite_sheet(sprite_sheet, tiles.WORLD_SCALE)
+            self.flipped_cache[sprite_sheet] = animations.flip_sprite_sheet(sprite_sheet, tiles.SPRITE_SCALE)
         flipped_sheet = self.flipped_cache[sprite_sheet]
 
         actor = platforms.Actor(**kwargs)
         animation = animations.Animation()
-        # FIXME: bad position to upscale
-        sprite = tiles.Sprite(sprite_sheet=pygame.transform.scale2x(sprite_sheet),
-                              flipped_sheet=pygame.transform.scale2x(flipped_sheet), actor=actor, animation=animation)
+
+        sprite = tiles.Sprite(sprite_sheet=sprite_sheet, flipped_sheet=flipped_sheet, actor=actor, animation=animation)
         self.physics.actors.append(actor)
         self.animation.animations.append(animation)
         self.renderer.sprites.append(sprite)

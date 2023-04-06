@@ -1,7 +1,7 @@
 import pygame
 from dataclasses import dataclass
 
-from constants import WORLD_SCALE
+from constants import SPRITE_SCALE
 
 
 ANIMATION_FRAME_DURATION: int = 100
@@ -84,21 +84,21 @@ def main():
 
     # get native resolution and factor for scaling
     native_width, native_height = pygame.display.get_desktop_sizes()[0]
-    native_width //= WORLD_SCALE
-    native_height //= WORLD_SCALE
+    native_width //= SPRITE_SCALE
+    native_height //= SPRITE_SCALE
     ui_scale_factor = max(1, min(native_width, native_height))
     ui_scale_factor //= 4
 
     # calculate window resolution and initialize screen
-    window_width = WORLD_SCALE * ui_scale_factor
-    window_height = WORLD_SCALE * ui_scale_factor
+    window_width = SPRITE_SCALE * ui_scale_factor
+    window_height = SPRITE_SCALE * ui_scale_factor
     print(f'Resolution: {window_width}x{window_height}; Resize: {ui_scale_factor}')
     screen = pygame.display.set_mode((window_width, window_height))
-    buffer = pygame.Surface((WORLD_SCALE, WORLD_SCALE))
+    buffer = pygame.Surface((SPRITE_SCALE, SPRITE_SCALE))
     clock = pygame.time.Clock()
 
     guy = pygame.image.load('data/guy.png')
-    guy2 = flip_sprite_sheet(guy, WORLD_SCALE)
+    guy2 = flip_sprite_sheet(guy, SPRITE_SCALE)
     sprite_sheet = guy
 
     ani = Animating()
@@ -126,15 +126,16 @@ def main():
         if keys[pygame.K_4]:
             start(ani.animations[0], JUMP_ACTION)
         if keys[pygame.K_5]:
+            start(ani.animations[0], LANDING_ACTION)
+        if keys[pygame.K_6]:
             start(ani.animations[0], DIE_ACTION)
 
         ani.update(elapsed)
 
         buffer.fill('lightblue')
-        rect = pygame.Rect(ani.animations[0].frame_id * WORLD_SCALE, ani.animations[0].action_id * WORLD_SCALE,
-                           WORLD_SCALE, WORLD_SCALE)
+        rect = pygame.Rect(ani.animations[0].frame_id * SPRITE_SCALE, ani.animations[0].action_id * SPRITE_SCALE,
+                           SPRITE_SCALE, SPRITE_SCALE)
         buffer.blit(sprite_sheet, (0, 0), rect)
-
         screen.blit(pygame.transform.scale_by(buffer, ui_scale_factor), (0, 0))
         pygame.display.flip()
 
