@@ -36,8 +36,10 @@ class Game(platforms.PhysicsListener, animations.AnimationListener):
 
         # horizontal platforms
         self.obj_manager.create_platform(x=0, y=1, width=3, height=2)
-        self.obj_manager.create_platform(x=3, y=1, width=1, height=4)
-        self.obj_manager.create_platform(x=3, y=1, width=1, height=0,
+        self.obj_manager.create_platform(x=-0.5, y=3.5, width=1, height=4)
+        self.obj_manager.create_platform(x=0, y=3, width=1, height=4)
+        self.obj_manager.create_platform(x=0.5, y=2, width=1, height=4)
+        self.obj_manager.create_platform(x=3, y=2, width=1, height=0,
                                          float_x=lambda x: -math.cos(x/2),
                                          float_y=lambda y: 2*math.sin(y)) # FIXME: actor is moved through walls :o
         self.obj_manager.create_platform(x=4, y=3, width=1, height=3)

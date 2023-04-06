@@ -384,9 +384,27 @@ class Physics(object):
 
         # update actors who stand on it
         for actor in self.actors:
-            if actor.anchor == platform:
-                actor.pos_x += delta_x
-                actor.pos_y += delta_y
+            if actor.anchor != platform:
+                continue
+
+            # apply
+            last_pos = pygame.math.Vector2(actor.pos_x, actor.pos_y)
+            actor.pos_x += delta_x
+            actor.pos_y += delta_y
+
+            # check for collision against all platforms and pick the closest collision point
+            platform = self.check_movement_collision(actor, last_pos)
+            if platform is None:
+                continue
+
+            # reset position
+            actor.pos_x, actor.pos_y = last_pos
+
+            # trigger event
+            actor.touch_repeat_cooldown -= elapsed_ms
+            if actor.touch_repeat_cooldown <= 0:
+                actor.touch_repeat_cooldown = COLLISION_REPEAT_DELAY
+                self.event_listener.on_colliding(actor, platform)
 
     def update(self, elapsed_ms: int) -> None:
         """Update all actors' physics (jumping and falling) within the past view elapsed_ms.
