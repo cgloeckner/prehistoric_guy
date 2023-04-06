@@ -1,5 +1,6 @@
 import pygame
 import random
+from typing import Optional
 
 import platforms
 import tiles
@@ -15,80 +16,82 @@ BONUS_OBJ: int = 2
 WEAPON_OBJ: int = 3
 
 
-score: int = 0
-obj_man: factory.ObjectManager = None
+class Game(platforms.PhysicsListener):
 
+    def __init__(self):
+        self.score = 0
+        self.obj_manager: Optional[factory.ObjectManager] = None
 
-def on_landed(actor: platforms.Actor, platform: platforms.Platform) -> None:
-    global obj_man
+    def create_food(self) -> None:
+        # pick random position on random platform
+        p = random.choice(self.obj_manager.physics.platforms)
+        x = random.randrange(p.width)
 
-    # search corresponding animation
-    for sprite in obj_man.renderer.sprites:
-        if sprite.actor == actor:
-            action = animations.LANDING_ACTION
-            delta_h = actor.max_jump_y - sprite.actor.pos_y
-            if delta_h > 2.5:
-                action = animations.DIE_ACTION
+        self.obj_manager.create_object(pos_x=p.x + x, pos_y=p.y + 0.5, object_type=DANGER_OBJ)
 
-            animations.start(sprite.animation, action)
+    def on_landing(self, actor: platforms.Actor, platform: platforms.Platform) -> None:
+        """Triggered when the actor landed on a platform.
+        """
+        # search corresponding animation
+        for sprite in self.obj_manager.renderer.sprites:
+            if sprite.actor == actor:
+                action = animations.IDLE_ACTION
+                delta_h = actor.fall_from_y - sprite.actor.pos_y
+                print(delta_h)
 
-            return
+                if delta_h > 2.5:
+                    action = animations.LANDING_ACTION
 
+                if delta_h > 4.0:
+                    action = animations.DIE_ACTION
 
-def on_collision(actor: platforms.Actor, platform: platforms.Platform) -> None:
-    # print(f'collision between\n\t{actor}\n\tand {platform}')
-    pass
+                animations.start(sprite.animation, action)
+                return
 
+    def on_falling(self, actor: platforms.Actor) -> None:
+        """Triggered when the actor starts falling.
+        """
+        pass
 
-def on_touch(actor: platforms.Actor, other: platforms.Actor) -> None:
-    # print(f'touch between\n\t{actor}\n\tand {other}')
-    pass
+    def on_colliding(self, actor: platforms.Actor, platform: platforms.Platform) -> None:
+        """Triggered when the actor runs into a platform.
+        """
+        pass
 
+    def on_touching(self, actor: platforms.Actor, other: platforms.Actor) -> None:
+        """Triggered when the actor touches another actor.
+        """
+        pass
 
-def create_food() -> None:
-    global score
-    global obj_man
+    def on_reaching(self, actor: platforms.Actor, obj: platforms.Object) -> None:
+        """Triggered when the actor reaches an object.
+        """
+        self.score += 1
+        self.obj_manager.destroy_object(obj)
 
-    # pick random position on random platform
-    p = random.choice(obj_man.physics.platforms)
-    x = random.randrange(p.width)
+        self.create_food()
 
-    obj_man.create_object(pos_x=p.x + x, pos_y=p.y + 0.5, object_type=DANGER_OBJ)
+    def populate_demo_scene(self, guy_sheet: pygame.Surface) -> None:
+        self.obj_manager.create_actor(sprite_sheet=guy_sheet, pos_x=1.5, pos_y=3.5)
+        self.obj_manager.create_actor(sprite_sheet=guy_sheet, pos_x=7.5, pos_y=4.5)
 
+        # horizontal platforms
+        self.obj_manager.create_platform(x=0, y=1.0, width=3, height=2)
+        self.obj_manager.create_platform(x=3, y=2.0, width=1, height=2)
+        self.obj_manager.create_platform(x=3, y=2.0, width=1, height=2)
+        self.obj_manager.create_platform(x=4, y=3.0, width=1, height=3)
+        self.obj_manager.create_platform(x=6, y=3.0, width=4, height=3)
+        self.obj_manager.create_platform(x=7, y=4.0, width=1, height=3)
+        self.obj_manager.create_platform(x=7, y=3.0, width=2, height=0)
 
-def on_reach(actor: platforms.Actor, other: platforms.Object) -> None:
-    global score
-    global obj_man
-    score += 1
-    obj_man.destroy_object(other)
+        # NOTE: h=0 necessary to avoid collisions when jumping "into" the platform
+        self.obj_manager.create_platform(x=1.0, y=5, width=RESOLUTION_X // WORLD_SCALE - 2, height=0)
 
-    create_food()
-
-
-def populate_demo_scene(obj_manager: factory.ObjectManager, guy_sheet: pygame.Surface) -> None:
-    obj_manager.create_actor(sprite_sheet=guy_sheet, pos_x=1.5, pos_y=3.5)
-    obj_manager.create_actor(sprite_sheet=guy_sheet, pos_x=7.5, pos_y=4.5)
-
-    # horizontal platforms
-    obj_manager.create_platform(x=0, y=1.0, width=3, height=2)
-    obj_manager.create_platform(x=3, y=2.0, width=1, height=2)
-    obj_manager.create_platform(x=3, y=2.0, width=1, height=2)
-    obj_manager.create_platform(x=4, y=3.0, width=1, height=3)
-    obj_manager.create_platform(x=6, y=3.0, width=4, height=3)
-    obj_manager.create_platform(x=7, y=4.0, width=1, height=3)
-    obj_manager.create_platform(x=7, y=3.0, width=2, height=0)
-
-    # NOTE: h=0 necessary to avoid collisions when jumping "into" the platform
-    obj_manager.create_platform(x=1.0, y=5, width=RESOLUTION_X // WORLD_SCALE - 2, height=0)
-
-    for i in range(10):
-        create_food()
+        for i in range(10):
+            self.create_food()
 
 
 def main():
-    global score
-    global obj_man
-
     pygame.init()
 
     # get native resolution and factor for scaling
@@ -109,12 +112,14 @@ def main():
 
     guy = pygame.image.load('data/guy.png')
 
-    phys = platforms.Physics(on_landed, on_collision, on_touch, on_reach)
+    game = Game()
+
+    phys = platforms.Physics(game)
     anis = animations.Animating()
     render = tiles.Renderer(buffer, clock, True)
 
-    obj_man = factory.ObjectManager(phys, anis, render)
-    populate_demo_scene(obj_man, guy)
+    game.obj_manager = factory.ObjectManager(phys, anis, render)
+    game.populate_demo_scene(guy)
 
     running = True
     elapsed = 0
@@ -179,9 +184,9 @@ def main():
         # limit pos to screen
         phys.actors[0].pos_x = max(0, min(phys.actors[0].pos_x, RESOLUTION_X // WORLD_SCALE))
         if phys.actors[0].pos_y < 0:
-            score -= 3
-            if score < 0:
-                score = 0
+            game.score -= 3
+            if game.score < 0:
+                game.score = 0
             phys.actors[0].pos_y += RESOLUTION_Y // WORLD_SCALE
 
         phys.actors[1].pos_x = max(0, min(phys.actors[1].pos_x, RESOLUTION_X // WORLD_SCALE))
@@ -193,7 +198,7 @@ def main():
         buffer.fill('black')
         render.draw(phys, 0)
 
-        score_surface = render.font.render(f'SCORE: {score}', False, 'black')
+        score_surface = render.font.render(f'SCORE: {game.score}', False, 'black')
         buffer.blit(score_surface, (0, 0))
 
         screen.blit(pygame.transform.scale_by(buffer, ui_scale_factor), (0, 0))

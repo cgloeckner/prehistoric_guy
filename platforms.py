@@ -1,6 +1,7 @@
 import pygame
 from dataclasses import dataclass
 from typing import Tuple, Optional
+from abc import abstractmethod
 
 
 GRAVITY: float = 9.81
@@ -25,7 +26,7 @@ class Actor:
     force_x: float = 0.0
     force_y: float = 0.0
     jump_ms: int = 0
-    max_jump_y: float = 0.0
+    fall_from_y: Optional[float] = None
     # collision data
     radius: float = 0.5
     # prevents another collision/touch event for a couple of ms
@@ -106,19 +107,48 @@ def get_falling_distance(elapsed_ms: int, delta_ms: int) -> float:
     return new_h - old_h
 
 
+class PhysicsListener(object):
+
+    @abstractmethod
+    def on_falling(self, actor: Actor) -> None:
+        """Triggered when the actor starts falling.
+        """
+        pass
+
+    @abstractmethod
+    def on_landing(self, actor: Actor, platform: Platform) -> None:
+        """Triggered when the actor landed on a platform.
+        """
+        pass
+
+    @abstractmethod
+    def on_colliding(self, actor: Actor, platform: Platform) -> None:
+        """Triggered when the actor runs into a platform.
+        """
+
+    @abstractmethod
+    def on_touching(self, actor: Actor, other: Actor) -> None:
+        """Triggered when the actor touches another actor.
+        """
+        pass
+
+    @abstractmethod
+    def on_reaching(self, actor: Actor, obj: Object) -> None:
+        """Triggered when the actor reaches an object.
+        """
+        pass
+
+
 class Physics(object):
     """Manages physics simulation for the platforming scene.
     It holds actors and platforms, which have to be registered by appending them to the corresponding lists.
     """
-    def __init__(self, on_landed: callable, on_collision: callable, on_touch: callable, on_reach: callable):
+    def __init__(self, event_listener: PhysicsListener):
         self.actors = list()
         self.platforms = list()
         self.objects = list()
 
-        self.on_landed = on_landed
-        self.on_collision = on_collision
-        self.on_touch = on_touch
-        self.on_reach = on_reach
+        self.event_listener = event_listener
 
     def is_falling(self, actor: Actor) -> bool:
         """The actor is falling if he does not stand on any platform.
@@ -184,13 +214,14 @@ class Physics(object):
     def simulate_gravity(self, actor: Actor, elapsed_ms: int) -> None:
         """This simulates the effect of gravity to an actor. This means adjusting the y-position by jumping and falling.
         Collision detection and handling is performed here. Further collision handling can be done using the on_landed
-        callback.
+        callback of the event_listener.
         """
         if self.is_falling(actor):
             # as if at the highest point of a jump
             actor.force_y = -1.0
             actor.jump_ms = JUMP_DURATION
-            actor.max_jump_y = actor.pos_y
+            actor.fall_from_y = actor.pos_y
+            self.event_listener.on_falling(actor)
 
         if actor.force_y == 0:
             return
@@ -198,6 +229,10 @@ class Physics(object):
         # calculate new height
         last_pos = pygame.math.Vector2(actor.pos_x, actor.pos_y)
         delta_height = get_falling_distance(actor.jump_ms, elapsed_ms) * JUMP_SPEED_FACTOR
+
+        if delta_height < 0 and actor.fall_from_y is None:
+            actor.fall_from_y = actor.pos_y
+
         actor.jump_ms += elapsed_ms
         actor.pos_y += delta_height
 
@@ -211,7 +246,8 @@ class Physics(object):
         actor.jump_ms = 0
 
         # trigger event
-        self.on_landed(actor, platform)
+        self.event_listener.on_landing(actor, platform)
+        actor.fall_from_y = None
 
         # reset vertical force
         actor.force_y = 0
@@ -244,7 +280,7 @@ class Physics(object):
         actor.touch_repeat_cooldown -= elapsed_ms
         if actor.touch_repeat_cooldown <= 0:
             actor.touch_repeat_cooldown = COLLISION_REPEAT_DELAY
-            self.on_collision(actor, platform)
+            self.event_listener.on_colliding(actor, platform)
 
         # reset movement force
         actor.force_x = 0
@@ -267,7 +303,7 @@ class Physics(object):
             actor.touch_repeat_cooldown -= elapsed_ms
             if actor.touch_repeat_cooldown <= 0:
                 actor.touch_repeat_cooldown = COLLISION_REPEAT_DELAY
-                self.on_touch(actor, other)
+                self.event_listener.on_touching(actor, other)
 
     def check_object_collision(self, actor: Actor) -> None:
         """This checks for collisions between the actor and other actors in mutual distance. For each such collision,
@@ -284,7 +320,7 @@ class Physics(object):
                 continue
 
             # trigger event
-            self.on_reach(actor, other)
+            self.event_listener.on_reaching(actor, other)
 
     def update(self, elapsed_ms: int) -> None:
         """Update all actors' physics (jumping and falling) within the past view elapsed_ms.

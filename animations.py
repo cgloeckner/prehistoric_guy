@@ -1,8 +1,6 @@
 import pygame
 from dataclasses import dataclass
 
-from constants import SPRITE_SCALE
-
 
 ANIMATION_FRAME_DURATION: int = 100
 ANIMATION_NUM_FRAMES: int = 4
@@ -82,6 +80,8 @@ class Animating(object):
 
 
 def main():
+    from constants import SPRITE_SCALE
+
     pygame.init()
 
     # get native resolution and factor for scaling
