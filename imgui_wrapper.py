@@ -157,9 +157,7 @@ class PygameRenderer(FixedPipelineRenderer):
 
 
 class OpenGlWrapper(object):
-    """
-    Based on: https://stackoverflow.com/questions/61396799/how-can-i-blit-my-pygame-game-onto-an-opengl-surface
-    and https://github.com/pyimgui/pyimgui/blob/master/doc/examples/integrations_pygame.py
+    """This wraps to blit onto a pygame.Surface and rendering ImGui onto an OpenGL screen into a single thing.
 
     Usage:
     (1) Create a pygame display using the flags from `get_display.flags()`
