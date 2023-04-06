@@ -12,6 +12,7 @@ class ObjectManager(object):
     def __init__(self, physics: platforms.Physics, animation: animations.Animating, renderer: tiles.Renderer):
         """Register all known systems that deal with game objects of any kind.
         """
+        self.next_obj_id = 0
         self.physics = physics
         self.animation = animation
         self.renderer = renderer
@@ -51,13 +52,16 @@ class ObjectManager(object):
             self.flipped_cache[sprite_sheet] = animations.flip_sprite_sheet(sprite_sheet, tiles.SPRITE_SCALE)
         flipped_sheet = self.flipped_cache[sprite_sheet]
 
-        actor = platforms.Actor(**kwargs)
-        animation = animations.Animation()
+        actor = platforms.Actor(id=self.next_obj_id, **kwargs)
+        animation = animations.Animation(id=self.next_obj_id)
 
         sprite = tiles.Sprite(sprite_sheet=sprite_sheet, flipped_sheet=flipped_sheet, actor=actor, animation=animation)
         self.physics.actors.append(actor)
         self.animation.animations.append(animation)
         self.renderer.sprites.append(sprite)
+
+        self.next_obj_id += 1
+
         return sprite
 
     def destroy_actor(self, sprite: tiles.Sprite) -> None:

@@ -16,7 +16,7 @@ BONUS_OBJ: int = 2
 WEAPON_OBJ: int = 3
 
 
-class Game(platforms.PhysicsListener):
+class Game(platforms.PhysicsListener, animations.AnimationListener):
 
     def __init__(self):
         self.score = 0
@@ -28,6 +28,27 @@ class Game(platforms.PhysicsListener):
         x = random.randrange(p.width)
 
         self.obj_manager.create_object(pos_x=p.x + x, pos_y=p.y + 0.5, object_type=DANGER_OBJ)
+
+    def populate_demo_scene(self, guy_sheet: pygame.Surface) -> None:
+        self.obj_manager.create_actor(sprite_sheet=guy_sheet, pos_x=1.5, pos_y=3.5)
+        self.obj_manager.create_actor(sprite_sheet=guy_sheet, pos_x=7.5, pos_y=4.5)
+
+        # horizontal platforms
+        self.obj_manager.create_platform(x=0, y=1.0, width=3, height=2)
+        self.obj_manager.create_platform(x=3, y=2.0, width=1, height=2)
+        self.obj_manager.create_platform(x=3, y=2.0, width=1, height=2)
+        self.obj_manager.create_platform(x=4, y=3.0, width=1, height=3)
+        self.obj_manager.create_platform(x=6, y=3.0, width=4, height=3)
+        self.obj_manager.create_platform(x=7, y=4.0, width=1, height=3)
+        self.obj_manager.create_platform(x=7, y=3.0, width=2, height=0)
+
+        # NOTE: h=0 necessary to avoid collisions when jumping "into" the platform
+        self.obj_manager.create_platform(x=1.0, y=5, width=RESOLUTION_X // WORLD_SCALE - 2, height=0)
+
+        for i in range(10):
+            self.create_food()
+
+    # --- Physics Events ----------------------------------------------------------------------------------------------
 
     def on_landing(self, actor: platforms.Actor, platform: platforms.Platform) -> None:
         """Triggered when the actor landed on a platform.
@@ -51,17 +72,17 @@ class Game(platforms.PhysicsListener):
     def on_falling(self, actor: platforms.Actor) -> None:
         """Triggered when the actor starts falling.
         """
-        pass
+        print('oooh!')
 
     def on_colliding(self, actor: platforms.Actor, platform: platforms.Platform) -> None:
         """Triggered when the actor runs into a platform.
         """
-        pass
+        print('buff!')
 
     def on_touching(self, actor: platforms.Actor, other: platforms.Actor) -> None:
         """Triggered when the actor touches another actor.
         """
-        pass
+        print('bing!')
 
     def on_reaching(self, actor: platforms.Actor, obj: platforms.Object) -> None:
         """Triggered when the actor reaches an object.
@@ -71,24 +92,17 @@ class Game(platforms.PhysicsListener):
 
         self.create_food()
 
-    def populate_demo_scene(self, guy_sheet: pygame.Surface) -> None:
-        self.obj_manager.create_actor(sprite_sheet=guy_sheet, pos_x=1.5, pos_y=3.5)
-        self.obj_manager.create_actor(sprite_sheet=guy_sheet, pos_x=7.5, pos_y=4.5)
+    # --- Animation Events -
 
-        # horizontal platforms
-        self.obj_manager.create_platform(x=0, y=1.0, width=3, height=2)
-        self.obj_manager.create_platform(x=3, y=2.0, width=1, height=2)
-        self.obj_manager.create_platform(x=3, y=2.0, width=1, height=2)
-        self.obj_manager.create_platform(x=4, y=3.0, width=1, height=3)
-        self.obj_manager.create_platform(x=6, y=3.0, width=4, height=3)
-        self.obj_manager.create_platform(x=7, y=4.0, width=1, height=3)
-        self.obj_manager.create_platform(x=7, y=3.0, width=2, height=0)
+    def on_step(self, ani: animations.Animation) -> None:
+        """Triggered when a cycle of a move animation finished.
+        """
+        print('step!')
 
-        # NOTE: h=0 necessary to avoid collisions when jumping "into" the platform
-        self.obj_manager.create_platform(x=1.0, y=5, width=RESOLUTION_X // WORLD_SCALE - 2, height=0)
-
-        for i in range(10):
-            self.create_food()
+    def on_attack(self, ani: animations.Animation) -> None:
+        """Triggered when an attack animation finished.
+        """
+        print('swing!')
 
 
 def main():
@@ -115,7 +129,7 @@ def main():
     game = Game()
 
     phys = platforms.Physics(game)
-    anis = animations.Animating()
+    anis = animations.Animating(game)
     render = tiles.Renderer(buffer, clock, True)
 
     game.obj_manager = factory.ObjectManager(phys, anis, render)

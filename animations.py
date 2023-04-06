@@ -1,5 +1,6 @@
 import pygame
 from dataclasses import dataclass
+from abc import abstractmethod
 
 
 ANIMATION_FRAME_DURATION: int = 100
@@ -15,6 +16,7 @@ DIE_ACTION: int = 5
 
 @dataclass
 class Animation:
+    id: int
     # row and column index
     action_id: int = 0
     frame_id: int = 0
@@ -48,11 +50,35 @@ def start(ani: Animation, action_id: int, duration_ms: int = ANIMATION_FRAME_DUR
     ani.frame_duration_ms = duration_ms
 
 
+class AnimationListener(object):
+
+    @abstractmethod
+    def on_step(self, ani: Animation) -> None:
+        """Triggered when a cycle of a move animation finished.
+        """
+        pass
+
+    @abstractmethod
+    def on_attack(self, ani: Animation) -> None:
+        """Triggered when an attack animation finished.
+        """
+        pass
+
+
 class Animating(object):
     """Handles all frame set animations.
     """
-    def __init__(self):
+    def __init__(self, animation_listener: AnimationListener):
         self.animations = list()
+        self.animation_listener = animation_listener
+
+    def notify_animation(self, ani: Animation) -> None:
+        """Notify about a finished animation.
+        """
+        if ani.action_id == MOVE_ACTION:
+            self.animation_listener.on_step(ani)
+        elif ani.action_id == ATTACK_ACTION:
+            self.animation_listener.on_attack(ani)
 
     def update(self, elapsed_ms: int) -> None:
         """Updates all animations' frame durations. It automatically switches frames and loops/returns/freezes the
@@ -67,6 +93,8 @@ class Animating(object):
 
                 # handle animation type (loop, reset, freeze)
                 if ani.frame_id == ANIMATION_NUM_FRAMES:
+                    self.notify_animation(ani)
+
                     if ani.action_id in [IDLE_ACTION, MOVE_ACTION]:
                         # loop
                         ani.frame_id = 0
@@ -81,6 +109,13 @@ class Animating(object):
 
 def main():
     from constants import SPRITE_SCALE
+
+    class DemoListener(AnimationListener):
+        def on_step(self, a: Animation) -> None:
+            print(f'{a} steps')
+
+        def on_attack(self, a: Animation) -> None:
+            print(f'{a} finished attack')
 
     pygame.init()
 
@@ -103,8 +138,9 @@ def main():
     guy2 = flip_sprite_sheet(guy, SPRITE_SCALE)
     sprite_sheet = guy
 
-    ani = Animating()
-    ani.animations.append(Animation())
+    listener = DemoListener()
+    ani = Animating(listener)
+    ani.animations.append(Animation(1))
 
     running = True
     elapsed = 0

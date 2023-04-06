@@ -18,6 +18,7 @@ JUMP_SPEED_FACTOR: float = 0.5
 
 @dataclass
 class Actor:
+    id: int
     # current position
     pos_x: float
     pos_y: float
