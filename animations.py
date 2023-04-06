@@ -20,8 +20,9 @@ class Animation:
     # row and column index
     action_id: int = 0
     frame_id: int = 0
-    # animation timing
-    frame_time_ms: int = 0
+    # animation delay until frame is switched
+    duration_ms: int = ANIMATION_FRAME_DURATION
+    frame_duration_ms: int = ANIMATION_FRAME_DURATION
 
 
 def flip_sprite_sheet(src: pygame.Surface, tile_size: int) -> pygame.Surface:
@@ -37,7 +38,7 @@ def flip_sprite_sheet(src: pygame.Surface, tile_size: int) -> pygame.Surface:
     return dst
 
 
-def start(ani: Animation, action_id: int) -> None:
+def start(ani: Animation, action_id: int, duration_ms: int = ANIMATION_FRAME_DURATION) -> None:
     """Resets the animation with the given action.
     """
     if ani.action_id == action_id:
@@ -45,7 +46,8 @@ def start(ani: Animation, action_id: int) -> None:
 
     ani.action_id = action_id
     ani.frame_id = 0
-    ani.frame_time_ms = 0
+    ani.duration_ms = duration_ms
+    ani.frame_duration_ms = duration_ms
 
 
 class Animating(object):
@@ -60,9 +62,9 @@ class Animating(object):
         """
         for ani in self.animations:
             # continue animation
-            ani.frame_time_ms += elapsed_ms
-            if ani.frame_time_ms >= ANIMATION_FRAME_DURATION:
-                ani.frame_time_ms -= ANIMATION_FRAME_DURATION
+            ani.duration_ms -= elapsed_ms
+            if ani.duration_ms <= 0:
+                ani.duration_ms += ani.frame_duration_ms
                 ani.frame_id += 1
 
                 # handle animation type (loop, reset, freeze)
@@ -118,17 +120,17 @@ def main():
         if keys[pygame.K_d]:
             sprite_sheet = guy
         if keys[pygame.K_1]:
-            start(ani.animations[0], IDLE_ACTION)
+            start(ani.animations[0], IDLE_ACTION, ANIMATION_FRAME_DURATION)
         if keys[pygame.K_2]:
-            start(ani.animations[0], MOVE_ACTION)
+            start(ani.animations[0], MOVE_ACTION, ANIMATION_FRAME_DURATION)
         if keys[pygame.K_3]:
-            start(ani.animations[0], ATTACK_ACTION)
+            start(ani.animations[0], ATTACK_ACTION, ANIMATION_FRAME_DURATION)
         if keys[pygame.K_4]:
-            start(ani.animations[0], JUMP_ACTION)
+            start(ani.animations[0], JUMP_ACTION, ANIMATION_FRAME_DURATION)
         if keys[pygame.K_5]:
-            start(ani.animations[0], LANDING_ACTION)
+            start(ani.animations[0], LANDING_ACTION, ANIMATION_FRAME_DURATION)
         if keys[pygame.K_6]:
-            start(ani.animations[0], DIE_ACTION)
+            start(ani.animations[0], DIE_ACTION, ANIMATION_FRAME_DURATION)
 
         ani.update(elapsed)
 
