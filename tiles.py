@@ -16,7 +16,6 @@ STAIRS_ROW: int = 3
 @dataclass
 class Sprite:
     sprite_sheet: pygame.Surface
-    flipped_sheet: pygame.Surface
     actor: platforms.Actor
     animation: animations.Animation
 
@@ -65,12 +64,11 @@ class Renderer(object):
 
         x -= SPRITE_SCALE // 2
         y -= SPRITE_SCALE
-        clip = pygame.Rect(sprite.animation.frame_id * SPRITE_SCALE, sprite.animation.action_id * SPRITE_SCALE,
+
+        x_offset = (0 if sprite.actor.face_x >= 0.0 else 1) * ANIMATION_NUM_FRAMES * SPRITE_SCALE
+        clip = pygame.Rect(sprite.animation.frame_id * SPRITE_SCALE + x_offset, sprite.animation.action_id * SPRITE_SCALE,
                            SPRITE_SCALE, SPRITE_SCALE)
-        sprite_sheet = sprite.sprite_sheet
-        if sprite.actor.face_x < 0:
-            sprite_sheet = sprite.flipped_sheet
-        self.surface.blit(sprite_sheet, (x, y), clip)
+        self.surface.blit(sprite.sprite_sheet, (x, y), clip)
 
     def draw_platform(self, platform: platforms.Platform, tileset_col: int) -> None:
         x = platform.x * WORLD_SCALE

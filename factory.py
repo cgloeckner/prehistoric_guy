@@ -17,8 +17,6 @@ class ObjectManager(object):
         self.animation = animation
         self.renderer = renderer
 
-        self.flipped_cache = dict()
-
     def create_platform(self, **kwargs) -> platforms.Platform:
         """Create a new platform.
         """
@@ -48,14 +46,10 @@ class ObjectManager(object):
         """Create an actor object such as player or enemy characters.
         Returns a sprite which links to the actor and its animations.
         """
-        if sprite_sheet not in self.flipped_cache:
-            self.flipped_cache[sprite_sheet] = animations.flip_sprite_sheet(sprite_sheet, tiles.SPRITE_SCALE)
-        flipped_sheet = self.flipped_cache[sprite_sheet]
-
         actor = platforms.Actor(id=self.next_obj_id, **kwargs)
         animation = animations.Animation(id=self.next_obj_id)
 
-        sprite = tiles.Sprite(sprite_sheet=sprite_sheet, flipped_sheet=flipped_sheet, actor=actor, animation=animation)
+        sprite = tiles.Sprite(sprite_sheet=sprite_sheet, actor=actor, animation=animation)
         self.physics.actors.append(actor)
         self.animation.animations.append(animation)
         self.renderer.sprites.append(sprite)

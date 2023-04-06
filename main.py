@@ -124,7 +124,7 @@ def main():
     buffer = pygame.Surface((RESOLUTION_X, RESOLUTION_Y))
     clock = pygame.time.Clock()
 
-    guy = pygame.image.load('data/guy.png')
+    guy = animations.flip_sprite_sheet(pygame.image.load('data/guy.png'), SPRITE_SCALE)
 
     game = Game()
 

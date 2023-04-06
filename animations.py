@@ -2,9 +2,10 @@ import pygame
 from dataclasses import dataclass
 from abc import abstractmethod
 
+from constants import ANIMATION_NUM_FRAMES
+
 
 ANIMATION_FRAME_DURATION: int = 100
-ANIMATION_NUM_FRAMES: int = 4
 
 IDLE_ACTION: int = 0
 MOVE_ACTION: int = 1
@@ -27,13 +28,15 @@ class Animation:
 
 def flip_sprite_sheet(src: pygame.Surface, tile_size: int) -> pygame.Surface:
     """Splits all sprite frames but keeps the logical order of the entire sprite sheet.
+    A new sprite sheet is returned which holds all sprites (left: original, right: flipped frames).
     """
     size = src.get_size()
     mirrored = pygame.transform.flip(src, flip_x=True, flip_y=False)
-    dst = pygame.Surface(size, flags=pygame.SRCALPHA)
+    dst = pygame.Surface((size[0] * 2, size[1]), flags=pygame.SRCALPHA)
 
+    dst.blit(src, (0, 0))
     for column in range(src.get_width() // tile_size):
-        dst.blit(mirrored, (column * tile_size, 0), (size[0] - (column + 1) * tile_size, 0, tile_size, size[1]))
+        dst.blit(mirrored, (size[0] + column * tile_size, 0), (size[0] - (column + 1) * tile_size, 0, tile_size, size[1]))
 
     return dst
 
@@ -135,8 +138,8 @@ def main():
     clock = pygame.time.Clock()
 
     guy = pygame.image.load('data/guy.png')
-    guy2 = flip_sprite_sheet(guy, SPRITE_SCALE)
-    sprite_sheet = guy
+    guy = flip_sprite_sheet(guy, SPRITE_SCALE)
+    look_right = True
 
     listener = DemoListener()
     ani = Animating(listener)
@@ -152,9 +155,9 @@ def main():
         keys = pygame.key.get_pressed()
 
         if keys[pygame.K_a]:
-            sprite_sheet = guy2
+            look_right = False
         if keys[pygame.K_d]:
-            sprite_sheet = guy
+            look_right = True
         if keys[pygame.K_1]:
             start(ani.animations[0], IDLE_ACTION, ANIMATION_FRAME_DURATION)
         if keys[pygame.K_2]:
@@ -171,9 +174,10 @@ def main():
         ani.update(elapsed)
 
         buffer.fill('lightblue')
-        rect = pygame.Rect(ani.animations[0].frame_id * SPRITE_SCALE, ani.animations[0].action_id * SPRITE_SCALE,
-                           SPRITE_SCALE, SPRITE_SCALE)
-        buffer.blit(sprite_sheet, (0, 0), rect)
+        x_offset = (0 if look_right else 1) * ANIMATION_NUM_FRAMES * SPRITE_SCALE
+        rect = pygame.Rect(ani.animations[0].frame_id * SPRITE_SCALE + x_offset,
+                           ani.animations[0].action_id * SPRITE_SCALE, SPRITE_SCALE, SPRITE_SCALE)
+        buffer.blit(guy, (0, 0), rect)
         screen.blit(pygame.transform.scale_by(buffer, ui_scale_factor), (0, 0))
         pygame.display.flip()
 
