@@ -48,12 +48,6 @@ def start(ani: Animation, action_id: int) -> None:
     ani.frame_time_ms = 0
 
 
-def get_frame_rect(ani: Animation) -> pygame.Rect:
-    """Returns the clipping rectangle for the animation's current frame.
-    """
-    return pygame.Rect(ani.frame_id * WORLD_SCALE, ani.action_id * WORLD_SCALE, WORLD_SCALE, WORLD_SCALE)
-
-
 class Animating(object):
     """Handles all frame set animations.
     """
@@ -137,7 +131,9 @@ def main():
         ani.update(elapsed)
 
         buffer.fill('lightblue')
-        buffer.blit(sprite_sheet, (0, 0), get_frame_rect(ani.animations[0]))
+        rect = pygame.Rect(ani.animations[0].frame_id * WORLD_SCALE, ani.animations[0].action_id * WORLD_SCALE,
+                           WORLD_SCALE, WORLD_SCALE)
+        buffer.blit(sprite_sheet, (0, 0), rect)
 
         screen.blit(pygame.transform.scale_by(buffer, ui_scale_factor), (0, 0))
         pygame.display.flip()

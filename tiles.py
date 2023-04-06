@@ -63,13 +63,10 @@ class Renderer(object):
             pygame.gfxdraw.circle(self.surface, int(x), int(y - sprite.actor.radius * WORLD_SCALE),
                                   int(sprite.actor.radius * WORLD_SCALE), pygame.Color('red'))
 
-        x -= WORLD_SCALE
-        y -= WORLD_SCALE * 2
-        clip = animations.get_frame_rect(sprite.animation)
-        clip.x *= 2
-        clip.y *= 2
-        clip.width *= 2
-        clip.height *= 2
+        x -= SPRITE_SCALE // 2
+        y -= SPRITE_SCALE
+        clip = pygame.Rect(sprite.animation.frame_id * SPRITE_SCALE, sprite.animation.action_id * SPRITE_SCALE,
+                           SPRITE_SCALE, SPRITE_SCALE)
         sprite_sheet = sprite.sprite_sheet
         if sprite.actor.face_x < 0:
             sprite_sheet = sprite.flipped_sheet
