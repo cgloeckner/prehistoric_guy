@@ -31,12 +31,12 @@ def flip_sprite_sheet(src: pygame.Surface, tile_size: int) -> pygame.Surface:
     A new sprite sheet is returned which holds all sprites (left: original, right: flipped frames).
     """
     size = src.get_size()
-    mirrored = pygame.transform.flip(src, flip_x=True, flip_y=False)
+    mirr = pygame.transform.flip(src, flip_x=True, flip_y=False)
     dst = pygame.Surface((size[0] * 2, size[1]), flags=pygame.SRCALPHA)
 
     dst.blit(src, (0, 0))
     for column in range(src.get_width() // tile_size):
-        dst.blit(mirrored, (size[0] + column * tile_size, 0), (size[0] - (column + 1) * tile_size, 0, tile_size, size[1]))
+        dst.blit(mirr, (size[0] + column * tile_size, 0), (size[0] - (column + 1) * tile_size, 0, tile_size, size[1]))
 
     return dst
 

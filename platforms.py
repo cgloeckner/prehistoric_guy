@@ -7,6 +7,8 @@ from abc import abstractmethod
 
 GRAVITY: float = 9.81
 
+OBJECT_RADIUS: float = 0.25
+
 # duration until the jump leads to falling
 JUMP_DURATION: int = 500
 
@@ -422,7 +424,7 @@ class Physics(object):
         """Performs debug drawing of shapes.
         """
         import pygame.gfxdraw
-        from constants import WORLD_SCALE
+        from constants import WORLD_SCALE, OBJECT_SCALE
 
         # background
         for p in self.platforms:
@@ -435,19 +437,19 @@ class Physics(object):
             y2 = target.get_height() - (p.y - p.height) * WORLD_SCALE
             pygame.draw.lines(target, 'red', False, ((x, y2), (x, y), (x2, y), (x2, y2)))
 
-        for o in self.objects:
-            # draw circular hit box
-            x = int(o.pos_x * WORLD_SCALE + WORLD_SCALE // 4)
-            y = int(target.get_height() - o.pos_y * WORLD_SCALE + WORLD_SCALE // 4)
-            r = int(0.25 * WORLD_SCALE)
+        for obj in self.objects:
+            # draw circular hit box (pos is bottom center, is moved to pure center)
+            x = int(obj.pos_x * WORLD_SCALE)
+            y = int(target.get_height() - (obj.pos_y * WORLD_SCALE + OBJECT_SCALE // 2))
+            r = int(OBJECT_RADIUS * WORLD_SCALE)
             c = pygame.Color('gold')
             pygame.gfxdraw.circle(target, x, y, r, c)
 
-        for a in self.actors:
-            # draw circular hit box
-            x = int(a.pos_x * WORLD_SCALE)
-            y = int(target.get_height() - a.pos_y * WORLD_SCALE - a.radius * WORLD_SCALE)
-            r = int(a.radius * WORLD_SCALE)
+        for actor in self.actors:
+            # draw circular hit box (pos is bottom center, needs to be pure center)
+            x = int(actor.pos_x * WORLD_SCALE)
+            y = int(target.get_height() - (actor.pos_y * WORLD_SCALE + WORLD_SCALE // 2))
+            r = int(actor.radius * WORLD_SCALE)
             c = pygame.Color('red')
             pygame.gfxdraw.circle(target, x, y, r, c)
 

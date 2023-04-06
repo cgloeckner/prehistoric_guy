@@ -19,6 +19,19 @@ class Sprite:
     animation: animations.Animation
 
 
+def fill_pixels(surface: pygame.Surface, color: pygame.Color):
+    """Replaces all non-transparent pixels with the given color.
+    """
+    pixels = pygame.PixelArray(surface)
+
+    for y in range(surface.get_height()):
+        for x in range(surface.get_width()):
+            if pixels[x, y] & 0xff000000 != 0:
+                pixels[x, y] = color
+
+    pixels.close()
+
+
 class Renderer(object):
     """Handles drawing the tiled environment.
     """
@@ -37,30 +50,46 @@ class Renderer(object):
         self.objects = pygame.image.load('data/objects.png')
 
     def draw_object(self, obj: platforms.Object) -> None:
-        x = obj.pos_x * WORLD_SCALE
-        y = self.surface.get_height() - obj.pos_y * WORLD_SCALE
+        """Draw an object.
+        """
+        objects = self.objects
+        if obj in self.hover:
+            objects = objects.copy()
+            fill_pixels(objects, pygame.Color(255, 0, 0))
+
+        # pos is bottom center, needs to be top left
+        x = obj.pos_x * WORLD_SCALE - OBJECT_SCALE // 2
+        y = self.surface.get_height() - (obj.pos_y * WORLD_SCALE + OBJECT_SCALE)
 
         variation_col = 0
         clip = (variation_col * OBJECT_SCALE, obj.object_type * OBJECT_SCALE, OBJECT_SCALE, OBJECT_SCALE)
-        self.surface.blit(self.objects, (x, y), clip)
+        self.surface.blit(objects, (x, y), clip)
 
     def draw_actor(self, sprite: Sprite) -> None:
         """Draw an actor's sprite.
-        Note that all sprite sheet pixels are doubled.
+        Note that all sprite sheet pixels are doubled (SPRITE_SCALE).
         """
-        x = sprite.actor.pos_x * WORLD_SCALE
-        y = self.surface.get_height() - sprite.actor.pos_y * WORLD_SCALE
-        x -= SPRITE_SCALE // 2
-        y -= SPRITE_SCALE
+        sprite_sheet = sprite.sprite_sheet
+        if sprite.actor in self.hover:
+            sprite_sheet = sprite_sheet.copy()
+            fill_pixels(sprite_sheet, pygame.Color(255, 0, 0))
+
+        # pos is bottom center, needs to be top left
+        x = sprite.actor.pos_x * WORLD_SCALE - SPRITE_SCALE // 2
+        y = self.surface.get_height() - (sprite.actor.pos_y * WORLD_SCALE + SPRITE_SCALE)
 
         x_offset = (0 if sprite.actor.face_x >= 0.0 else 1) * ANIMATION_NUM_FRAMES * SPRITE_SCALE
         clip = pygame.Rect(sprite.animation.frame_id * SPRITE_SCALE + x_offset,
                            sprite.animation.action_id * SPRITE_SCALE, SPRITE_SCALE, SPRITE_SCALE)
-        self.surface.blit(sprite.sprite_sheet, (x, y), clip)
+        self.surface.blit(sprite_sheet, (x, y), clip)
 
     def draw_platform(self, platform: platforms.Platform, tileset_col: int) -> None:
+        """Draw a platform.
+        """
+        tiles = self.tiles
         if platform in self.hover:
-            return
+            tiles = tiles.copy()
+            fill_pixels(tiles, pygame.Color(255, 0, 0))
 
         x = platform.x * WORLD_SCALE
         y = self.surface.get_height() - platform.y * WORLD_SCALE
@@ -68,13 +97,13 @@ class Renderer(object):
         for i in range(int(platform.width)):
             # draw texture below
             for j in range(int(platform.height)):
-                self.surface.blit(self.tiles,
+                self.surface.blit(tiles,
                                   (x + i * WORLD_SCALE, y + j * WORLD_SCALE),
                                   ((3 * tileset_col+1) * WORLD_SCALE, TEXTURE_ROW * WORLD_SCALE,
                                    WORLD_SCALE, WORLD_SCALE))
 
             # draw platform on top
-            self.surface.blit(self.tiles,
+            self.surface.blit(tiles,
                               (x + i * WORLD_SCALE, y - WORLD_SCALE),
                               ((3 * tileset_col+1) * WORLD_SCALE, PLATFORM_ROW * WORLD_SCALE,
                                WORLD_SCALE, WORLD_SCALE * 2))
@@ -82,21 +111,21 @@ class Renderer(object):
         if platform.height > 0.0:
             # draw texture edges
             for j in range(int(platform.height)):
-                self.surface.blit(self.tiles,
+                self.surface.blit(tiles,
                                   (x - WORLD_SCALE, y + j * WORLD_SCALE),
                                   (3 * tileset_col * WORLD_SCALE, TEXTURE_ROW * WORLD_SCALE,
                                    WORLD_SCALE, WORLD_SCALE))
-                self.surface.blit(self.tiles,
+                self.surface.blit(tiles,
                                   (x + int(platform.width) * WORLD_SCALE, y + j * WORLD_SCALE),
                                   ((3 * tileset_col + 2) * WORLD_SCALE, TEXTURE_ROW * WORLD_SCALE,
                                    WORLD_SCALE, WORLD_SCALE))
 
         # draw platform edges
-        self.surface.blit(self.tiles,
+        self.surface.blit(tiles,
                           (x - WORLD_SCALE, y - WORLD_SCALE),
                           (3 * tileset_col * WORLD_SCALE, PLATFORM_ROW * WORLD_SCALE,
                            WORLD_SCALE, WORLD_SCALE * 2))
-        self.surface.blit(self.tiles,
+        self.surface.blit(tiles,
                           (x + int(platform.width) * WORLD_SCALE, y - WORLD_SCALE),
                           ((3 * tileset_col + 2) * WORLD_SCALE, PLATFORM_ROW * WORLD_SCALE,
                            WORLD_SCALE, WORLD_SCALE * 2))

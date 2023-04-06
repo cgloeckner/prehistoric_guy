@@ -23,32 +23,43 @@ class Game(platforms.PhysicsListener, animations.AnimationListener):
         self.score = 0
         self.obj_manager: Optional[factory.ObjectManager] = None
 
-    def get_hovered_platform(self, screen: pygame.Surface) -> None:
-        # FIXME: proof of concept, rendering needs to be different :D
+    def get_hovered(self, screen: pygame.Surface) -> List:
+        # transform screen coordinates to game coordinates (keep in mind that the screen was upscaled by x2)
         x, y = pygame.mouse.get_pos()
         y = screen.get_height() - y
-        # because the screen was upscaled with x2
         x //= 2
         y //= 2
-        # consider world scale (tile size)
         x /= WORLD_SCALE
         y /= WORLD_SCALE
-        print(x, y)
+        pos = pygame.math.Vector2(x, y)
 
-        self.obj_manager.renderer.hover = list()
-        for p in self.obj_manager.physics.platforms:
-            h = p.height
-            if h == 0.0:
-                h += 0.25
-            if p.x <= x <= p.x + p.width and p.y - h <= y <= p.y:
-                self.obj_manager.renderer.hover.append(p)
+        # collect all hoverable objects
+        hovered = list()
+        for platform in self.obj_manager.physics.platforms:
+            h = platform.height if platform.height > 0.0 else platforms.OBJECT_RADIUS
+            if platform.x <= x <= platform.x + platform.width and platform.y - h <= y <= platform.y:
+                hovered.append(platform)
+
+        for actor in self.obj_manager.physics.actors:
+            actor_pos = pygame.math.Vector2(actor.pos_x, actor.pos_y + actor.radius)
+            distance = pos.distance_squared_to(actor_pos)
+            if distance <= actor.radius ** 2:
+                hovered.append(actor)
+
+        for obj in self.obj_manager.physics.objects:
+            obj_pos = pygame.math.Vector2(obj.pos_x, obj.pos_y + platforms.OBJECT_RADIUS)
+            distance = pos.distance_squared_to(obj_pos)
+            if distance <= platforms.OBJECT_RADIUS ** 2:
+                hovered.append(obj)
+
+        return hovered
 
     def create_food(self) -> None:
         # pick random position on random platform
         p = random.choice(self.obj_manager.physics.platforms)
         x = random.randrange(p.width)
 
-        self.obj_manager.create_object(pos_x=p.x + x, pos_y=p.y + 0.5, object_type=DANGER_OBJ)
+        self.obj_manager.create_object(pos_x=p.x + x, pos_y=p.y + 0.5, object_type=FOOD_OBJ)
 
     def populate_demo_scene(self, guy_sheet: pygame.Surface) -> None:
         self.obj_manager.create_actor(sprite_sheet=guy_sheet, pos_x=1.5, pos_y=3.5)
@@ -61,7 +72,7 @@ class Game(platforms.PhysicsListener, animations.AnimationListener):
         self.obj_manager.create_platform(x=0.5, y=2, width=1, height=4)
         self.obj_manager.create_platform(x=3, y=2, width=1, height=0,
                                          float_x=lambda x: -math.cos(x/2),
-                                         float_y=lambda y: 2*math.sin(y)) # FIXME: actor is moved through walls :o
+                                         float_y=lambda y: 2*math.sin(y))
         self.obj_manager.create_platform(x=4, y=3, width=1, height=3)
         self.obj_manager.create_platform(x=6, y=3, width=4, height=3)
         self.obj_manager.create_platform(x=7, y=4, width=1, height=3)
@@ -144,9 +155,9 @@ def main():
     native_width, native_height = pygame.display.get_desktop_sizes()[0]
     native_width //= RESOLUTION_X
     native_height //= RESOLUTION_Y
-    ui_scale_factor = max(1, min(native_width, native_height))
+    # ui_scale_factor = max(1, min(native_width, native_height))
     # override it for debugging purpose
-    ui_scale_factor //= 2
+    ui_scale_factor = 2
 
     # calculate window resolution and initialize screen
     window_width = RESOLUTION_X * ui_scale_factor
@@ -178,7 +189,8 @@ def main():
                 # FIXME: pygame.display.toggle_fullscreen() does not work correctly when leaving fullscreen
                 pass
 
-        game.get_hovered_platform(screen)
+        render.hover = game.get_hovered(screen)
+
         keys = pygame.key.get_pressed()
 
         if render.sprites[0].animation.action_id != animations.DIE_ACTION:
