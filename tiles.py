@@ -27,6 +27,7 @@ class Renderer(object):
         self.clock = clock
 
         self.x = 0
+        self.hover = list()
         self.sprites = list()
 
         # load resources
@@ -58,6 +59,9 @@ class Renderer(object):
         self.surface.blit(sprite.sprite_sheet, (x, y), clip)
 
     def draw_platform(self, platform: platforms.Platform, tileset_col: int) -> None:
+        if platform in self.hover:
+            return
+
         x = platform.x * WORLD_SCALE
         y = self.surface.get_height() - platform.y * WORLD_SCALE
 

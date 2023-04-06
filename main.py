@@ -1,7 +1,7 @@
 import pygame
 import random
 import math
-from typing import Optional
+from typing import Optional, List
 
 import platforms
 import tiles
@@ -22,6 +22,26 @@ class Game(platforms.PhysicsListener, animations.AnimationListener):
     def __init__(self):
         self.score = 0
         self.obj_manager: Optional[factory.ObjectManager] = None
+
+    def get_hovered_platform(self, screen: pygame.Surface) -> None:
+        # FIXME: proof of concept, rendering needs to be different :D
+        x, y = pygame.mouse.get_pos()
+        y = screen.get_height() - y
+        # because the screen was upscaled with x2
+        x //= 2
+        y //= 2
+        # consider world scale (tile size)
+        x /= WORLD_SCALE
+        y /= WORLD_SCALE
+        print(x, y)
+
+        self.obj_manager.renderer.hover = list()
+        for p in self.obj_manager.physics.platforms:
+            h = p.height
+            if h == 0.0:
+                h += 0.25
+            if p.x <= x <= p.x + p.width and p.y - h <= y <= p.y:
+                self.obj_manager.renderer.hover.append(p)
 
     def create_food(self) -> None:
         # pick random position on random platform
@@ -158,6 +178,7 @@ def main():
                 # FIXME: pygame.display.toggle_fullscreen() does not work correctly when leaving fullscreen
                 pass
 
+        game.get_hovered_platform(screen)
         keys = pygame.key.get_pressed()
 
         if render.sprites[0].animation.action_id != animations.DIE_ACTION:
