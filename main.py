@@ -34,16 +34,17 @@ class Game(platforms.PhysicsListener, animations.AnimationListener):
         self.obj_manager.create_actor(sprite_sheet=guy_sheet, pos_x=7.5, pos_y=4.5)
 
         # horizontal platforms
-        self.obj_manager.create_platform(x=0, y=1.0, width=3, height=2)
-        self.obj_manager.create_platform(x=3, y=2.0, width=1, height=2)
-        self.obj_manager.create_platform(x=3, y=2.0, width=1, height=2)
-        self.obj_manager.create_platform(x=4, y=3.0, width=1, height=3)
-        self.obj_manager.create_platform(x=6, y=3.0, width=4, height=3)
-        self.obj_manager.create_platform(x=7, y=4.0, width=1, height=3)
-        self.obj_manager.create_platform(x=7, y=3.0, width=2, height=0)
+        self.obj_manager.create_platform(x=0, y=1, width=3, height=2)
+        self.obj_manager.create_platform(x=3, y=1, width=1, height=4, float_type=platforms.MOVE_Y_PLATFORM)
+        self.obj_manager.create_platform(x=4, y=3, width=1, height=3)
+        self.obj_manager.create_platform(x=6, y=3, width=4, height=3)
+        self.obj_manager.create_platform(x=7, y=4, width=1, height=3)
+        self.obj_manager.create_platform(x=6, y=5, width=2, height=0, float_type=platforms.MOVE_X_PLATFORM, amplitude=-1.0)
+        self.obj_manager.create_platform(x=7, y=5, width=2, height=0, float_type=platforms.MOVE_X_PLATFORM)
 
         # NOTE: h=0 necessary to avoid collisions when jumping "into" the platform
-        self.obj_manager.create_platform(x=1.0, y=5, width=RESOLUTION_X // WORLD_SCALE - 2, height=0)
+        self.obj_manager.create_platform(x=1.0, y=6, width=RESOLUTION_X // WORLD_SCALE - 2 - 3, height=0,
+                                         float_type=platforms.MOVE_Y_PLATFORM, amplitude=-1.5, speed=1.0)
 
         for i in range(10):
             self.create_food()

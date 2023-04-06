@@ -1,4 +1,5 @@
 import pygame
+import math
 from dataclasses import dataclass
 from typing import Tuple, Optional
 from abc import abstractmethod
@@ -15,6 +16,30 @@ COLLISION_REPEAT_DELAY: int = 150
 MOVE_SPEED_FACTOR: float = 3.5
 JUMP_SPEED_FACTOR: float = 0.5
 
+# types of floating platforms
+STATIC_PLATFORM: int = 0
+MOVE_X_PLATFORM: int = 1
+MOVE_Y_PLATFORM: int = 2
+
+
+@dataclass
+class Platform:
+    # top left position
+    x: float
+    y: float
+    # size
+    width: int
+    height: int
+    # floating information
+    float_type: int = STATIC_PLATFORM
+    speed: float = 1.0
+    amplitude: float = 1.0
+    hover_index: int = 0
+
+    # FIXME: niy
+    move_x: float = 0.0
+    move_y: float = 0.0
+
 
 @dataclass
 class Actor:
@@ -30,6 +55,7 @@ class Actor:
     fall_from_y: Optional[float] = None
     # collision data
     radius: float = 0.5
+    stands_on: Optional[Platform] = None
     # prevents another collision/touch event for a couple of ms
     collision_repeat_cooldown: int = 0
     touch_repeat_cooldown: int = 0
@@ -42,16 +68,6 @@ class Object:
     pos_y: float
     # object type id
     object_type: int
-
-
-@dataclass
-class Platform:
-    # top left position
-    x: float
-    y: float
-    # size
-    width: int
-    height: int
 
 
 def test_line_intersection(x1: float, y1: float, x2: float, y2: float, x3: float, y3: float,
@@ -247,6 +263,7 @@ class Physics(object):
         actor.jump_ms = 0
 
         # trigger event
+        actor.stands_on = platform
         self.event_listener.on_landing(actor, platform)
         actor.fall_from_y = None
 
@@ -276,6 +293,10 @@ class Physics(object):
 
         # reset position
         actor.pos_x, actor.pos_y = last_pos
+
+        if actor.stands_on is not None:
+            # FIXME: find all platforms on which the actor could stand right now
+            pass
 
         # trigger event
         actor.touch_repeat_cooldown -= elapsed_ms
@@ -323,6 +344,29 @@ class Physics(object):
             # trigger event
             self.event_listener.on_reaching(actor, other)
 
+    def simulate_floating(self, platform: Platform, elapsed_ms: int) -> None:
+        if platform.float_type == STATIC_PLATFORM or platform.speed == 0.0 or platform.amplitude == 0.0:
+            return
+
+        # calculate movement delta
+        angle = 2 * math.pi * platform.hover_index / 360.0
+        platform.hover_index += 1
+        delta = platform.amplitude * math.sin(angle * platform.speed) * elapsed_ms / 1000.0
+
+        # move platform
+        if platform.float_type == MOVE_X_PLATFORM:
+            platform.x += delta
+        if platform.float_type == MOVE_Y_PLATFORM:
+            platform.y += delta
+
+        # update actors who stand on it
+        for actor in self.actors:
+            if actor.stands_on == platform:
+                if platform.float_type == MOVE_X_PLATFORM:
+                    actor.pos_x += delta
+                if platform.float_type == MOVE_Y_PLATFORM:
+                    actor.pos_y += delta
+
     def update(self, elapsed_ms: int) -> None:
         """Update all actors' physics (jumping and falling) within the past view elapsed_ms.
         """
@@ -331,6 +375,9 @@ class Physics(object):
             self.handle_movement(actor, elapsed_ms)
             self.check_actor_collision(actor, elapsed_ms)
             self.check_object_collision(actor)
+
+        for platform in self.platforms:
+            self.simulate_floating(platform, elapsed_ms)
 
 
 if __name__ == '__main__':
