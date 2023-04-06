@@ -17,8 +17,8 @@ import OpenGL.GL
 
 
 class PygameRenderer(FixedPipelineRenderer):
-    """
-    Based on https://github.com/pyimgui/pyimgui/blob/dev/version-2.0/imgui/integrations/pygame.py
+    """Custom Renderer implementation that fixes a keycode issue with imgui v1.4.1
+    This may become obsolete once imgui v2.0 is finished.
     """
     def __init__(self):
         super(PygameRenderer, self).__init__()
@@ -126,13 +126,12 @@ class PygameRenderer(FixedPipelineRenderer):
 
         if ev.type == pygame.VIDEORESIZE:
             surface = pygame.display.get_surface()
-            # note: pygame does not modify existing surface upon resize,
-            #       we need to to it ourselves.
+            # note: pygame does not modify existing surface upon resize, we need to it ourselves.
             pygame.display.set_mode(
                 (ev.w, ev.h),
                 flags=surface.get_flags(),
             )
-            # existing font texure is no longer valid, so we need to refresh it
+            # existing font texture is no longer valid, so we need to refresh it
             self.refresh_font_texture()
 
             # notify imgui about new window size
