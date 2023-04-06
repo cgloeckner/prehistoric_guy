@@ -16,11 +16,6 @@ COLLISION_REPEAT_DELAY: int = 150
 MOVE_SPEED_FACTOR: float = 3.5
 JUMP_SPEED_FACTOR: float = 0.5
 
-# types of floating platforms
-STATIC_PLATFORM: int = 0
-MOVE_X_PLATFORM: int = 1
-MOVE_Y_PLATFORM: int = 2
-
 
 @dataclass
 class Platform:
@@ -31,9 +26,8 @@ class Platform:
     width: int
     height: int
     # floating information
-    float_type: int = STATIC_PLATFORM
-    speed: float = 1.0
-    amplitude: float = 1.0
+    float_x: callable = None
+    float_y: callable = None
     hover_index: int = 0
 
 
@@ -300,7 +294,7 @@ class Physics(object):
         """This handles the actor's horizontal movement. Collision is detected and handled. More collision handling
         can be achieved via on_collision. Multiple calls are delayed with COLLISION_REPEAT_DELAY
         """
-        if actor.anchor is not None and actor.anchor.float_type == MOVE_X_PLATFORM:
+        if actor.anchor is not None and actor.anchor.float_x is not None:
             self.anchor_actor(actor)
 
         # look into current x-direction
@@ -371,27 +365,28 @@ class Physics(object):
             self.event_listener.on_reaching(actor, other)
 
     def simulate_floating(self, platform: Platform, elapsed_ms: int) -> None:
-        if platform.float_type == STATIC_PLATFORM or platform.speed == 0.0 or platform.amplitude == 0.0:
+        if platform.float_x is None and platform.float_y is None:
             return
 
         # calculate movement delta
         angle = 2 * math.pi * platform.hover_index / 360.0
         platform.hover_index += 1
-        delta = platform.amplitude * math.sin(angle * platform.speed) * elapsed_ms / 1000.0
+        delta_x = 0
+        delta_y = 0
+        if platform.float_x is not None:
+            delta_x = platform.float_x(angle) * elapsed_ms / 1000.0
+        if platform.float_y is not None:
+            delta_y = platform.float_y(angle) * elapsed_ms / 1000.0
 
         # move platform
-        if platform.float_type == MOVE_X_PLATFORM:
-            platform.x += delta
-        if platform.float_type == MOVE_Y_PLATFORM:
-            platform.y += delta
+        platform.x += delta_x
+        platform.y += delta_y
 
         # update actors who stand on it
         for actor in self.actors:
             if actor.anchor == platform:
-                if platform.float_type == MOVE_X_PLATFORM:
-                    actor.pos_x += delta
-                if platform.float_type == MOVE_Y_PLATFORM:
-                    actor.pos_y += delta
+                actor.pos_x += delta_x
+                actor.pos_y += delta_y
 
     def update(self, elapsed_ms: int) -> None:
         """Update all actors' physics (jumping and falling) within the past view elapsed_ms.

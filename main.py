@@ -1,5 +1,6 @@
 import pygame
 import random
+import math
 from typing import Optional
 
 import platforms
@@ -35,16 +36,19 @@ class Game(platforms.PhysicsListener, animations.AnimationListener):
 
         # horizontal platforms
         self.obj_manager.create_platform(x=0, y=1, width=3, height=2)
-        self.obj_manager.create_platform(x=3, y=1, width=1, height=4, float_type=platforms.MOVE_Y_PLATFORM)
+        self.obj_manager.create_platform(x=3, y=1, width=1, height=4)
+        self.obj_manager.create_platform(x=3, y=1, width=1, height=0,
+                                         float_x=lambda x: -math.cos(x/2),
+                                         float_y=lambda y: 2*math.sin(y)) # FIXME: actor is moved through walls :o
         self.obj_manager.create_platform(x=4, y=3, width=1, height=3)
         self.obj_manager.create_platform(x=6, y=3, width=4, height=3)
         self.obj_manager.create_platform(x=7, y=4, width=1, height=3)
-        self.obj_manager.create_platform(x=6, y=5, width=2, height=0, float_type=platforms.MOVE_X_PLATFORM, amplitude=-1.0)
-        self.obj_manager.create_platform(x=7, y=5, width=2, height=0, float_type=platforms.MOVE_X_PLATFORM)
+        self.obj_manager.create_platform(x=3, y=5, width=2, height=0, float_y=math.cos)
+        self.obj_manager.create_platform(x=7, y=5, width=2, height=0, float_x=math.cos)
 
         # NOTE: h=0 necessary to avoid collisions when jumping "into" the platform
         self.obj_manager.create_platform(x=1.0, y=6, width=RESOLUTION_X // WORLD_SCALE - 2 - 3, height=0,
-                                         float_type=platforms.MOVE_Y_PLATFORM, amplitude=-1.5, speed=1.0)
+                                         float_y=lambda y: -math.sin(y))
 
         for i in range(10):
             self.create_food()
