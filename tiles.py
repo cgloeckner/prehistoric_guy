@@ -1,5 +1,4 @@
 import pygame
-import pygame.gfxdraw
 from dataclasses import dataclass
 
 import platforms
@@ -23,10 +22,9 @@ class Sprite:
 class Renderer(object):
     """Handles drawing the tiled environment.
     """
-    def __init__(self, surface: pygame.Surface, clock: pygame.time.Clock, debug_render: bool = False):
+    def __init__(self, surface: pygame.Surface, clock: pygame.time.Clock):
         self.surface = surface
         self.clock = clock
-        self.debug_render = debug_render
 
         self.x = 0
         self.sprites = list()
@@ -41,11 +39,6 @@ class Renderer(object):
         x = obj.pos_x * WORLD_SCALE
         y = self.surface.get_height() - obj.pos_y * WORLD_SCALE
 
-        if self.debug_render:
-            # draw hit box
-            pygame.gfxdraw.circle(self.surface, int(x + WORLD_SCALE // 4), int(y + WORLD_SCALE // 4),
-                                  int(0.25 * WORLD_SCALE), pygame.Color('gold'))
-
         variation_col = 0
         clip = (variation_col * OBJECT_SCALE, obj.object_type * OBJECT_SCALE, OBJECT_SCALE, OBJECT_SCALE)
         self.surface.blit(self.objects, (x, y), clip)
@@ -56,18 +49,12 @@ class Renderer(object):
         """
         x = sprite.actor.pos_x * WORLD_SCALE
         y = self.surface.get_height() - sprite.actor.pos_y * WORLD_SCALE
-
-        if self.debug_render:
-            # draw hit box
-            pygame.gfxdraw.circle(self.surface, int(x), int(y - sprite.actor.radius * WORLD_SCALE),
-                                  int(sprite.actor.radius * WORLD_SCALE), pygame.Color('red'))
-
         x -= SPRITE_SCALE // 2
         y -= SPRITE_SCALE
 
         x_offset = (0 if sprite.actor.face_x >= 0.0 else 1) * ANIMATION_NUM_FRAMES * SPRITE_SCALE
-        clip = pygame.Rect(sprite.animation.frame_id * SPRITE_SCALE + x_offset, sprite.animation.action_id * SPRITE_SCALE,
-                           SPRITE_SCALE, SPRITE_SCALE)
+        clip = pygame.Rect(sprite.animation.frame_id * SPRITE_SCALE + x_offset,
+                           sprite.animation.action_id * SPRITE_SCALE, SPRITE_SCALE, SPRITE_SCALE)
         self.surface.blit(sprite.sprite_sheet, (x, y), clip)
 
     def draw_platform(self, platform: platforms.Platform, tileset_col: int) -> None:
@@ -109,12 +96,6 @@ class Renderer(object):
                           (x + int(platform.width) * WORLD_SCALE, y - WORLD_SCALE),
                           ((3 * tileset_col + 2) * WORLD_SCALE, PLATFORM_ROW * WORLD_SCALE,
                            WORLD_SCALE, WORLD_SCALE * 2))
-
-        if self.debug_render:
-            # draw hit box
-            x2 = (platform.x + platform.width) * WORLD_SCALE
-            y2 = self.surface.get_height() - (platform.y - platform.height) * WORLD_SCALE
-            pygame.draw.lines(self.surface, 'red', False, ((x, y2), (x, y), (x2, y), (x2, y2)))
 
     def draw(self, platformer: platforms.Physics, bg_col: int) -> None:
         # background

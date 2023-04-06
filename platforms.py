@@ -418,6 +418,39 @@ class Physics(object):
         for platform in self.platforms:
             self.simulate_floating(platform, elapsed_ms)
 
+    def draw(self, target: pygame.Surface) -> None:
+        """Performs debug drawing of shapes.
+        """
+        import pygame.gfxdraw
+        from constants import WORLD_SCALE
+
+        # background
+        for p in self.platforms:
+            # draw platform's top, left and right edges
+            x = p.x * WORLD_SCALE
+            y = target.get_height() - p.y * WORLD_SCALE
+
+            # draw hit box
+            x2 = (p.x + p.width) * WORLD_SCALE
+            y2 = target.get_height() - (p.y - p.height) * WORLD_SCALE
+            pygame.draw.lines(target, 'red', False, ((x, y2), (x, y), (x2, y), (x2, y2)))
+
+        for o in self.objects:
+            # draw circular hit box
+            x = int(o.pos_x * WORLD_SCALE + WORLD_SCALE // 4)
+            y = int(target.get_height() - o.pos_y * WORLD_SCALE + WORLD_SCALE // 4)
+            r = int(0.25 * WORLD_SCALE)
+            c = pygame.Color('gold')
+            pygame.gfxdraw.circle(target, x, y, r, c)
+
+        for a in self.actors:
+            # draw circular hit box
+            x = int(a.pos_x * WORLD_SCALE)
+            y = int(target.get_height() - a.pos_y * WORLD_SCALE - a.radius * WORLD_SCALE)
+            r = int(a.radius * WORLD_SCALE)
+            c = pygame.Color('red')
+            pygame.gfxdraw.circle(target, x, y, r, c)
+
 
 if __name__ == '__main__':
     # minimal unit testing

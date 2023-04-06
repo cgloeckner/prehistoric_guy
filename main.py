@@ -142,7 +142,7 @@ def main():
 
     phys = platforms.Physics(game)
     anis = animations.Animating(game)
-    render = tiles.Renderer(buffer, clock, True)
+    render = tiles.Renderer(buffer, clock)
 
     game.obj_manager = factory.ObjectManager(phys, anis, render)
     game.populate_demo_scene(guy)
@@ -223,6 +223,7 @@ def main():
 
         buffer.fill('black')
         render.draw(phys, 0)
+        # phys.draw(buffer)
 
         score_surface = render.font.render(f'SCORE: {game.score}', False, 'black')
         buffer.blit(score_surface, (0, 0))
