@@ -14,9 +14,12 @@ STAIRS_ROW: int = 3
 
 @dataclass
 class Sprite:
-    sprite_sheet: pygame.Surface
+    # link to related actor
     actor: platforms.Actor
-    animation: animations.FrameAnimation
+    # sprite frames
+    sprite_sheet: pygame.Surface
+    # animation related stuff
+    animation: animations.Animation
 
 
 def fill_pixels(surface: pygame.Surface, color: pygame.Color):
@@ -83,9 +86,15 @@ class Renderer(object):
         """Draw an actor's sprite.
         Note that all sprite sheet pixels are doubled (SPRITE_SCALE).
         """
+        # color sprite with based on flashing animation (or else because of editor)
         sprite_sheet = sprite.sprite_sheet
-        if sprite.actor.color is not None:
-            sprite_sheet = self.get_colored_surface(sprite_sheet, sprite.actor.color)
+        color = None
+        if sprite.animation.color is not None:
+            color = sprite.animation.color
+        elif sprite.actor.color is not None:
+            color = sprite.actor.color
+        if color is not None:
+            sprite_sheet = self.get_colored_surface(sprite_sheet, color)
 
         # pos is bottom center, needs to be top left
         x = sprite.actor.x * WORLD_SCALE - SPRITE_SCALE // 2

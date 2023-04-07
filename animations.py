@@ -1,6 +1,7 @@
 import pygame
 from dataclasses import dataclass
 from abc import abstractmethod
+from typing import Optional
 
 from constants import ANIMATION_NUM_FRAMES
 
@@ -16,14 +17,16 @@ DIE_ACTION: int = 5
 
 
 @dataclass
-class FrameAnimation:
+class Animation:
     id: int
-    # row and column index
+    # frame animation: row and column index, animation delay until frame is switched
     action_id: int = 0
     frame_id: int = 0
-    # animation delay until frame is switched
-    duration_ms: int = ANIMATION_FRAME_DURATION
     frame_duration_ms: int = ANIMATION_FRAME_DURATION
+    frame_max_duration_ms: int = ANIMATION_FRAME_DURATION
+    # color animation
+    color: Optional[pygame.Color] = None
+    color_duration_ms: int = ANIMATION_FRAME_DURATION
 
 
 def flip_sprite_sheet(src: pygame.Surface, tile_size: int) -> pygame.Surface:
@@ -41,28 +44,35 @@ def flip_sprite_sheet(src: pygame.Surface, tile_size: int) -> pygame.Surface:
     return dst
 
 
-def start(ani: FrameAnimation, action_id: int, duration_ms: int = ANIMATION_FRAME_DURATION) -> None:
-    """Resets the animation with the given action.
+def start(ani: Animation, action_id: int, duration_ms: int = ANIMATION_FRAME_DURATION) -> None:
+    """Resets the frame animation with the given action.
     """
     if ani.action_id == action_id:
         return
 
     ani.action_id = action_id
     ani.frame_id = 0
-    ani.duration_ms = duration_ms
     ani.frame_duration_ms = duration_ms
+    ani.frame_max_duration_ms = duration_ms
+
+
+def flash(ani: Animation, color: pygame.Color, duration_ms: int = ANIMATION_FRAME_DURATION) -> None:
+    """Resets the color animation with the given color.
+    """
+    ani.color = color
+    ani.color_duration_ms = duration_ms
 
 
 class AnimationListener(object):
 
     @abstractmethod
-    def on_step(self, ani: FrameAnimation) -> None:
+    def on_step(self, ani: Animation) -> None:
         """Triggered when a cycle of a move animation finished.
         """
         pass
 
     @abstractmethod
-    def on_attack(self, ani: FrameAnimation) -> None:
+    def on_attack(self, ani: Animation) -> None:
         """Triggered when an attack animation finished.
         """
         pass
@@ -72,10 +82,10 @@ class Animating(object):
     """Handles all frame set animations.
     """
     def __init__(self, animation_listener: AnimationListener):
-        self.frame_animations = list()
+        self.animations = list()
         self.event_listener = animation_listener
 
-    def notify_animation(self, ani: FrameAnimation) -> None:
+    def notify_animation(self, ani: Animation) -> None:
         """Notify about a finished animation.
         """
         if ani.action_id == MOVE_ACTION:
@@ -83,15 +93,15 @@ class Animating(object):
         elif ani.action_id == ATTACK_ACTION:
             self.event_listener.on_attack(ani)
 
-    def update_frame(self, ani: FrameAnimation, elapsed_ms: int) -> None:
+    def update_frame(self, ani: Animation, elapsed_ms: int) -> None:
         """Update a single frame animation.
         """
         # continue animation
-        ani.duration_ms -= elapsed_ms
-        if ani.duration_ms > 0:
+        ani.frame_duration_ms -= elapsed_ms
+        if ani.frame_duration_ms > 0:
             return
 
-        ani.duration_ms += ani.frame_duration_ms
+        ani.frame_duration_ms += ani.frame_max_duration_ms
         ani.frame_id += 1
 
         if ani.frame_id < ANIMATION_NUM_FRAMES:
@@ -111,22 +121,36 @@ class Animating(object):
             # freeze at last frame
             ani.frame_id -= 1
 
+    def update_color(self, ani: Animation, elapsed_ms: int) -> None:
+        if ani.color is None:
+            return
+
+        ani.color_duration_ms -= elapsed_ms
+        if ani.color_duration_ms > 0:
+            return
+
+        ani.color_duration_ms = 0
+        ani.color = None
+
+        # FIXME: trigger event using self.on_flashed?
+
     def update(self, elapsed_ms: int) -> None:
         """Updates all animations' frame durations. It automatically switches frames and loops/returns/freezes the
         animation once finished.
         """
-        for ani in self.frame_animations:
+        for ani in self.animations:
             self.update_frame(ani, elapsed_ms)
+            self.update_color(ani, elapsed_ms)
 
 
 def main():
     from constants import SPRITE_SCALE
 
     class DemoListener(AnimationListener):
-        def on_step(self, a: FrameAnimation) -> None:
+        def on_step(self, a: Animation) -> None:
             print(f'{a} steps')
 
-        def on_attack(self, a: FrameAnimation) -> None:
+        def on_attack(self, a: Animation) -> None:
             print(f'{a} finished attack')
 
     pygame.init()
@@ -152,7 +176,7 @@ def main():
 
     listener = DemoListener()
     ani = Animating(listener)
-    ani.frame_animations.append(FrameAnimation(1))
+    ani.frame_animations.append(Animation(1))
 
     running = True
     elapsed = 0

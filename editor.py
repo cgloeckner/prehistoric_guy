@@ -160,7 +160,7 @@ class SceneEditor(object):
             elem.color = None
         self.hovered_elements = self.get_hovered()
         for elem in self.hovered_elements:
-            elem.color = pygame.Color(255, 255, 255)
+            elem.color = pygame.Color('gold')
 
         # select first hovered element on click
         left_click = pygame.mouse.get_pressed()[0]

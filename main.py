@@ -100,12 +100,12 @@ class Game(platforms.PhysicsListener, animations.AnimationListener):
 
     # --- Animation Events -
 
-    def on_step(self, ani: animations.FrameAnimation) -> None:
+    def on_step(self, ani: animations.Animation) -> None:
         """Triggered when a cycle of a move animation finished.
         """
         print('step!')
 
-    def on_attack(self, ani: animations.FrameAnimation) -> None:
+    def on_attack(self, ani: animations.Animation) -> None:
         """Triggered when an attack animation finished.
         """
         print('swing!')
@@ -162,6 +162,9 @@ def main():
         keys = pygame.key.get_pressed()
 
         if render.sprites[0].animation.action_id != animations.DIE_ACTION:
+            if keys[pygame.K_y]:
+                animations.flash(render.sprites[0].animation, pygame.Color('white'))
+
             if keys[pygame.K_SPACE]:
                 animations.start(render.sprites[0].animation, animations.ATTACK_ACTION)
                 render.sprites[0].actor.force_x = 0
