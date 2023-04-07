@@ -40,7 +40,6 @@ class Renderer(object):
         self.clock = clock
 
         self.x = 0
-        self.hover = list()
         self.sprites = list()
 
         # load resources
@@ -53,9 +52,9 @@ class Renderer(object):
         """Draw an object.
         """
         objects = self.objects
-        if obj in self.hover:
+        if obj.color is not None:
             objects = objects.copy()
-            fill_pixels(objects, pygame.Color(255, 0, 0))
+            fill_pixels(objects, obj.color)
 
         # pos is bottom center, needs to be top left
         x = obj.pos_x * WORLD_SCALE - OBJECT_SCALE // 2
@@ -70,9 +69,9 @@ class Renderer(object):
         Note that all sprite sheet pixels are doubled (SPRITE_SCALE).
         """
         sprite_sheet = sprite.sprite_sheet
-        if sprite.actor in self.hover:
+        if sprite.actor.color is not None:
             sprite_sheet = sprite_sheet.copy()
-            fill_pixels(sprite_sheet, pygame.Color(255, 0, 0))
+            fill_pixels(sprite_sheet, sprite.actor.color)
 
         # pos is bottom center, needs to be top left
         x = sprite.actor.pos_x * WORLD_SCALE - SPRITE_SCALE // 2
@@ -87,9 +86,9 @@ class Renderer(object):
         """Draw a platform.
         """
         tiles = self.tiles
-        if platform in self.hover:
+        if platform.color is not None:
             tiles = tiles.copy()
-            fill_pixels(tiles, pygame.Color(255, 0, 0))
+            fill_pixels(tiles, platform.color)
 
         x = platform.x * WORLD_SCALE
         y = self.surface.get_height() - platform.y * WORLD_SCALE

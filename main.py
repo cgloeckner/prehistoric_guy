@@ -4,12 +4,14 @@ import math
 import imgui
 from typing import Optional, List
 
+from imgui_wrapper import OpenGlWrapper
+
 from constants import *
 import platforms
 import tiles
 import animations
 import factory
-from imgui_wrapper import OpenGlWrapper
+import editor
 
 
 # objects row offsets
@@ -24,37 +26,6 @@ class Game(platforms.PhysicsListener, animations.AnimationListener):
     def __init__(self):
         self.score = 0
         self.obj_manager: Optional[factory.ObjectManager] = None
-
-    def get_hovered(self, screen: pygame.Surface) -> List:
-        # transform screen coordinates to game coordinates (keep in mind that the screen was upscaled by x2)
-        x, y = pygame.mouse.get_pos()
-        y = screen.get_height() - y
-        x //= 2
-        y //= 2
-        x /= WORLD_SCALE
-        y /= WORLD_SCALE
-        pos = pygame.math.Vector2(x, y)
-
-        # collect all hoverable objects
-        hovered = list()
-        for platform in self.obj_manager.physics.platforms:
-            h = platform.height if platform.height > 0.0 else platforms.OBJECT_RADIUS
-            if platform.x <= x <= platform.x + platform.width and platform.y - h <= y <= platform.y:
-                hovered.append(platform)
-
-        for actor in self.obj_manager.physics.actors:
-            actor_pos = pygame.math.Vector2(actor.pos_x, actor.pos_y + actor.radius)
-            distance = pos.distance_squared_to(actor_pos)
-            if distance <= actor.radius ** 2:
-                hovered.append(actor)
-
-        for obj in self.obj_manager.physics.objects:
-            obj_pos = pygame.math.Vector2(obj.pos_x, obj.pos_y + platforms.OBJECT_RADIUS)
-            distance = pos.distance_squared_to(obj_pos)
-            if distance <= platforms.OBJECT_RADIUS ** 2:
-                hovered.append(obj)
-
-        return hovered
 
     def create_food(self) -> None:
         # pick random position on random platform
@@ -72,18 +43,16 @@ class Game(platforms.PhysicsListener, animations.AnimationListener):
         self.obj_manager.create_platform(x=-0.5, y=3.5, width=1, height=4)
         self.obj_manager.create_platform(x=0, y=3, width=1, height=4)
         self.obj_manager.create_platform(x=0.5, y=2, width=1, height=4)
-        self.obj_manager.create_platform(x=3, y=2, width=1, height=0,
-                                         float_x=lambda x: -math.cos(x/2),
-                                         float_y=lambda y: 2*math.sin(y))
+        self.obj_manager.create_platform(x=3, y=2, width=1, height=0, hover=platforms.Hovering(x=math.cos, y=math.sin))
         self.obj_manager.create_platform(x=4, y=3, width=1, height=3)
         self.obj_manager.create_platform(x=6, y=3, width=4, height=3)
         self.obj_manager.create_platform(x=7, y=4, width=1, height=3)
-        self.obj_manager.create_platform(x=3, y=5, width=2, height=0, float_y=math.cos)
-        self.obj_manager.create_platform(x=7, y=5, width=2, height=0, float_x=math.cos)
+        self.obj_manager.create_platform(x=3, y=5, width=2, height=0, hover=platforms.Hovering(y=math.cos))
+        self.obj_manager.create_platform(x=7, y=5, width=2, height=0, hover=platforms.Hovering(x=math.cos))
 
         # NOTE: h=0 necessary to avoid collisions when jumping "into" the platform
         self.obj_manager.create_platform(x=1.0, y=6, width=RESOLUTION_X // WORLD_SCALE - 2 - 3, height=0,
-                                         float_y=lambda y: -math.sin(y))
+                                         hover=platforms.Hovering(y=math.sin))
 
         for i in range(10):
             self.create_food()
@@ -150,12 +119,7 @@ class Game(platforms.PhysicsListener, animations.AnimationListener):
         print('swing!')
 
 
-selected = None
-
-
 def main():
-    global selected
-
     pygame.init()
 
     # get native resolution and factor for scaling
@@ -186,41 +150,7 @@ def main():
     game.obj_manager = factory.ObjectManager(phys, anis, render)
     game.populate_demo_scene(guy)
 
-    def demo_ui():
-        global selected
-
-        imgui.new_frame()
-
-        if selected is None:
-            return
-
-        imgui.begin(type(selected).__name__, False)
-
-        if isinstance(selected, platforms.Platform):
-            _, selected.x = imgui.input_float('x', selected.x, step=0.1)
-            _, selected.y = imgui.input_float('y', selected.y, step=0.1)
-            _, selected.width = imgui.input_float('width', selected.width, step=0.1)
-            _, selected.height = imgui.input_float('height', selected.height, step=0.1)
-            clicked, current = imgui.combo('float_x', 0, ['None', 'sin', '-sin', 'cos', '-cos'])
-            if clicked:
-                if current == 'None': selected.float_x = None
-                if current == 'sin': selected.float_x = math.sin
-                if current == '-sin': selected.float_x = lambda v: -math.sin(v)
-                if current == 'cos': selected.float_x = math.cos
-                if current == '-cos': selected.float_x = lambda v: -math.cos(v)
-            clicked, current = imgui.combo('float_y', 0, ['None', 'sin', '-sin', 'cos', '-cos'])
-            if clicked:
-                if current == 'None': selected.float_y = None
-                if current == 'sin': selected.float_y = math.sin
-                if current == '-sin': selected.float_y = lambda v: -math.sin(v)
-                if current == 'cos': selected.float_y = math.cos
-                if current == '-cos': selected.float_y = lambda v: -math.cos(v)
-            if imgui.button("Close"):
-                selected = None
-        else:
-            imgui.text('Not Implemented Yet')
-
-        imgui.end()
+    editor_ui = editor.SceneEditor(screen, game.obj_manager)
 
     running = True
     elapsed = 0
@@ -235,11 +165,7 @@ def main():
 
             wrapper.process_event(event)
 
-        if pygame.mouse.get_pressed()[0]:
-            if len(render.hover) > 0 and selected is None:
-                selected = render.hover[0]
-
-        render.hover = game.get_hovered(screen)
+        editor_ui.update()
 
         keys = pygame.key.get_pressed()
 
@@ -304,6 +230,7 @@ def main():
 
         anis.update(elapsed)
 
+        # draw game
         buffer.fill('black')
         render.draw(phys, 0)
         # phys.draw(buffer)
@@ -311,8 +238,9 @@ def main():
         score_surface = render.font.render(f'SCORE: {game.score}', False, 'black')
         wrapper.buffer.blit(score_surface, (0, 0))
 
-        demo_ui()
-
+        # draw imgui UI
+        imgui.new_frame()
+        editor_ui.draw()
         wrapper.buffer.blit(pygame.transform.scale_by(buffer, ui_scale_factor), (0, 0))
         wrapper.render()
 

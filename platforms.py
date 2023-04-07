@@ -20,6 +20,30 @@ JUMP_SPEED_FACTOR: float = 0.5
 
 
 @dataclass
+class Hovering:
+    x: callable = None
+    y: callable = None
+    index: int = 0
+    amplitude: float = 1.0
+
+
+def get_hover_delta(hover: Hovering, elapsed_ms: int) -> Tuple[float, float]:
+    # calculate movement delta
+    angle = 2 * math.pi * hover.index / 360.0
+    hover.index += 1
+    x = 0
+    y = 0
+    if hover.x is not None:
+        x = hover.x(angle) * elapsed_ms / 1000.0
+    if hover.y is not None:
+        y = hover.y(angle) * elapsed_ms / 1000.0
+    x *= hover.amplitude
+    y *= hover.amplitude
+
+    return x, y
+
+
+@dataclass
 class Platform:
     # top left position
     x: float
@@ -28,9 +52,9 @@ class Platform:
     width: int
     height: int
     # floating information
-    float_x: callable = None
-    float_y: callable = None
-    hover_index: int = 0
+    hover: Optional[Hovering] = None
+    # editor UI related
+    color: Optional[pygame.Color] = None
 
 
 @dataclass
@@ -51,6 +75,8 @@ class Actor:
     # prevents another collision/touch event for a couple of ms
     collision_repeat_cooldown: int = 0
     touch_repeat_cooldown: int = 0
+    # editor UI related
+    color: Optional[pygame.Color] = None
 
 
 @dataclass
@@ -60,6 +86,8 @@ class Object:
     pos_y: float
     # object type id
     object_type: int
+    # editor UI related
+    color: Optional[pygame.Color] = None
 
 
 def test_line_intersection(x1: float, y1: float, x2: float, y2: float, x3: float, y3: float,
@@ -296,8 +324,9 @@ class Physics(object):
         """This handles the actor's horizontal movement. Collision is detected and handled. More collision handling
         can be achieved via on_collision. Multiple calls are delayed with COLLISION_REPEAT_DELAY
         """
-        if actor.anchor is not None and actor.anchor.float_x is not None:
-            self.anchor_actor(actor)
+        if actor.anchor is not None and actor.anchor.hover is not None:
+            if actor.anchor.hover.x is not None:
+                self.anchor_actor(actor)
 
         # look into current x-direction
         if actor.force_x != 0.0:
@@ -367,18 +396,10 @@ class Physics(object):
             self.event_listener.on_reaching(actor, other)
 
     def simulate_floating(self, platform: Platform, elapsed_ms: int) -> None:
-        if platform.float_x is None and platform.float_y is None:
+        if platform.hover is None or platform.hover.amplitude == 0.0:
             return
 
-        # calculate movement delta
-        angle = 2 * math.pi * platform.hover_index / 360.0
-        platform.hover_index += 1
-        delta_x = 0
-        delta_y = 0
-        if platform.float_x is not None:
-            delta_x = platform.float_x(angle) * elapsed_ms / 1000.0
-        if platform.float_y is not None:
-            delta_y = platform.float_y(angle) * elapsed_ms / 1000.0
+        delta_x, delta_y = get_hover_delta(platform.hover, elapsed_ms)
 
         # move platform
         platform.x += delta_x
