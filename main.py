@@ -100,12 +100,12 @@ class Game(platforms.PhysicsListener, animations.AnimationListener):
 
     # --- Animation Events -
 
-    def on_step(self, ani: animations.Animation) -> None:
+    def on_step(self, ani: animations.FrameAnimation) -> None:
         """Triggered when a cycle of a move animation finished.
         """
         print('step!')
 
-    def on_attack(self, ani: animations.Animation) -> None:
+    def on_attack(self, ani: animations.FrameAnimation) -> None:
         """Triggered when an attack animation finished.
         """
         print('swing!')

@@ -47,11 +47,11 @@ class ObjectManager(object):
         Returns a sprite which links to the actor and its animations.
         """
         actor = platforms.Actor(id=self.next_obj_id, **kwargs)
-        animation = animations.Animation(id=self.next_obj_id)
+        animation = animations.FrameAnimation(id=self.next_obj_id)
 
         sprite = tiles.Sprite(sprite_sheet=sprite_sheet, actor=actor, animation=animation)
         self.physics.actors.append(actor)
-        self.animation.animations.append(animation)
+        self.animation.frame_animations.append(animation)
         self.renderer.sprites.append(sprite)
 
         self.next_obj_id += 1
@@ -62,5 +62,5 @@ class ObjectManager(object):
         """Remove an actor (as well as its animation) from by using the related sprite object.
         """
         self.physics.actors.remove(sprite.actor)
-        self.animation.animations.remove(sprite.animation)
+        self.animation.frame_animations.remove(sprite.animation)
         self.renderer.sprites.remove(sprite)

@@ -16,7 +16,7 @@ DIE_ACTION: int = 5
 
 
 @dataclass
-class Animation:
+class FrameAnimation:
     id: int
     # row and column index
     action_id: int = 0
@@ -41,7 +41,7 @@ def flip_sprite_sheet(src: pygame.Surface, tile_size: int) -> pygame.Surface:
     return dst
 
 
-def start(ani: Animation, action_id: int, duration_ms: int = ANIMATION_FRAME_DURATION) -> None:
+def start(ani: FrameAnimation, action_id: int, duration_ms: int = ANIMATION_FRAME_DURATION) -> None:
     """Resets the animation with the given action.
     """
     if ani.action_id == action_id:
@@ -56,13 +56,13 @@ def start(ani: Animation, action_id: int, duration_ms: int = ANIMATION_FRAME_DUR
 class AnimationListener(object):
 
     @abstractmethod
-    def on_step(self, ani: Animation) -> None:
+    def on_step(self, ani: FrameAnimation) -> None:
         """Triggered when a cycle of a move animation finished.
         """
         pass
 
     @abstractmethod
-    def on_attack(self, ani: Animation) -> None:
+    def on_attack(self, ani: FrameAnimation) -> None:
         """Triggered when an attack animation finished.
         """
         pass
@@ -72,10 +72,10 @@ class Animating(object):
     """Handles all frame set animations.
     """
     def __init__(self, animation_listener: AnimationListener):
-        self.animations = list()
+        self.frame_animations = list()
         self.event_listener = animation_listener
 
-    def notify_animation(self, ani: Animation) -> None:
+    def notify_animation(self, ani: FrameAnimation) -> None:
         """Notify about a finished animation.
         """
         if ani.action_id == MOVE_ACTION:
@@ -83,41 +83,50 @@ class Animating(object):
         elif ani.action_id == ATTACK_ACTION:
             self.event_listener.on_attack(ani)
 
+    def update_frame(self, ani: FrameAnimation, elapsed_ms: int) -> None:
+        """Update a single frame animation.
+        """
+        # continue animation
+        ani.duration_ms -= elapsed_ms
+        if ani.duration_ms > 0:
+            return
+
+        ani.duration_ms += ani.frame_duration_ms
+        ani.frame_id += 1
+
+        if ani.frame_id < ANIMATION_NUM_FRAMES:
+            return
+
+        # handle animation type (loop, reset, freeze)
+        self.notify_animation(ani)
+
+        if ani.action_id in [IDLE_ACTION, MOVE_ACTION]:
+            # loop
+            ani.frame_id = 0
+        elif ani.action_id in [ATTACK_ACTION, LANDING_ACTION]:
+            # reset to idle
+            ani.frame_id = 0
+            ani.action_id = IDLE_ACTION
+        else:
+            # freeze at last frame
+            ani.frame_id -= 1
+
     def update(self, elapsed_ms: int) -> None:
         """Updates all animations' frame durations. It automatically switches frames and loops/returns/freezes the
         animation once finished.
         """
-        for ani in self.animations:
-            # continue animation
-            ani.duration_ms -= elapsed_ms
-            if ani.duration_ms <= 0:
-                ani.duration_ms += ani.frame_duration_ms
-                ani.frame_id += 1
-
-                # handle animation type (loop, reset, freeze)
-                if ani.frame_id == ANIMATION_NUM_FRAMES:
-                    self.notify_animation(ani)
-
-                    if ani.action_id in [IDLE_ACTION, MOVE_ACTION]:
-                        # loop
-                        ani.frame_id = 0
-                    elif ani.action_id in [ATTACK_ACTION, LANDING_ACTION]:
-                        # reset to idle
-                        ani.frame_id = 0
-                        ani.action_id = IDLE_ACTION
-                    else:
-                        # freeze at last frame
-                        ani.frame_id -= 1
+        for ani in self.frame_animations:
+            self.update_frame(ani, elapsed_ms)
 
 
 def main():
     from constants import SPRITE_SCALE
 
     class DemoListener(AnimationListener):
-        def on_step(self, a: Animation) -> None:
+        def on_step(self, a: FrameAnimation) -> None:
             print(f'{a} steps')
 
-        def on_attack(self, a: Animation) -> None:
+        def on_attack(self, a: FrameAnimation) -> None:
             print(f'{a} finished attack')
 
     pygame.init()
@@ -143,7 +152,7 @@ def main():
 
     listener = DemoListener()
     ani = Animating(listener)
-    ani.animations.append(Animation(1))
+    ani.frame_animations.append(FrameAnimation(1))
 
     running = True
     elapsed = 0
@@ -159,24 +168,24 @@ def main():
         if keys[pygame.K_d]:
             look_right = True
         if keys[pygame.K_1]:
-            start(ani.animations[0], IDLE_ACTION, ANIMATION_FRAME_DURATION)
+            start(ani.frame_animations[0], IDLE_ACTION, ANIMATION_FRAME_DURATION)
         if keys[pygame.K_2]:
-            start(ani.animations[0], MOVE_ACTION, ANIMATION_FRAME_DURATION)
+            start(ani.frame_animations[0], MOVE_ACTION, ANIMATION_FRAME_DURATION)
         if keys[pygame.K_3]:
-            start(ani.animations[0], ATTACK_ACTION, ANIMATION_FRAME_DURATION)
+            start(ani.frame_animations[0], ATTACK_ACTION, ANIMATION_FRAME_DURATION)
         if keys[pygame.K_4]:
-            start(ani.animations[0], JUMP_ACTION, ANIMATION_FRAME_DURATION)
+            start(ani.frame_animations[0], JUMP_ACTION, ANIMATION_FRAME_DURATION)
         if keys[pygame.K_5]:
-            start(ani.animations[0], LANDING_ACTION, ANIMATION_FRAME_DURATION)
+            start(ani.frame_animations[0], LANDING_ACTION, ANIMATION_FRAME_DURATION)
         if keys[pygame.K_6]:
-            start(ani.animations[0], DIE_ACTION, ANIMATION_FRAME_DURATION)
+            start(ani.frame_animations[0], DIE_ACTION, ANIMATION_FRAME_DURATION)
 
         ani.update(elapsed)
 
         buffer.fill('lightblue')
         x_offset = (0 if look_right else 1) * ANIMATION_NUM_FRAMES * SPRITE_SCALE
-        rect = pygame.Rect(ani.animations[0].frame_id * SPRITE_SCALE + x_offset,
-                           ani.animations[0].action_id * SPRITE_SCALE, SPRITE_SCALE, SPRITE_SCALE)
+        rect = pygame.Rect(ani.frame_animations[0].frame_id * SPRITE_SCALE + x_offset,
+                           ani.frame_animations[0].action_id * SPRITE_SCALE, SPRITE_SCALE, SPRITE_SCALE)
         buffer.blit(guy, (0, 0), rect)
         screen.blit(pygame.transform.scale_by(buffer, ui_scale_factor), (0, 0))
         pygame.display.flip()

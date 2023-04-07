@@ -16,7 +16,7 @@ STAIRS_ROW: int = 3
 class Sprite:
     sprite_sheet: pygame.Surface
     actor: platforms.Actor
-    animation: animations.Animation
+    animation: animations.FrameAnimation
 
 
 def fill_pixels(surface: pygame.Surface, color: pygame.Color):
