@@ -61,8 +61,8 @@ class Platform:
 class Actor:
     id: int
     # current position
-    pos_x: float
-    pos_y: float
+    x: float
+    y: float
     # movement vector
     face_x: float = 0.0
     force_x: float = 0.0
@@ -82,8 +82,8 @@ class Actor:
 @dataclass
 class Object:
     # position
-    pos_x: float
-    pos_y: float
+    x: float
+    y: float
     # object type id
     object_type: int
     # editor UI related
@@ -117,14 +117,14 @@ def test_line_intersection(x1: float, y1: float, x2: float, y2: float, x3: float
 def is_inside_platform(actor: Actor, platform: Platform) -> bool:
     """Test whether the actor is inside the platform.
     """
-    return platform.x <= actor.pos_x < platform.x + platform.width and\
-        platform.y - platform.height < actor.pos_y < platform.y
+    return platform.x <= actor.x < platform.x + platform.width and\
+        platform.y - platform.height < actor.y < platform.y
 
 
 def did_traverse_above(actor: Actor, last_pos: pygame.math.Vector2, platform: Platform) -> bool:
     """Test whether the actor moved through the top of the platform.
     """
-    return actor.pos_y <= platform.y < last_pos.y
+    return actor.y <= platform.y < last_pos.y
 
 
 def get_falling_distance(elapsed_ms: int, delta_ms: int) -> float:
@@ -147,10 +147,10 @@ def get_falling_distance(elapsed_ms: int, delta_ms: int) -> float:
 def does_stand_on(actor: Actor, platform: Platform) -> bool:
     """Tests if the actor stands on the given platform or not.
     """
-    if platform.y != actor.pos_y:
+    if platform.y != actor.y:
         return False
 
-    return platform.x <= actor.pos_x <= platform.x + platform.width
+    return platform.x <= actor.x <= platform.x + platform.width
 
 
 class PhysicsListener(object):
@@ -248,7 +248,7 @@ class Physics(object):
             top_left = (platform.x, platform.y)
             top_right = (platform.x + platform.width, platform.y)
 
-            pos = test_line_intersection(last_pos.x, last_pos.y, actor.pos_x, actor.pos_y, *top_left, *top_right)
+            pos = test_line_intersection(last_pos.x, last_pos.y, actor.x, actor.y, *top_left, *top_right)
             if pos is None:
                 continue
 
@@ -260,7 +260,7 @@ class Physics(object):
 
         # reset position
         if stop_pos is not None:
-            actor.pos_x, actor.pos_y = stop_pos
+            actor.x, actor.y = stop_pos
 
         return stop_platform
 
@@ -274,7 +274,7 @@ class Physics(object):
                 continue
 
             # reset position
-            actor.pos_x, actor.pos_y = last_pos
+            actor.x, actor.y = last_pos
 
             return platform
 
@@ -287,21 +287,21 @@ class Physics(object):
             # as if at the highest point of a jump
             actor.force_y = -1.0
             actor.jump_ms = JUMP_DURATION
-            actor.fall_from_y = actor.pos_y
+            actor.fall_from_y = actor.y
             self.event_listener.on_falling(actor)
 
         if actor.force_y == 0:
             return
 
         # calculate new height
-        last_pos = pygame.math.Vector2(actor.pos_x, actor.pos_y)
+        last_pos = pygame.math.Vector2(actor.x, actor.y)
         delta_height = get_falling_distance(actor.jump_ms, elapsed_ms) * JUMP_SPEED_FACTOR
 
         if delta_height < 0 and actor.fall_from_y is None:
-            actor.fall_from_y = actor.pos_y
+            actor.fall_from_y = actor.y
 
         actor.jump_ms += elapsed_ms
-        actor.pos_y += delta_height
+        actor.y += delta_height
 
         # check for collision
         platform = self.check_falling_collision(actor, last_pos)
@@ -337,8 +337,8 @@ class Physics(object):
             return
 
         # apply horizontal force
-        last_pos = pygame.math.Vector2(actor.pos_x, actor.pos_y)
-        actor.pos_x += delta_x
+        last_pos = pygame.math.Vector2(actor.x, actor.y)
+        actor.x += delta_x
 
         # check for collision against all platforms and pick the closest collision point
         platform = self.check_movement_collision(actor, last_pos)
@@ -346,7 +346,7 @@ class Physics(object):
             return
 
         # reset position
-        actor.pos_x, actor.pos_y = last_pos
+        actor.x, actor.y = last_pos
         self.anchor_actor(actor)
 
         # trigger event
@@ -362,13 +362,13 @@ class Physics(object):
         """This checks for collisions between the actor and other actors in mutual distance. For each such collision,
         the callback on_touch is triggered. Multiple calls are delayed with COLLISION_REPEAT_DELAY.
         """
-        pos = pygame.math.Vector2(actor.pos_x, actor.pos_y)
+        pos = pygame.math.Vector2(actor.x, actor.y)
 
         for other in self.actors:
             if actor == other:
                 continue
 
-            distance = pygame.math.Vector2(other.pos_x, other.pos_y).distance_squared_to(pos)
+            distance = pygame.math.Vector2(other.x, other.y).distance_squared_to(pos)
             if distance > (actor.radius + other.radius) ** 2:
                 continue
 
@@ -382,13 +382,13 @@ class Physics(object):
         """This checks for collisions between the actor and other actors in mutual distance. For each such collision,
         the callback on_reach is triggered.
         """
-        pos = pygame.math.Vector2(actor.pos_x, actor.pos_y + actor.radius)
+        pos = pygame.math.Vector2(actor.x, actor.y + actor.radius)
 
         for other in self.objects:
             if actor == other:
                 continue
 
-            distance = pygame.math.Vector2(other.pos_x, other.pos_y).distance_squared_to(pos)
+            distance = pygame.math.Vector2(other.x, other.y).distance_squared_to(pos)
             if distance > (actor.radius * 2) ** 2:
                 continue
 
@@ -411,9 +411,9 @@ class Physics(object):
                 continue
 
             # apply
-            last_pos = pygame.math.Vector2(actor.pos_x, actor.pos_y)
-            actor.pos_x += delta_x
-            actor.pos_y += delta_y
+            last_pos = pygame.math.Vector2(actor.x, actor.y)
+            actor.x += delta_x
+            actor.y += delta_y
 
             # check for collision against all platforms and pick the closest collision point
             platform = self.check_movement_collision(actor, last_pos)
@@ -421,7 +421,7 @@ class Physics(object):
                 continue
 
             # reset position
-            actor.pos_x, actor.pos_y = last_pos
+            actor.x, actor.y = last_pos
 
             # trigger event
             actor.touch_repeat_cooldown -= elapsed_ms
@@ -460,16 +460,16 @@ class Physics(object):
 
         for obj in self.objects:
             # draw circular hit box (pos is bottom center, is moved to pure center)
-            x = int(obj.pos_x * WORLD_SCALE)
-            y = int(target.get_height() - (obj.pos_y * WORLD_SCALE + OBJECT_SCALE // 2))
+            x = int(obj.x * WORLD_SCALE)
+            y = int(target.get_height() - (obj.y * WORLD_SCALE + OBJECT_SCALE // 2))
             r = int(OBJECT_RADIUS * WORLD_SCALE)
             c = pygame.Color('gold')
             pygame.gfxdraw.circle(target, x, y, r, c)
 
         for actor in self.actors:
             # draw circular hit box (pos is bottom center, needs to be pure center)
-            x = int(actor.pos_x * WORLD_SCALE)
-            y = int(target.get_height() - (actor.pos_y * WORLD_SCALE + WORLD_SCALE // 2))
+            x = int(actor.x * WORLD_SCALE)
+            y = int(target.get_height() - (actor.y * WORLD_SCALE + WORLD_SCALE // 2))
             r = int(actor.radius * WORLD_SCALE)
             c = pygame.Color('red')
             pygame.gfxdraw.circle(target, x, y, r, c)
@@ -477,6 +477,6 @@ class Physics(object):
 
 if __name__ == '__main__':
     # minimal unit testing
-    pos_x, pos_y = test_line_intersection(-3.5, 4, 4, -1, -3, -3, 4, 2)
-    assert abs(pos_x - 1.8276) < 0.01
-    assert abs(pos_y - 0.4483) < 0.01
+    x, y = test_line_intersection(-3.5, 4, 4, -1, -3, -3, 4, 2)
+    assert abs(x - 1.8276) < 0.01
+    assert abs(y - 0.4483) < 0.01

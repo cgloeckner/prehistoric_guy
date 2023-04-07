@@ -6,3 +6,9 @@ ANIMATION_NUM_FRAMES: int = 4
 
 RESOLUTION_X: int = WORLD_SCALE * 10
 RESOLUTION_Y: int = int(RESOLUTION_X * 0.75)
+
+# objects row offsets
+FOOD_OBJ: int = 0
+DANGER_OBJ: int = 1
+BONUS_OBJ: int = 2
+WEAPON_OBJ: int = 3

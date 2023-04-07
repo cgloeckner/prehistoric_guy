@@ -57,8 +57,8 @@ class Renderer(object):
             fill_pixels(objects, obj.color)
 
         # pos is bottom center, needs to be top left
-        x = obj.pos_x * WORLD_SCALE - OBJECT_SCALE // 2
-        y = self.surface.get_height() - (obj.pos_y * WORLD_SCALE + OBJECT_SCALE)
+        x = obj.x * WORLD_SCALE - OBJECT_SCALE // 2
+        y = self.surface.get_height() - (obj.y * WORLD_SCALE + OBJECT_SCALE)
 
         variation_col = 0
         clip = (variation_col * OBJECT_SCALE, obj.object_type * OBJECT_SCALE, OBJECT_SCALE, OBJECT_SCALE)
@@ -74,8 +74,8 @@ class Renderer(object):
             fill_pixels(sprite_sheet, sprite.actor.color)
 
         # pos is bottom center, needs to be top left
-        x = sprite.actor.pos_x * WORLD_SCALE - SPRITE_SCALE // 2
-        y = self.surface.get_height() - (sprite.actor.pos_y * WORLD_SCALE + SPRITE_SCALE)
+        x = sprite.actor.x * WORLD_SCALE - SPRITE_SCALE // 2
+        y = self.surface.get_height() - (sprite.actor.y * WORLD_SCALE + SPRITE_SCALE)
 
         x_offset = (0 if sprite.actor.face_x >= 0.0 else 1) * ANIMATION_NUM_FRAMES * SPRITE_SCALE
         clip = pygame.Rect(sprite.animation.frame_id * SPRITE_SCALE + x_offset,

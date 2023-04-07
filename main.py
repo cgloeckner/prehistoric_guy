@@ -14,13 +14,6 @@ import factory
 import editor
 
 
-# objects row offsets
-FOOD_OBJ: int = 0
-DANGER_OBJ: int = 1
-BONUS_OBJ: int = 2
-WEAPON_OBJ: int = 3
-
-
 class Game(platforms.PhysicsListener, animations.AnimationListener):
 
     def __init__(self):
@@ -32,11 +25,11 @@ class Game(platforms.PhysicsListener, animations.AnimationListener):
         p = random.choice(self.obj_manager.physics.platforms)
         x = random.randrange(p.width)
 
-        self.obj_manager.create_object(pos_x=p.x + x, pos_y=p.y + 0.5, object_type=FOOD_OBJ)
+        self.obj_manager.create_object(x=p.x + x, y=p.y + 0.5, object_type=FOOD_OBJ)
 
     def populate_demo_scene(self, guy_sheet: pygame.Surface) -> None:
-        self.obj_manager.create_actor(sprite_sheet=guy_sheet, pos_x=1.5, pos_y=3.5)
-        self.obj_manager.create_actor(sprite_sheet=guy_sheet, pos_x=7.5, pos_y=4.5)
+        self.obj_manager.create_actor(sprite_sheet=guy_sheet, x=1.5, y=3.5)
+        self.obj_manager.create_actor(sprite_sheet=guy_sheet, x=7.5, y=4.5)
 
         # horizontal platforms
         self.obj_manager.create_platform(x=0, y=1, width=3, height=2)
@@ -52,7 +45,7 @@ class Game(platforms.PhysicsListener, animations.AnimationListener):
 
         # NOTE: h=0 necessary to avoid collisions when jumping "into" the platform
         self.obj_manager.create_platform(x=1.0, y=6, width=RESOLUTION_X // WORLD_SCALE - 2 - 3, height=0,
-                                         hover=platforms.Hovering(y=math.sin))
+                                         hover=platforms.Hovering(y=math.cos, amplitude=-1))
 
         for i in range(10):
             self.create_food()
@@ -66,8 +59,7 @@ class Game(platforms.PhysicsListener, animations.AnimationListener):
         for sprite in self.obj_manager.renderer.sprites:
             if sprite.actor == actor:
                 action = animations.IDLE_ACTION
-                delta_h = actor.fall_from_y - sprite.actor.pos_y
-                print(delta_h)
+                delta_h = actor.fall_from_y - sprite.actor.y
 
                 if delta_h > 2.5:
                     action = animations.LANDING_ACTION
@@ -217,16 +209,16 @@ def main():
         phys.update(elapsed)
 
         # limit pos to screen
-        phys.actors[0].pos_x = max(0, min(phys.actors[0].pos_x, RESOLUTION_X // WORLD_SCALE))
-        if phys.actors[0].pos_y < 0:
+        phys.actors[0].x = max(0, min(phys.actors[0].x, RESOLUTION_X // WORLD_SCALE))
+        if phys.actors[0].y < 0:
             game.score -= 3
             if game.score < 0:
                 game.score = 0
-            phys.actors[0].pos_y += RESOLUTION_Y // WORLD_SCALE
+            phys.actors[0].y += RESOLUTION_Y // WORLD_SCALE
 
-        phys.actors[1].pos_x = max(0, min(phys.actors[1].pos_x, RESOLUTION_X // WORLD_SCALE))
-        if phys.actors[1].pos_y < 0:
-            phys.actors[1].pos_y += RESOLUTION_Y // WORLD_SCALE
+        phys.actors[1].x = max(0, min(phys.actors[1].x, RESOLUTION_X // WORLD_SCALE))
+        if phys.actors[1].y < 0:
+            phys.actors[1].y += RESOLUTION_Y // WORLD_SCALE
 
         anis.update(elapsed)
 
