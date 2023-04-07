@@ -41,6 +41,7 @@ class Renderer(object):
 
         self.x = 0
         self.sprites = list()
+        self.colored_cache = dict()
 
         # load resources
         self.font = pygame.font.SysFont(pygame.font.get_default_font(), 18)
@@ -48,13 +49,27 @@ class Renderer(object):
         self.tiles = pygame.image.load('data/tiles.png')
         self.objects = pygame.image.load('data/objects.png')
 
+    def get_colored_surface(self, surface: pygame.Surface, color: pygame.Color) -> pygame.Surface:
+        """If not cached, a copy of the given surface is created and all non-transparent pixels are replaced with the
+        given color. If cached, the existing copy is used.
+        Returns the colored surface.
+        """
+        key = (surface, (color.r, color.g, color.b))
+        if key in self.colored_cache:
+            return self.colored_cache[key]
+
+        copy = surface.copy()
+        fill_pixels(copy, color)
+        self.colored_cache[key] = copy
+
+        return copy
+
     def draw_object(self, obj: platforms.Object) -> None:
         """Draw an object.
         """
         objects = self.objects
         if obj.color is not None:
-            objects = objects.copy()
-            fill_pixels(objects, obj.color)
+            objects = self.get_colored_surface(objects, obj.color)
 
         # pos is bottom center, needs to be top left
         x = obj.x * WORLD_SCALE - OBJECT_SCALE // 2
@@ -70,8 +85,7 @@ class Renderer(object):
         """
         sprite_sheet = sprite.sprite_sheet
         if sprite.actor.color is not None:
-            sprite_sheet = sprite_sheet.copy()
-            fill_pixels(sprite_sheet, sprite.actor.color)
+            sprite_sheet = self.get_colored_surface(sprite_sheet, sprite.actor.color)
 
         # pos is bottom center, needs to be top left
         x = sprite.actor.x * WORLD_SCALE - SPRITE_SCALE // 2
@@ -87,8 +101,7 @@ class Renderer(object):
         """
         tiles = self.tiles
         if platform.color is not None:
-            tiles = tiles.copy()
-            fill_pixels(tiles, platform.color)
+            tiles = self.get_colored_surface(tiles, platform.color)
 
         x = platform.x * WORLD_SCALE
         y = self.surface.get_height() - platform.y * WORLD_SCALE
