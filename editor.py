@@ -69,6 +69,8 @@ def sprite_ui(sprite: tiles.Sprite) -> bool:
     imgui.text(f'force_x={sprite.actor.force_x}')
     imgui.text(f'force_y={sprite.actor.force_y}')
     imgui.text(f'fall_from_y={sprite.actor.fall_from_y}')
+    imgui.text(f'anchor={sprite.actor.anchor}')
+    imgui.text(f'ladder={sprite.actor.ladder}')
     _, sprite.actor.radius = imgui.input_float('y', sprite.actor.radius, 0.1)
     imgui.text(f'action_id={sprite.animation.action_id}')
 
