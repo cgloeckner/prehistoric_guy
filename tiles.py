@@ -112,12 +112,12 @@ class Renderer(object):
 
         # top left position
         x = ladder.x * WORLD_SCALE
-        y = self.surface.get_height() - ladder.y * WORLD_SCALE
+        y = self.surface.get_height() - (ladder.y + 1) * WORLD_SCALE
 
         w = WORLD_SCALE
         h = ladder.height * WORLD_SCALE
 
-        for i in range(ladder.height+1):
+        for i in range(ladder.height):
             self.surface.blit(tiles, (x, y - i * WORLD_SCALE),
                           ((3 * tileset_col + 1) * WORLD_SCALE, LADDER_ROW * WORLD_SCALE, WORLD_SCALE, WORLD_SCALE * 2))
 

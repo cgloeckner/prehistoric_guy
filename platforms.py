@@ -50,7 +50,7 @@ class Platform:
     y: float
     # size
     width: int
-    height: int
+    height: int = 0
     # floating information
     hover: Optional[Hovering] = None
     # editor UI related
@@ -81,6 +81,7 @@ class Actor:
     # collision data
     radius: float = 0.5
     anchor: Optional[Platform] = None
+    ladder: Optional[Ladder] = None
     # prevents another collision/touch event for a couple of ms
     collision_repeat_cooldown: int = 0
     touch_repeat_cooldown: int = 0
@@ -130,6 +131,12 @@ def is_inside_platform(actor: Actor, platform: Platform) -> bool:
         platform.y - platform.height < actor.y < platform.y
 
 
+def ladder_in_reach(actor: Actor, ladder: Ladder) -> bool:
+    """Test whether the actor is in reach of the ladder.
+    """
+    return ladder.x <= actor.x < ladder.x + 1 and ladder.y - 0.5 <= actor.y < ladder.y + ladder.height + 0.5
+
+
 def did_traverse_above(actor: Actor, last_pos: pygame.math.Vector2, platform: Platform) -> bool:
     """Test whether the actor moved through the top of the platform.
     """
@@ -171,32 +178,44 @@ class PhysicsListener(object):
         pass
 
     @abstractmethod
-    def on_landing(self, actor: Actor, platform: Platform) -> None:
+    def on_land_on_platform(self, actor: Actor, platform: Platform) -> None:
         """Triggered when the actor landed on a platform.
         """
         pass
 
     @abstractmethod
-    def on_colliding(self, actor: Actor, platform: Platform) -> None:
+    def on_collide_platform(self, actor: Actor, platform: Platform) -> None:
         """Triggered when the actor runs into a platform.
         """
         pass
 
     @abstractmethod
-    def on_switching(self, actor: Actor, platform: Platform) -> None:
+    def on_switch_platform(self, actor: Actor, platform: Platform) -> None:
         """Triggered when the actor switches to the given platform as an anchor.
         """
         pass
 
     @abstractmethod
-    def on_touching(self, actor: Actor, other: Actor) -> None:
+    def on_touch_actor(self, actor: Actor, other: Actor) -> None:
         """Triggered when the actor touches another actor.
         """
         pass
 
     @abstractmethod
-    def on_reaching(self, actor: Actor, obj: Object) -> None:
+    def on_reach_object(self, actor: Actor, obj: Object) -> None:
         """Triggered when the actor reaches an object.
+        """
+        pass
+
+    @abstractmethod
+    def on_reach_ladder(self, actor: Actor, ladder: Ladder) -> None:
+        """Triggered when the actor reaches a ladder.
+        """
+        pass
+
+    @abstractmethod
+    def on_leave_ladder(self, actor: Actor, ladder: Ladder) -> None:
+        """Triggered when the actor leaves a ladder.
         """
         pass
 
@@ -230,14 +249,50 @@ class Physics(object):
         if actor.anchor == relevant[0]:
             return
 
-        self.event_listener.on_switching(actor, relevant[0])
+        self.event_listener.on_switch_platform(actor, relevant[0])
         actor.anchor = relevant[0]
+
+    def find_closest_ladder(self, actor: Actor) -> Optional[Ladder]:
+        """Searches the closest ladder.
+        Returns that ladder or None.
+        """
+        min_ladder = None
+        min_dist = None
+        for ladder in self.ladders:
+            if not ladder_in_reach(actor, ladder):
+                continue
+
+            distance = abs(ladder.x - actor.x)
+            if min_ladder is None or distance < min_dist:
+                min_ladder = ladder
+                min_dist = distance
+
+        return min_ladder
+
+    def grab_ladder(self, actor: Actor) -> None:
+        """Tries to (re-)grab the closest ladder.
+        Once a ladder is reached, on_reach_ladder is triggered.
+        """
+        closest_ladder = self.find_closest_ladder(actor)
+
+        # notify reaching the new or leaving the old ladder
+        if actor.ladder != closest_ladder:
+            if closest_ladder is None:
+                self.event_listener.on_leave_ladder(actor, closest_ladder)
+                actor.force_y = 0
+            else:
+                self.event_listener.on_reach_ladder(actor, closest_ladder)
+
+        actor.ladder = closest_ladder
 
     def is_falling(self, actor: Actor) -> bool:
         """The actor is falling if he does not stand on any platform.
         If the actor is jumping (force_y > 0) or already falling (force_y < 0), he is not falling.
         Returns True if he is falling.
         """
+        if actor.ladder is not None:
+            return False
+
         if actor.force_y != 0:
             return False
 
@@ -290,9 +345,12 @@ class Physics(object):
 
     def simulate_gravity(self, actor: Actor, elapsed_ms: int) -> None:
         """This simulates the effect of gravity to an actor. This means adjusting the y-position by jumping and falling.
-        Collision detection and handling is performed here. Further collision handling can be done using the on_landed
-        callback of the event_listener.
+        Collision detection and handling is performed here. Further collision handling can be done using the
+        on_land_on_platform callback of the event_listener.
         """
+        if actor.ladder is not None:
+            return
+
         if self.is_falling(actor):
             # as if at the highest point of a jump
             actor.force_y = -1.0
@@ -302,6 +360,8 @@ class Physics(object):
 
         if actor.force_y == 0:
             return
+
+        actor.anchor = None
 
         # calculate new height
         last_pos = pygame.math.Vector2(actor.x, actor.y)
@@ -324,7 +384,7 @@ class Physics(object):
 
         # trigger event
         actor.anchor = platform
-        self.event_listener.on_landing(actor, platform)
+        self.event_listener.on_land_on_platform(actor, platform)
         actor.fall_from_y = None
 
         # reset vertical force
@@ -332,7 +392,7 @@ class Physics(object):
 
     def handle_movement(self, actor: Actor, elapsed_ms: int) -> None:
         """This handles the actor's horizontal movement. Collision is detected and handled. More collision handling
-        can be achieved via on_collision. Multiple calls are delayed with COLLISION_REPEAT_DELAY
+        can be achieved via on_collide_platform. Multiple calls are delayed with COLLISION_REPEAT_DELAY.
         """
         if actor.anchor is not None and actor.anchor.hover is not None:
             if actor.anchor.hover.x is not None:
@@ -363,14 +423,64 @@ class Physics(object):
         actor.touch_repeat_cooldown -= elapsed_ms
         if actor.touch_repeat_cooldown <= 0:
             actor.touch_repeat_cooldown = COLLISION_REPEAT_DELAY
-            self.event_listener.on_colliding(actor, platform)
+            self.event_listener.on_collide_platform(actor, platform)
 
         # reset movement force
         actor.force_x = 0
 
+    def handle_climb(self, actor: Actor, elapsed_ms: int) -> None:
+        """Handles climbing on a ladder.
+        If the ladder is left, on_leave_ladder is triggered.
+        """
+        self.grab_ladder(actor)
+        print(actor.ladder)
+
+        if actor.force_x != 0.0:
+            if actor.ladder is not None:
+                self.event_listener.on_leave_ladder(actor, actor.ladder)
+                actor.ladder = None
+                actor.force_y = 0.0
+            return
+
+        if actor.ladder is None:
+            return
+
+        # reset falling
+        actor.jump_ms = 0
+        actor.fall_from_y = None
+
+        delta_y = actor.force_y * elapsed_ms * MOVE_SPEED_FACTOR / 1000
+        if delta_y == 0.0:
+            return
+
+        # stop climbing until triggered again
+        actor.force_y = 0.0
+
+        # apply horizontal force
+        last_pos = pygame.math.Vector2(actor.x, actor.y)
+        actor.y += delta_y
+
+        if ladder_in_reach(actor, actor.ladder):
+            return
+
+        # search for platform to stand at
+        relevant = self.get_supporting_platforms(actor)
+        if len(relevant) > 0:
+            actor.anchor = relevant[0]
+            actor.ladder = None
+            self.event_listener.on_leave_ladder(actor, actor.ladder)
+            actor.force_y = 0.0
+            return
+
+        # reset actor to avoid leaving the ladder's end
+        actor.force_y = 0.0
+        actor.x, actor.y = last_pos
+        print('reaching end of ladder', actor)
+
+
     def check_actor_collision(self, actor: Actor, elapsed_ms: int) -> None:
         """This checks for collisions between the actor and other actors in mutual distance. For each such collision,
-        the callback on_touch is triggered. Multiple calls are delayed with COLLISION_REPEAT_DELAY.
+        the callback on_touch_actor is triggered. Multiple calls are delayed with COLLISION_REPEAT_DELAY.
         """
         pos = pygame.math.Vector2(actor.x, actor.y)
 
@@ -386,11 +496,11 @@ class Physics(object):
             actor.touch_repeat_cooldown -= elapsed_ms
             if actor.touch_repeat_cooldown <= 0:
                 actor.touch_repeat_cooldown = COLLISION_REPEAT_DELAY
-                self.event_listener.on_touching(actor, other)
+                self.event_listener.on_touch_actor(actor, other)
 
     def check_object_collision(self, actor: Actor) -> None:
         """This checks for collisions between the actor and other actors in mutual distance. For each such collision,
-        the callback on_reach is triggered.
+        the callback on_reach_object is triggered.
         """
         pos = pygame.math.Vector2(actor.x, actor.y + actor.radius)
 
@@ -403,7 +513,7 @@ class Physics(object):
                 continue
 
             # trigger event
-            self.event_listener.on_reaching(actor, other)
+            self.event_listener.on_reach_object(actor, other)
 
     def simulate_floating(self, platform: Platform, elapsed_ms: int) -> None:
         if platform.hover is None or platform.hover.amplitude == 0.0:
@@ -437,7 +547,7 @@ class Physics(object):
             actor.touch_repeat_cooldown -= elapsed_ms
             if actor.touch_repeat_cooldown <= 0:
                 actor.touch_repeat_cooldown = COLLISION_REPEAT_DELAY
-                self.event_listener.on_colliding(actor, platform)
+                self.event_listener.on_collide_platform(actor, platform)
 
     def update(self, elapsed_ms: int) -> None:
         """Update all actors' physics (jumping and falling) within the past view elapsed_ms.
@@ -445,6 +555,7 @@ class Physics(object):
         for actor in self.actors:
             self.simulate_gravity(actor, elapsed_ms)
             self.handle_movement(actor, elapsed_ms)
+            self.handle_climb(actor, elapsed_ms)
             self.check_actor_collision(actor, elapsed_ms)
             self.check_object_collision(actor)
 
@@ -470,11 +581,11 @@ class Physics(object):
         for ladder in self.ladders:
             # top left position
             x = ladder.x * WORLD_SCALE
-            y = target.get_height() - (ladder.y + ladder.height) * WORLD_SCALE
+            y = target.get_height() - (ladder.y) * WORLD_SCALE
 
             w = WORLD_SCALE
             h = ladder.height * WORLD_SCALE
-            pygame.gfxdraw.rectangle(target, (x, y, w, h), pygame.Color('blue'))
+            pygame.gfxdraw.rectangle(target, (x, y, w, -h), pygame.Color('blue'))
 
         for obj in self.objects:
             # draw circular hit box (pos is bottom center, is moved to pure center)

@@ -65,6 +65,8 @@ def actor_ui(actor: platforms.Actor) -> bool:
     _, actor.x = imgui.input_float('x', actor.x, 0.1)
     _, actor.y = imgui.input_float('y', actor.y, 0.1)
     imgui.text(f'face_x={actor.face_x}')
+    imgui.text(f'force_x={actor.force_x}')
+    imgui.text(f'force_y={actor.force_y}')
     imgui.text(f'fall_from_y={actor.fall_from_y}')
     _, actor.radius = imgui.input_float('y', actor.radius, 0.1)
 

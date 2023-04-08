@@ -29,33 +29,28 @@ class Game(platforms.PhysicsListener, animations.AnimationListener):
 
     def populate_demo_scene(self, guy_sheet: pygame.Surface) -> None:
         self.obj_manager.create_actor(sprite_sheet=guy_sheet, x=1.5, y=3.5)
-        self.obj_manager.create_actor(sprite_sheet=guy_sheet, x=7.5, y=4.5)
+        #self.obj_manager.create_actor(sprite_sheet=guy_sheet, x=7.5, y=4.5)
 
         # horizontal platforms
         self.obj_manager.create_platform(x=0, y=1, width=3, height=2)
-        self.obj_manager.create_platform(x=-0.5, y=3.5, width=1, height=4)
-        self.obj_manager.create_platform(x=0, y=3, width=1, height=4)
-        self.obj_manager.create_platform(x=0.5, y=2, width=1, height=4)
-        self.obj_manager.create_platform(x=3, y=2, width=1, height=0, hover=platforms.Hovering(x=math.cos, y=math.sin))
-        self.obj_manager.create_platform(x=4, y=3, width=1, height=3)
-        self.obj_manager.create_platform(x=6, y=3, width=4, height=3)
-        self.obj_manager.create_platform(x=7, y=4, width=1, height=3)
-        self.obj_manager.create_platform(x=3, y=5, width=2, height=0, hover=platforms.Hovering(y=math.cos))
-        self.obj_manager.create_platform(x=7, y=5, width=2, height=0, hover=platforms.Hovering(x=math.cos))
+        self.obj_manager.create_platform(x=0, y=4, width=4)
+        self.obj_manager.create_platform(x=3, y=1, width=6, hover=platforms.Hovering(x=math.cos, y=math.sin))
+        self.obj_manager.create_platform(x=6, y=6, width=4)
 
         # NOTE: h=0 necessary to avoid collisions when jumping "into" the platform
         self.obj_manager.create_platform(x=1.0, y=6, width=RESOLUTION_X // WORLD_SCALE - 2 - 3, height=0,
                                          hover=platforms.Hovering(y=math.cos, amplitude=-1))
 
         # ladders
-        self.obj_manager.create_ladder(x=0, y=4, height=3)
+        self.obj_manager.create_ladder(x=0, y=2.5, height=2)
+        self.obj_manager.create_ladder(x=7, y=3.5, height=3)
 
         for i in range(10):
             self.create_food()
 
     # --- Physics Events ----------------------------------------------------------------------------------------------
 
-    def on_landing(self, actor: platforms.Actor, platform: platforms.Platform) -> None:
+    def on_land_on_platform(self, actor: platforms.Actor, platform: platforms.Platform) -> None:
         """Triggered when the actor landed on a platform.
         """
         # search corresponding animation
@@ -76,30 +71,40 @@ class Game(platforms.PhysicsListener, animations.AnimationListener):
     def on_falling(self, actor: platforms.Actor) -> None:
         """Triggered when the actor starts falling.
         """
-        print('oooh!')
+        print('falling')
 
-    def on_colliding(self, actor: platforms.Actor, platform: platforms.Platform) -> None:
+    def on_collide_platform(self, actor: platforms.Actor, platform: platforms.Platform) -> None:
         """Triggered when the actor runs into a platform.
         """
-        print('buff!')
+        print('colliding')
 
-    def on_switching(self, actor: platforms.Actor, platform: platforms.Platform) -> None:
+    def on_switch_platform(self, actor: platforms.Actor, platform: platforms.Platform) -> None:
         """Triggered when the actor switches to the given platform as an anchor.
         """
-        print('wuuuhuu')
+        print('switching')
 
-    def on_touching(self, actor: platforms.Actor, other: platforms.Actor) -> None:
+    def on_touch_actor(self, actor: platforms.Actor, other: platforms.Actor) -> None:
         """Triggered when the actor touches another actor.
         """
-        print('bing!')
+        print('touched actor')
 
-    def on_reaching(self, actor: platforms.Actor, obj: platforms.Object) -> None:
+    def on_reach_object(self, actor: platforms.Actor, obj: platforms.Object) -> None:
         """Triggered when the actor reaches an object.
         """
         self.score += 1
         self.obj_manager.destroy_object(obj)
 
         self.create_food()
+
+    def on_reach_ladder(self, actor: platforms.Actor, ladder: platforms.Ladder) -> None:
+        """Triggered when the actor reaches a ladder.
+        """
+        print('reached ladder')
+
+    def on_leave_ladder(self, actor: platforms.Actor, ladder: platforms.Ladder) -> None:
+        """Triggered when the actor leaves a ladder.
+        """
+        print('left ladder')
 
     # --- Animation Events -
 
@@ -175,7 +180,14 @@ def main():
             else:
                 if keys[pygame.K_w]:
                     render.sprites[0].actor.force_y = 1
-                    animations.start(render.sprites[0].animation, animations.JUMP_ACTION)
+                    if render.sprites[0].actor.ladder is None:
+                        animations.start(render.sprites[0].animation, animations.JUMP_ACTION)
+                    else:
+                        # FIXME
+                        animations.start(render.sprites[0].animation, animations.MOVE_ACTION)
+                if keys[pygame.K_s]:
+                    if render.sprites[0].actor.ladder is not None:
+                        render.sprites[0].actor.force_y = -1
 
                 delta_x = 0.0
                 if keys[pygame.K_a]:
@@ -189,6 +201,7 @@ def main():
                         animations.start(render.sprites[0].animation, animations.IDLE_ACTION)
                 render.sprites[0].actor.force_x = delta_x
 
+        """
         if render.sprites[1].animation.action_id != animations.DIE_ACTION:
             if keys[pygame.K_RETURN]:
                 animations.start(render.sprites[1].animation, animations.ATTACK_ACTION)
@@ -211,6 +224,7 @@ def main():
                     else:
                         animations.start(render.sprites[1].animation, animations.IDLE_ACTION)
                 render.sprites[1].actor.force_x = delta_x
+        """
 
         phys.update(elapsed)
 
@@ -222,16 +236,17 @@ def main():
                 game.score = 0
             phys.actors[0].y += RESOLUTION_Y // WORLD_SCALE
 
+        """
         phys.actors[1].x = max(0, min(phys.actors[1].x, RESOLUTION_X // WORLD_SCALE))
         if phys.actors[1].y < 0:
             phys.actors[1].y += RESOLUTION_Y // WORLD_SCALE
-
+        """
         anis.update(elapsed)
 
         # draw game
         buffer.fill('black')
         render.draw(phys, 0)
-        # phys.draw(buffer)
+        phys.draw(buffer)
 
         score_surface = render.font.render(f'SCORE: {game.score}', False, 'black')
         wrapper.buffer.blit(score_surface, (0, 0))
