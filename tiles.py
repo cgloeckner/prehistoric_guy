@@ -117,9 +117,21 @@ class Renderer(object):
         w = WORLD_SCALE
         h = ladder.height * WORLD_SCALE
 
+        # draw repeated ladder parts
         for i in range(ladder.height):
             self.surface.blit(tiles, (x, y - i * WORLD_SCALE),
-                          ((3 * tileset_col + 1) * WORLD_SCALE, LADDER_ROW * WORLD_SCALE, WORLD_SCALE, WORLD_SCALE * 2))
+                              ((3 * tileset_col + 1) * WORLD_SCALE, LADDER_ROW * WORLD_SCALE,
+                               WORLD_SCALE, WORLD_SCALE * 2))
+
+        # draw upper ladder part
+        self.surface.blit(tiles, (x, y - ladder.height * WORLD_SCALE),
+                          ((3 * tileset_col) * WORLD_SCALE, LADDER_ROW * WORLD_SCALE,
+                           WORLD_SCALE, WORLD_SCALE * 2))
+
+        # draw lower ladder part
+        self.surface.blit(tiles, (x, y + WORLD_SCALE),
+                          ((3 * tileset_col + 2) * WORLD_SCALE, LADDER_ROW * WORLD_SCALE,
+                           WORLD_SCALE, WORLD_SCALE * 2))
 
     def draw_platform(self, platform: platforms.Platform, tileset_col: int) -> None:
         """Draw a platform.
@@ -175,7 +187,7 @@ class Renderer(object):
         platformer.platforms.sort(key=lambda plat: plat.y)
 
         # FIXME: needs a better spot
-        tileset_col = 1
+        tileset_col = 0
 
         for p in platformer.platforms:
             self.draw_platform(p, tileset_col)

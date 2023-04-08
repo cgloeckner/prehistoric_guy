@@ -134,7 +134,8 @@ def is_inside_platform(actor: Actor, platform: Platform) -> bool:
 def ladder_in_reach(actor: Actor, ladder: Ladder) -> bool:
     """Test whether the actor is in reach of the ladder.
     """
-    return ladder.x <= actor.x < ladder.x + 1 and ladder.y - 0.5 <= actor.y < ladder.y + ladder.height + 0.5
+    return ladder.x <= actor.x < ladder.x + 1 and\
+        ladder.y - actor.radius <= actor.y < ladder.y + ladder.height + OBJECT_RADIUS
 
 
 def did_traverse_above(actor: Actor, last_pos: pygame.math.Vector2, platform: Platform) -> bool:
@@ -433,7 +434,6 @@ class Physics(object):
         If the ladder is left, on_leave_ladder is triggered.
         """
         self.grab_ladder(actor)
-        print(actor.ladder)
 
         if actor.force_x != 0.0:
             if actor.ladder is not None:

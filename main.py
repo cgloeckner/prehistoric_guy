@@ -33,7 +33,7 @@ class Game(platforms.PhysicsListener, animations.AnimationListener):
 
         # horizontal platforms
         self.obj_manager.create_platform(x=0, y=1, width=3, height=2)
-        self.obj_manager.create_platform(x=0, y=4, width=4)
+        self.obj_manager.create_platform(x=0, y=4.5, width=4)
         self.obj_manager.create_platform(x=3, y=1, width=6, hover=platforms.Hovering(x=math.cos, y=math.sin))
         self.obj_manager.create_platform(x=6, y=6, width=4)
 
@@ -246,7 +246,7 @@ def main():
         # draw game
         buffer.fill('black')
         render.draw(phys, 0)
-        phys.draw(buffer)
+        # phys.draw(buffer)
 
         score_surface = render.font.render(f'SCORE: {game.score}', False, 'black')
         wrapper.buffer.blit(score_surface, (0, 0))
