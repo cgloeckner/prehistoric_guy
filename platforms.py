@@ -77,7 +77,7 @@ class Actor:
     x: float
     y: float
     # movement vector
-    face_x: float = 0.0
+    face_x: float = 1.0
     force_x: float = 0.0
     force_y: float = 0.0
     jump_ms: int = 0
@@ -222,12 +222,6 @@ class PhysicsListener(object):
         pass
 
     @abstractmethod
-    def on_projectile_collides_platform(self, proj: Projectile, platform: Platform) -> None:
-        """Triggered when a projectile hits a platform.
-        """
-        pass
-
-    @abstractmethod
     def on_switch_platform(self, actor: Actor, platform: Platform) -> None:
         """Triggered when the actor switches to the given platform as an anchor.
         """
@@ -254,6 +248,18 @@ class PhysicsListener(object):
     @abstractmethod
     def on_leave_ladder(self, actor: Actor, ladder: Ladder) -> None:
         """Triggered when the actor leaves a ladder.
+        """
+        pass
+
+    @abstractmethod
+    def on_impact_platform(self, proj: Projectile, platform: Platform) -> None:
+        """Triggered when a projectile hits a platform.
+        """
+        pass
+
+    @abstractmethod
+    def on_impact_actor(self, proj: Projectile, actor: Actor) -> None:
+        """Triggered when a projectile hits an actor.
         """
         pass
 
@@ -592,10 +598,18 @@ class Physics(object):
 
         proj.fly_ms += elapsed_ms
 
+        pos = pygame.math.Vector2(proj.x, proj.y)
+        for actor in self.actors:
+            distance = pos.distance_squared_to(pygame.math.Vector2(actor.x, actor.y))
+            threshold = actor.radius + proj.radius
+            if distance <= threshold ** 2:
+                # collision with actor
+                self.event_listener.on_impact_actor(proj, actor)
+
         for platform in self.platforms:
             if is_inside_platform(proj.x, proj.y, platform) or did_traverse_above(proj.x, proj.y, last_pos, platform):
                 # collision with platform
-                self.event_listener.on_projectile_collides_platform(proj, platform)
+                self.event_listener.on_impact_platform(proj, platform)
                 proj.x, proj.y = last_pos.xy
                 proj.face_x = 0.0
 

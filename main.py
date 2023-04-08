@@ -29,7 +29,8 @@ class Game(platforms.PhysicsListener, animations.AnimationListener):
         self.obj_manager.create_object(x=p.x + x, y=p.y + 0.5, object_type=FOOD_OBJ)
 
     def populate_demo_scene(self, guy_sheet: pygame.Surface) -> None:
-        self.obj_manager.create_actor(sprite_sheet=guy_sheet, x=1.5, y=3.5)
+        self.obj_manager.create_actor_sprite(sprite_sheet=guy_sheet, x=2, y=5)
+        self.obj_manager.create_actor_sprite(sprite_sheet=guy_sheet, x=6, y=5)
 
         # horizontal platforms
         self.obj_manager.create_platform(x=0, y=1, width=3, height=2)
@@ -81,12 +82,6 @@ class Game(platforms.PhysicsListener, animations.AnimationListener):
         """
         print('colliding')
 
-    def on_projectile_collides_platform(self, proj: platforms.Projectile, platform: platforms.Platform) -> None:
-        """Triggered when a projectile hits a platform.
-        """
-        self.obj_manager.create_object(x=proj.x, y=proj.y - platforms.OBJECT_RADIUS, object_type=proj.object_type)
-        self.obj_manager.destroy_projectile(proj)
-
     def on_switch_platform(self, actor: platforms.Actor, platform: platforms.Platform) -> None:
         """Triggered when the actor switches to the given platform as an anchor.
         """
@@ -135,6 +130,21 @@ class Game(platforms.PhysicsListener, animations.AnimationListener):
                                            y=sprite.actor.y + sprite.actor.radius, radius=platforms.OBJECT_RADIUS,
                                            speed=10.0, face_x=sprite.actor.face_x, object_type=WEAPON_OBJ)
         print('swing!')
+
+    def on_impact_platform(self, proj: platforms.Projectile, platform: platforms.Platform) -> None:
+        """Triggered when a projectile hits a platform.
+        """
+        self.obj_manager.create_object(x=proj.x, y=proj.y - platforms.OBJECT_RADIUS, object_type=proj.object_type)
+        self.obj_manager.destroy_projectile(proj)
+
+    def on_impact_actor(self, proj: platforms.Projectile, actor: platforms.Actor) -> None:
+        """Triggered when a projectile hits an actor.
+        """
+        sprite = [sprite for sprite in self.obj_manager.renderer.sprites if sprite.actor == actor][0]
+        self.obj_manager.destroy_actor_sprite(sprite)
+        self.obj_manager.create_object(x=proj.x, y=proj.y - platforms.OBJECT_RADIUS, object_type=proj.object_type)
+        self.obj_manager.destroy_projectile(proj)
+
 
 
 def main():

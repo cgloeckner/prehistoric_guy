@@ -67,8 +67,8 @@ class ObjectManager(object):
         """Remove an existing projectile."""
         self.physics.projectiles.remove(proj)
 
-    def create_actor(self, sprite_sheet: pygame.Surface, **kwargs) -> tiles.Sprite:
-        """Create an actor object such as player or enemy characters.
+    def create_actor_sprite(self, sprite_sheet: pygame.Surface, **kwargs) -> tiles.Sprite:
+        """Create an actor sprite object such as player or enemy characters.
         Returns a sprite which links to the actor and its animations.
         """
         actor = platforms.Actor(id=self.next_obj_id, **kwargs)
@@ -83,8 +83,8 @@ class ObjectManager(object):
 
         return sprite
 
-    def destroy_actor(self, sprite: tiles.Sprite) -> None:
-        """Remove an actor (as well as its animation) from by using the related sprite object.
+    def destroy_actor_sprite(self, sprite: tiles.Sprite) -> None:
+        """Remove an actor sprite (as well as its animation) from by using the related sprite object.
         """
         self.physics.actors.remove(sprite.actor)
         self.animation.animations.remove(sprite.animation)
