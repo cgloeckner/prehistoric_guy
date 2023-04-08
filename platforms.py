@@ -19,6 +19,9 @@ MOVE_SPEED_FACTOR: float = 3.5
 CLIMB_SPEED_FACTOR: float = MOVE_SPEED_FACTOR * 0.75
 JUMP_SPEED_FACTOR: float = 0.5
 
+# falling factor for projectiles with reduced gravity effect
+PROJECTILE_GRAVITY_FACTOR: float = 0.1
+
 
 @dataclass
 class Hovering:
@@ -101,6 +104,23 @@ class Object:
     color: Optional[pygame.Color] = None
 
 
+@dataclass
+class Projectile:
+    # position
+    x: float
+    y: float
+    # collision radius
+    radius: float
+    # flying speed
+    speed: float
+    # facing direction
+    face_x: int
+    # object type id
+    object_type: int
+    # flying time
+    fly_ms: int = JUMP_DURATION // 4
+
+
 def test_line_intersection(x1: float, y1: float, x2: float, y2: float, x3: float, y3: float,
                            x4: float, y4: float) -> Optional[Tuple[float, float]]:
     """Tests whether the line from (x1, y1) to (x2, y2) intersects the line from (x3, y3) to (x4, y4).
@@ -125,11 +145,11 @@ def test_line_intersection(x1: float, y1: float, x2: float, y2: float, x3: float
     return x, y
 
 
-def is_inside_platform(actor: Actor, platform: Platform) -> bool:
-    """Test whether the actor is inside the platform.
+def is_inside_platform(x: float, y: float, platform: Platform) -> bool:
+    """Test whether the position is inside the platform.
     """
-    return platform.x <= actor.x < platform.x + platform.width and\
-        platform.y - platform.height < actor.y < platform.y
+    return platform.x <= x < platform.x + platform.width and\
+        platform.y - platform.height < y < platform.y
 
 
 def ladder_in_reach(actor: Actor, ladder: Ladder) -> bool:
@@ -148,10 +168,11 @@ def within_ladder(actor: Actor) -> bool:
     return actor.ladder.y < actor.y < actor.ladder.y + actor.ladder.height
 
 
-def did_traverse_above(actor: Actor, last_pos: pygame.math.Vector2, platform: Platform) -> bool:
-    """Test whether the actor moved through the top of the platform.
+def did_traverse_above(x: float, y: float, last_pos: pygame.math.Vector2, platform: Platform) -> bool:
+    """Test whether the move from last_pos to pos went through the top of the platform.
     """
-    return actor.y <= platform.y < last_pos.y
+    return (platform.x < x < platform.x + platform.width or platform.x < last_pos.x < platform.x + platform.width)\
+        and y <= platform.y < last_pos.y
 
 
 def get_falling_distance(elapsed_ms: int, delta_ms: int) -> float:
@@ -201,6 +222,12 @@ class PhysicsListener(object):
         pass
 
     @abstractmethod
+    def on_projectile_collides_platform(self, proj: Projectile, platform: Platform) -> None:
+        """Triggered when a projectile hits a platform.
+        """
+        pass
+
+    @abstractmethod
     def on_switch_platform(self, actor: Actor, platform: Platform) -> None:
         """Triggered when the actor switches to the given platform as an anchor.
         """
@@ -240,6 +267,7 @@ class Physics(object):
         self.platforms = list()
         self.ladders = list()
         self.objects = list()
+        self.projectiles = list()
 
         self.event_listener = event_listener
 
@@ -320,7 +348,7 @@ class Physics(object):
         stop_platform = None
 
         # check for platform traversal via line intersections
-        for platform in (p for p in self.platforms if did_traverse_above(actor, last_pos, p)):
+        for platform in (p for p in self.platforms if did_traverse_above(actor.x, actor.y, last_pos, p)):
             # create relevant lines from platform's vertices
             top_left = (platform.x, platform.y)
             top_right = (platform.x + platform.width, platform.y)
@@ -347,7 +375,7 @@ class Physics(object):
         Returns a platform or None.
         """
         for platform in self.platforms:
-            if not is_inside_platform(actor, platform):
+            if not is_inside_platform(actor.x, actor.y, platform):
                 continue
 
             # reset position
@@ -551,6 +579,26 @@ class Physics(object):
                 actor.touch_repeat_cooldown = COLLISION_REPEAT_DELAY
                 self.event_listener.on_collide_platform(actor, platform)
 
+    def update_projectile(self, proj: Projectile, elapsed_ms: int) -> None:
+        """Update a projectile's ballistic trajectory.
+        """
+        if proj.face_x == 0.0:
+            return
+
+        last_pos = pygame.math.Vector2(proj.x, proj.y)
+
+        proj.x += proj.face_x * proj.speed * elapsed_ms / 1000.0
+        proj.y += get_falling_distance(proj.fly_ms, elapsed_ms) * PROJECTILE_GRAVITY_FACTOR
+
+        proj.fly_ms += elapsed_ms
+
+        for platform in self.platforms:
+            if is_inside_platform(proj.x, proj.y, platform) or did_traverse_above(proj.x, proj.y, last_pos, platform):
+                # collision with platform
+                self.event_listener.on_projectile_collides_platform(proj, platform)
+                proj.x, proj.y = last_pos.xy
+                proj.face_x = 0.0
+
     def update(self, elapsed_ms: int) -> None:
         """Update all actors' physics (jumping and falling) within the past view elapsed_ms.
         """
@@ -560,6 +608,9 @@ class Physics(object):
             self.handle_climb(actor, elapsed_ms)
             self.check_actor_collision(actor, elapsed_ms)
             self.check_object_collision(actor)
+
+        for proj in self.projectiles:
+            self.update_projectile(proj, elapsed_ms)
 
         for platform in self.platforms:
             self.simulate_floating(platform, elapsed_ms)
@@ -603,6 +654,14 @@ class Physics(object):
             y = int(target.get_height() - (actor.y * WORLD_SCALE + WORLD_SCALE // 2))
             r = int(actor.radius * WORLD_SCALE)
             c = pygame.Color('green')
+            pygame.gfxdraw.circle(target, x, y, r, c)
+
+        for proj in self.projectiles:
+            # draw circular hit box (pos is center as it needs to be)
+            x = int(proj.x * WORLD_SCALE)
+            y = int(target.get_height() - proj.y * WORLD_SCALE)
+            r = int(proj.radius * WORLD_SCALE)
+            c = pygame.Color('orange')
             pygame.gfxdraw.circle(target, x, y, r, c)
 
 

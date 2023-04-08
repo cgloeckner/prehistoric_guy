@@ -14,6 +14,7 @@ class Keybinding:
     up: int
     down: int
     attack: int
+    throw: int
 
 
 class Player(object):
@@ -21,7 +22,7 @@ class Player(object):
         self.sprite = sprite
         self.binding = binding
 
-    def get_inputs(self) -> Tuple[pygame.math.Vector2, bool]:
+    def get_inputs(self) -> Tuple[pygame.math.Vector2, bool, bool]:
         """Grabs the movement vector and whether it's an attack or not.
         Returns the vector and the bool.
         """
@@ -39,13 +40,14 @@ class Player(object):
             delta.y -= 1
 
         attack = keys[self.binding.attack]
+        throw = keys[self.binding.throw]
 
-        return delta, attack
+        return delta, attack, throw
 
     def update(self) -> None:
         """Triggers movement/attack and animations.
         """
-        delta, attack = self.get_inputs()
+        delta, attack, throw = self.get_inputs()
 
         if self.sprite.animation.action_id in [animations.DIE_ACTION, animations.ATTACK_ACTION,
                                                animations.LANDING_ACTION]:
@@ -54,7 +56,20 @@ class Player(object):
             self.sprite.actor.force_y = 0.0
             return
 
+        if throw:
+            if self.sprite.animation.action_id in [animations.HOLD_ACTION, animations.CLIMB_ACTION]:
+                # not allowed
+                return
+
+            animations.start(self.sprite.animation, animations.ATTACK_ACTION)
+            # FIXME: create projectile AFTER animation
+            return
+
         if attack:
+            if self.sprite.animation.action_id in [animations.HOLD_ACTION, animations.CLIMB_ACTION]:
+                # not allowed
+                return
+
             # attack!
             animations.start(self.sprite.animation, animations.ATTACK_ACTION)
             return

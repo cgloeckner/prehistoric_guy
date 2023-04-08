@@ -35,8 +35,9 @@ class Game(platforms.PhysicsListener, animations.AnimationListener):
         self.obj_manager.create_platform(x=0, y=1, width=3, height=2)
         self.obj_manager.create_platform(x=2, y=2, width=2)
         self.obj_manager.create_platform(x=0, y=4, width=3)
-        self.obj_manager.create_platform(x=4, y=1, width=6,
-                                         hover=platforms.Hovering(x=math.cos, y=math.sin, amplitude=1.5))
+        #self.obj_manager.create_platform(x=4, y=1, width=6,
+        #                                 hover=platforms.Hovering(x=math.cos, y=math.sin, amplitude=1.5))
+        self.obj_manager.create_platform(x=4, y=4, width=6, height=10)
         self.obj_manager.create_platform(x=5, y=6, width=4)
 
         # NOTE: h=0 necessary to avoid collisions when jumping "into" the platform
@@ -79,6 +80,12 @@ class Game(platforms.PhysicsListener, animations.AnimationListener):
         """Triggered when the actor runs into a platform.
         """
         print('colliding')
+
+    def on_projectile_collides_platform(self, proj: platforms.Projectile, platform: platforms.Platform) -> None:
+        """Triggered when a projectile hits a platform.
+        """
+        self.obj_manager.create_object(x=proj.x, y=proj.y - platforms.OBJECT_RADIUS, object_type=proj.object_type)
+        self.obj_manager.destroy_projectile(proj)
 
     def on_switch_platform(self, actor: platforms.Actor, platform: platforms.Platform) -> None:
         """Triggered when the actor switches to the given platform as an anchor.
@@ -123,6 +130,10 @@ class Game(platforms.PhysicsListener, animations.AnimationListener):
     def on_attack(self, ani: animations.Animation) -> None:
         """Triggered when an attack animation finished.
         """
+        sprite = [sprite for sprite in self.obj_manager.renderer.sprites if sprite.animation == ani][0]
+        self.obj_manager.create_projectile(x=sprite.actor.x + sprite.actor.face_x,
+                                           y=sprite.actor.y + sprite.actor.radius, radius=platforms.OBJECT_RADIUS,
+                                           speed=10.0, face_x=sprite.actor.face_x, object_type=WEAPON_OBJ)
         print('swing!')
 
 
@@ -160,7 +171,7 @@ def main():
     editor_ui = editor.SceneEditor(screen, game.obj_manager)
     ctrl = controls.Player(render.sprites[0],
                            controls.Keybinding(left=pygame.K_a, right=pygame.K_d, up=pygame.K_w, down=pygame.K_s,
-                                               attack=pygame.K_SPACE))
+                                               attack=pygame.K_SPACE, throw=pygame.K_RETURN))
 
     running = True
     elapsed = 0
@@ -192,7 +203,7 @@ def main():
         # draw game
         buffer.fill('black')
         render.draw(phys, 0)
-        # phys.draw(buffer)
+        phys.draw(buffer)
 
         score_surface = render.font.render(f'SCORE: {game.score}', False, 'black')
         wrapper.buffer.blit(score_surface, (0, 0))

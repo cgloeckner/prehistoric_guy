@@ -55,6 +55,18 @@ class ObjectManager(object):
         """Remove an existing, static object."""
         self.physics.objects.remove(obj)
 
+    def create_projectile(self, **kwargs) -> platforms.Projectile:
+        """Create a projectile e.g. a thrown weapon.
+        """
+        proj = platforms.Projectile(**kwargs)
+        self.physics.projectiles.append(proj)
+        # NOTE: The renderer grabs objects from the physics system.
+        return proj
+
+    def destroy_projectile(self, proj: platforms.Projectile) -> None:
+        """Remove an existing projectile."""
+        self.physics.projectiles.remove(proj)
+
     def create_actor(self, sprite_sheet: pygame.Surface, **kwargs) -> tiles.Sprite:
         """Create an actor object such as player or enemy characters.
         Returns a sprite which links to the actor and its animations.
