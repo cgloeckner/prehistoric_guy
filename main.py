@@ -12,6 +12,7 @@ import tiles
 import animations
 import factory
 import editor
+import controls
 
 
 class Game(platforms.PhysicsListener, animations.AnimationListener):
@@ -32,19 +33,19 @@ class Game(platforms.PhysicsListener, animations.AnimationListener):
 
         # horizontal platforms
         self.obj_manager.create_platform(x=0, y=1, width=3, height=2)
-        self.obj_manager.create_platform(x=1, y=2, width=2)
+        self.obj_manager.create_platform(x=2, y=2, width=2)
         self.obj_manager.create_platform(x=0, y=4.5, width=4)
-        self.obj_manager.create_platform(x=3, y=0.5, width=6,
+        self.obj_manager.create_platform(x=4, y=0.5, width=6,
                                          hover=platforms.Hovering(x=math.cos, y=math.sin, amplitude=1.5))
-        self.obj_manager.create_platform(x=6, y=6, width=4)
+        self.obj_manager.create_platform(x=5, y=6, width=4)
 
         # NOTE: h=0 necessary to avoid collisions when jumping "into" the platform
-        self.obj_manager.create_platform(x=1.0, y=6, width=RESOLUTION_X // WORLD_SCALE - 2 - 3, height=0,
+        self.obj_manager.create_platform(x=2.0, y=6, width=RESOLUTION_X // WORLD_SCALE - 2 - 3, height=0,
                                          hover=platforms.Hovering(y=math.cos, amplitude=-1))
 
         # ladders
-        self.obj_manager.create_ladder(x=0, y=2.5, height=2)
-        self.obj_manager.create_ladder(x=7, y=3.5, height=3)
+        self.obj_manager.create_ladder(x=1, y=1.5, height=3)
+        self.obj_manager.create_ladder(x=8, y=3.5, height=3)
 
         for i in range(10):
             self.create_food()
@@ -163,6 +164,9 @@ def main():
     game.populate_demo_scene(guy)
 
     editor_ui = editor.SceneEditor(screen, game.obj_manager)
+    ctrl = controls.Player(render.sprites[0],
+                           controls.Keybinding(left=pygame.K_a, right=pygame.K_d, up=pygame.K_w, down=pygame.K_s,
+                                               attack=pygame.K_SPACE))
 
     running = True
     elapsed = 0
@@ -178,46 +182,7 @@ def main():
             wrapper.process_event(event)
 
         editor_ui.update()
-
-        keys = pygame.key.get_pressed()
-
-        if render.sprites[0].animation.action_id != animations.DIE_ACTION:
-            if keys[pygame.K_y]:
-                animations.flash(render.sprites[0].animation, pygame.Color('white'))
-
-            if keys[pygame.K_SPACE]:
-                animations.start(render.sprites[0].animation, animations.ATTACK_ACTION)
-                render.sprites[0].actor.force_x = 0
-
-            else:
-                delta_x = 0.0
-                if keys[pygame.K_LEFT]:
-                    delta_x -= 1.0
-                if keys[pygame.K_RIGHT]:
-                    delta_x += 1.0
-                if render.sprites[0].animation.action_id in [animations.IDLE_ACTION, animations.MOVE_ACTION]:
-                    if delta_x != 0.0:
-                        animations.start(render.sprites[0].animation, animations.MOVE_ACTION)
-                    else:
-                        animations.start(render.sprites[0].animation, animations.IDLE_ACTION)
-                render.sprites[0].actor.force_x = delta_x
-
-                has_ladder = render.sprites[0].actor.ladder is not None
-
-                delta_y = 0.0
-                if keys[pygame.K_UP]:
-                    delta_y = 1.0
-                if keys[pygame.K_DOWN]:
-                    delta_y = -1.0
-
-                if delta_y != 0.0:
-                    if has_ladder and delta_x == 0.0:
-                        animations.start(render.sprites[0].animation, animations.CLIMB_ACTION)
-                        render.sprites[0].actor.force_y = delta_y
-                    elif not has_ladder and delta_y > 0.0:
-                        animations.start(render.sprites[0].animation, animations.JUMP_ACTION)
-                        render.sprites[0].actor.force_y = delta_y
-
+        ctrl.update()
         phys.update(elapsed)
 
         # limit pos to screen

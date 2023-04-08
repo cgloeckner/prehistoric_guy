@@ -162,6 +162,9 @@ def main():
         def on_step(self, a: Animation) -> None:
             print(f'{a} steps')
 
+        def on_climb(self, a: Animation) -> None:
+            print(f'{a} climbs')
+
         def on_attack(self, a: Animation) -> None:
             print(f'{a} finished attack')
 
@@ -188,7 +191,7 @@ def main():
 
     listener = DemoListener()
     ani = Animating(listener)
-    ani.frame_animations.append(Animation(1))
+    ani.animations.append(Animation(1))
 
     running = True
     elapsed = 0
@@ -204,24 +207,28 @@ def main():
         if keys[pygame.K_d]:
             look_right = True
         if keys[pygame.K_1]:
-            start(ani.frame_animations[0], IDLE_ACTION, ANIMATION_FRAME_DURATION)
+            start(ani.animations[0], IDLE_ACTION, ANIMATION_FRAME_DURATION)
         if keys[pygame.K_2]:
-            start(ani.frame_animations[0], MOVE_ACTION, ANIMATION_FRAME_DURATION)
+            start(ani.animations[0], MOVE_ACTION, ANIMATION_FRAME_DURATION)
         if keys[pygame.K_3]:
-            start(ani.frame_animations[0], ATTACK_ACTION, ANIMATION_FRAME_DURATION)
+            start(ani.animations[0], HOLD_ACTION, ANIMATION_FRAME_DURATION)
         if keys[pygame.K_4]:
-            start(ani.frame_animations[0], JUMP_ACTION, ANIMATION_FRAME_DURATION)
+            start(ani.animations[0], CLIMB_ACTION, ANIMATION_FRAME_DURATION)
         if keys[pygame.K_5]:
-            start(ani.frame_animations[0], LANDING_ACTION, ANIMATION_FRAME_DURATION)
+            start(ani.animations[0], ATTACK_ACTION, ANIMATION_FRAME_DURATION)
         if keys[pygame.K_6]:
-            start(ani.frame_animations[0], DIE_ACTION, ANIMATION_FRAME_DURATION)
+            start(ani.animations[0], JUMP_ACTION, ANIMATION_FRAME_DURATION)
+        if keys[pygame.K_7]:
+            start(ani.animations[0], LANDING_ACTION, ANIMATION_FRAME_DURATION)
+        if keys[pygame.K_8]:
+            start(ani.animations[0], DIE_ACTION, ANIMATION_FRAME_DURATION)
 
         ani.update(elapsed)
 
         buffer.fill('lightblue')
         x_offset = (0 if look_right else 1) * ANIMATION_NUM_FRAMES * SPRITE_SCALE
-        rect = pygame.Rect(ani.frame_animations[0].frame_id * SPRITE_SCALE + x_offset,
-                           ani.frame_animations[0].action_id * SPRITE_SCALE, SPRITE_SCALE, SPRITE_SCALE)
+        rect = pygame.Rect(ani.animations[0].frame_id * SPRITE_SCALE + x_offset,
+                           ani.animations[0].action_id * SPRITE_SCALE, SPRITE_SCALE, SPRITE_SCALE)
         buffer.blit(guy, (0, 0), rect)
         screen.blit(pygame.transform.scale_by(buffer, ui_scale_factor), (0, 0))
         pygame.display.flip()

@@ -139,6 +139,15 @@ def ladder_in_reach(actor: Actor, ladder: Ladder) -> bool:
         ladder.y - actor.radius <= actor.y < ladder.y + ladder.height + OBJECT_RADIUS
 
 
+def within_ladder(actor: Actor) -> bool:
+    """Test whether the actor is at the middle part of his ladder.
+    """
+    if actor.ladder is None or not ladder_in_reach(actor, actor.ladder):
+        return False
+
+    return actor.ladder.y < actor.y < actor.ladder.y + actor.ladder.height
+
+
 def did_traverse_above(actor: Actor, last_pos: pygame.math.Vector2, platform: Platform) -> bool:
     """Test whether the actor moved through the top of the platform.
     """
