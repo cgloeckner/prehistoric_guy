@@ -100,6 +100,12 @@ class Game(platforms.PhysicsListener, animations.AnimationListener):
     def on_reach_ladder(self, actor: platforms.Actor, ladder: platforms.Ladder) -> None:
         """Triggered when the actor reaches a ladder.
         """
+        # trigger HOLD animation
+        if actor.ladder == ladder:
+            print('GRAB IT!')
+            sprite = [sprite for sprite in self.obj_manager.renderer.sprites if sprite.actor == actor][0]
+            animations.start(sprite.animation, animations.HOLD_ACTION)
+
         print('reached ladder')
 
     def on_leave_ladder(self, actor: platforms.Actor, ladder: platforms.Ladder) -> None:
@@ -184,23 +190,6 @@ def main():
                 render.sprites[0].actor.force_x = 0
 
             else:
-                has_ladder = render.sprites[0].actor.ladder is not None
-                is_falling = render.sprites[0].actor.anchor is not None
-
-                delta_y = 0.0
-                if keys[pygame.K_w]:
-                    delta_y = 1.0
-                if keys[pygame.K_s]:
-                    delta_y = -1.0
-
-                if has_ladder and delta_y != 0.0:
-                    animations.start(render.sprites[0].animation, animations.CLIMB_ACTION)
-                    render.sprites[0].actor.force_y = delta_y
-
-                if is_falling and not has_ladder and delta_y > 0.0:
-                    animations.start(render.sprites[0].animation, animations.JUMP_ACTION)
-                    render.sprites[0].actor.force_y = delta_y
-
                 delta_x = 0.0
                 if keys[pygame.K_a]:
                     delta_x -= 1.0
@@ -212,6 +201,22 @@ def main():
                     else:
                         animations.start(render.sprites[0].animation, animations.IDLE_ACTION)
                 render.sprites[0].actor.force_x = delta_x
+
+                has_ladder = render.sprites[0].actor.ladder is not None
+
+                delta_y = 0.0
+                if keys[pygame.K_w]:
+                    delta_y = 1.0
+                if keys[pygame.K_s]:
+                    delta_y = -1.0
+
+                if delta_y != 0.0:
+                    if has_ladder and delta_x == 0.0:
+                        animations.start(render.sprites[0].animation, animations.CLIMB_ACTION)
+                        render.sprites[0].actor.force_y = delta_y
+                    elif not has_ladder and delta_y > 0.0:
+                        animations.start(render.sprites[0].animation, animations.JUMP_ACTION)
+                        render.sprites[0].actor.force_y = delta_y
 
         """
         if render.sprites[1].animation.action_id != animations.DIE_ACTION:

@@ -82,7 +82,7 @@ class Renderer(object):
         clip = (variation_col * OBJECT_SCALE, obj.object_type * OBJECT_SCALE, OBJECT_SCALE, OBJECT_SCALE)
         self.surface.blit(objects, (x, y), clip)
 
-    def draw_actor(self, sprite: Sprite) -> None:
+    def draw_sprite(self, sprite: Sprite) -> None:
         """Draw an actor's sprite.
         Note that all sprite sheet pixels are doubled (SPRITE_SCALE).
         """
@@ -199,7 +199,7 @@ class Renderer(object):
             self.draw_object(o)
 
         for s in self.sprites:
-            self.draw_actor(s)
+            self.draw_sprite(s)
 
         # draw FPS
         fps_surface = self.font.render(f'FPS: {int(self.clock.get_fps()):02d}', False, 'white')

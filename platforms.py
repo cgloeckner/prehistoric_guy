@@ -278,14 +278,16 @@ class Physics(object):
         closest_ladder = self.find_closest_ladder(actor)
 
         # notify reaching the new or leaving the old ladder
-        if actor.ladder != closest_ladder:
+        old_ladder = actor.ladder
+        actor.ladder = closest_ladder
+
+        if old_ladder != closest_ladder:
             if closest_ladder is None:
                 self.event_listener.on_leave_ladder(actor, closest_ladder)
                 actor.force_y = 0
             else:
                 self.event_listener.on_reach_ladder(actor, closest_ladder)
 
-        actor.ladder = closest_ladder
 
     def is_falling(self, actor: Actor) -> bool:
         """The actor is falling if he does not stand on any platform.
@@ -435,16 +437,6 @@ class Physics(object):
         If the ladder is left, on_leave_ladder is triggered.
         """
         self.grab_ladder(actor)
-
-        # FIXME: is this really necessary? it basically disables x-wise jumping onto a ladder :o
-        """
-        if actor.force_x != 0.0:
-            if actor.ladder is not None:
-                self.event_listener.on_leave_ladder(actor, actor.ladder)
-                actor.ladder = None
-                actor.force_y = 0.0
-            return
-        """
 
         if actor.ladder is None:
             return

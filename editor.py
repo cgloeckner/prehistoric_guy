@@ -5,6 +5,7 @@ from typing import List, Optional
 
 from constants import *
 import platforms
+import tiles
 import factory
 
 
@@ -56,28 +57,20 @@ def platform_ui(platform: platforms.Platform) -> bool:
     return not opened
 
 
-def actor_ui(actor: platforms.Actor) -> bool:
+def sprite_ui(sprite: tiles.Sprite) -> bool:
     """Shows an ImGui-based UI for editing a given actor. Values are updated automatically.
     Returns True if the close button was clicked.
     """
-    _, opened = imgui.begin('Actor', True)
+    _, opened = imgui.begin('Sprite', True)
 
-    _, actor.x = imgui.input_float('x', actor.x, 0.1)
-    _, actor.y = imgui.input_float('y', actor.y, 0.1)
-    imgui.text(f'face_x={actor.face_x}')
-    imgui.text(f'force_x={actor.force_x}')
-    imgui.text(f'force_y={actor.force_y}')
-    imgui.text(f'fall_from_y={actor.fall_from_y}')
-    _, actor.radius = imgui.input_float('y', actor.radius, 0.1)
-
-    if imgui.button('move left'):
-        actor.face_x = -1.0
-        actor.force_x = -1.0
-    if imgui.button('move right'):
-        actor.face_x = 1.0
-        actor.force_x = 1.0
-    if imgui.button('jump'):
-        actor.force_y = 1.0
+    _, sprite.actor.x = imgui.input_float('x', sprite.actor.x, 0.1)
+    _, sprite.actor.y = imgui.input_float('y', sprite.actor.y, 0.1)
+    imgui.text(f'face_x={sprite.actor.face_x}')
+    imgui.text(f'force_x={sprite.actor.force_x}')
+    imgui.text(f'force_y={sprite.actor.force_y}')
+    imgui.text(f'fall_from_y={sprite.actor.fall_from_y}')
+    _, sprite.actor.radius = imgui.input_float('y', sprite.actor.radius, 0.1)
+    imgui.text(f'action_id={sprite.animation.action_id}')
 
     imgui.end()
 
@@ -176,8 +169,10 @@ class SceneEditor(object):
         if isinstance(self.selected, platforms.Platform) and platform_ui(self.selected):
             self.selected = None
 
-        if isinstance(self.selected, platforms.Actor) and actor_ui(self.selected):
-            self.selected = None
+        if isinstance(self.selected, platforms.Actor):
+            sprite = [sprite for sprite in self.obj_manager.renderer.sprites if sprite.actor == self.selected][0]
+            if sprite_ui(sprite):
+                self.selected = None
 
         if isinstance(self.selected, platforms.Object) and object_ui(self.selected):
             self.selected = None
