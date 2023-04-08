@@ -58,9 +58,18 @@ class Platform:
 
 
 @dataclass
+class Ladder:
+    # bottom left position
+    x: float
+    y: float
+    # size (uniform width)
+    height: int
+
+
+@dataclass
 class Actor:
     id: int
-    # current position
+    # bottom center position
     x: float
     y: float
     # movement vector
@@ -199,6 +208,7 @@ class Physics(object):
     def __init__(self, event_listener: PhysicsListener):
         self.actors = list()
         self.platforms = list()
+        self.ladders = list()
         self.objects = list()
 
         self.event_listener = event_listener
@@ -447,7 +457,6 @@ class Physics(object):
         import pygame.gfxdraw
         from constants import WORLD_SCALE, OBJECT_SCALE
 
-        # background
         for p in self.platforms:
             # draw platform's top, left and right edges
             x = p.x * WORLD_SCALE
@@ -457,6 +466,15 @@ class Physics(object):
             x2 = (p.x + p.width) * WORLD_SCALE
             y2 = target.get_height() - (p.y - p.height) * WORLD_SCALE
             pygame.draw.lines(target, 'red', False, ((x, y2), (x, y), (x2, y), (x2, y2)))
+
+        for ladder in self.ladders:
+            # top left position
+            x = ladder.x * WORLD_SCALE
+            y = target.get_height() - (ladder.y + ladder.height) * WORLD_SCALE
+
+            w = WORLD_SCALE
+            h = ladder.height * WORLD_SCALE
+            pygame.gfxdraw.rectangle(target, (x, y, w, h), pygame.Color('blue'))
 
         for obj in self.objects:
             # draw circular hit box (pos is bottom center, is moved to pure center)
@@ -471,7 +489,7 @@ class Physics(object):
             x = int(actor.x * WORLD_SCALE)
             y = int(target.get_height() - (actor.y * WORLD_SCALE + WORLD_SCALE // 2))
             r = int(actor.radius * WORLD_SCALE)
-            c = pygame.Color('red')
+            c = pygame.Color('green')
             pygame.gfxdraw.circle(target, x, y, r, c)
 
 

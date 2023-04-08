@@ -30,6 +30,19 @@ class ObjectManager(object):
         """
         self.physics.platforms.remove(platform)
 
+    def create_ladder(self, **kwargs) -> platforms.Ladder:
+        """Create a new ladder.
+        """
+        ladder = platforms.Ladder(**kwargs)
+        self.physics.ladders.append(ladder)
+        # NOTE: The renderer grabs ladders from the physics system.
+        return ladder
+
+    def destroy_ladder(self, ladder: platforms.Ladder) -> None:
+        """Remove an existing ladder.
+        """
+        self.physics.ladders.remove(ladder)
+
     def create_object(self, **kwargs) -> platforms.Object:
         """Create a static object such as fireplaces or powerups.
         """

@@ -9,7 +9,7 @@ from constants import *
 # tiles row offsets
 PLATFORM_ROW: int = 0
 TEXTURE_ROW: int = 2
-STAIRS_ROW: int = 3
+LADDER_ROW: int = 3
 
 
 @dataclass
@@ -105,6 +105,22 @@ class Renderer(object):
                            sprite.animation.action_id * SPRITE_SCALE, SPRITE_SCALE, SPRITE_SCALE)
         self.surface.blit(sprite_sheet, (x, y), clip)
 
+    def draw_ladder(self, ladder: platforms.Ladder, tileset_col: int) -> None:
+        """Draw a ladder.
+        """
+        tiles = self.tiles
+
+        # top left position
+        x = ladder.x * WORLD_SCALE
+        y = self.surface.get_height() - ladder.y * WORLD_SCALE
+
+        w = WORLD_SCALE
+        h = ladder.height * WORLD_SCALE
+
+        for i in range(ladder.height+1):
+            self.surface.blit(tiles, (x, y - i * WORLD_SCALE),
+                          ((3 * tileset_col + 1) * WORLD_SCALE, LADDER_ROW * WORLD_SCALE, WORLD_SCALE, WORLD_SCALE * 2))
+
     def draw_platform(self, platform: platforms.Platform, tileset_col: int) -> None:
         """Draw a platform.
         """
@@ -158,8 +174,14 @@ class Renderer(object):
         # foreground
         platformer.platforms.sort(key=lambda plat: plat.y)
 
+        # FIXME: needs a better spot
+        tileset_col = 1
+
         for p in platformer.platforms:
-            self.draw_platform(p, 0)
+            self.draw_platform(p, tileset_col)
+
+        for l in platformer.ladders:
+            self.draw_ladder(l, tileset_col)
 
         for o in platformer.objects:
             self.draw_object(o)

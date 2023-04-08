@@ -47,6 +47,9 @@ class Game(platforms.PhysicsListener, animations.AnimationListener):
         self.obj_manager.create_platform(x=1.0, y=6, width=RESOLUTION_X // WORLD_SCALE - 2 - 3, height=0,
                                          hover=platforms.Hovering(y=math.cos, amplitude=-1))
 
+        # ladders
+        self.obj_manager.create_ladder(x=0, y=4, height=3)
+
         for i in range(10):
             self.create_food()
 
