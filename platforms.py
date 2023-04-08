@@ -19,8 +19,9 @@ MOVE_SPEED_FACTOR: float = 3.5
 CLIMB_SPEED_FACTOR: float = MOVE_SPEED_FACTOR * 0.75
 JUMP_SPEED_FACTOR: float = 0.5
 
-# falling factor for projectiles with reduced gravity effect
-PROJECTILE_GRAVITY_FACTOR: float = 0.1
+# altering projectiles' ballistic trajectory
+PROJECTILE_GRAVITY: float = 0.1
+PROJECTILE_SPEED: float = 12.5
 
 
 @dataclass
@@ -111,8 +112,6 @@ class Projectile:
     y: float
     # collision radius
     radius: float
-    # flying speed
-    speed: float
     # facing direction
     face_x: int
     # object type id
@@ -593,8 +592,8 @@ class Physics(object):
 
         last_pos = pygame.math.Vector2(proj.x, proj.y)
 
-        proj.x += proj.face_x * proj.speed * elapsed_ms / 1000.0
-        proj.y += get_falling_distance(proj.fly_ms, elapsed_ms) * PROJECTILE_GRAVITY_FACTOR
+        proj.x += proj.face_x * PROJECTILE_SPEED * elapsed_ms / 1000.0
+        proj.y += get_falling_distance(proj.fly_ms, elapsed_ms) * PROJECTILE_GRAVITY
 
         proj.fly_ms += elapsed_ms
 

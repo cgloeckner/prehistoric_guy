@@ -1,4 +1,5 @@
 import pygame
+import math
 from dataclasses import dataclass
 
 import platforms
@@ -45,6 +46,7 @@ class Renderer(object):
         self.x = 0
         self.sprites = list()
         self.colored_cache = dict()
+        self.rotated_cache = dict()
 
         # load resources
         self.font = pygame.font.SysFont(pygame.font.get_default_font(), 18)
@@ -66,6 +68,24 @@ class Renderer(object):
         self.colored_cache[key] = copy
 
         return copy
+
+    def get_rotated_surface_clip(self, surface: pygame.Surface, rect: pygame.Rect, angle: float, flip: bool)\
+            -> pygame.Surface:
+        """If not cached, a part of the surface, described by the given rect, is created and rotated. This copy is
+        cached for each integer angle in [0; 360). Flipping the frame x-wise is also supported.
+        Returns the rotated surface.
+        """
+        key = (surface, tuple(rect), flip)
+        if key not in self.rotated_cache:
+            # grab and rotate frame
+            frame = surface.subsurface(rect)
+            if flip:
+                frame = pygame.transform.flip(frame, flip_x=True, flip_y=False)
+                self.rotated_cache[key] = [pygame.transform.rotate(frame, alpha) for alpha in range(360)]
+            else:
+                self.rotated_cache[key] = [pygame.transform.rotate(frame, -alpha) for alpha in range(360)]
+
+        return self.rotated_cache[key][int(angle) % 360]
 
     def draw_object(self, obj: platforms.Object) -> None:
         """Draw an object.
@@ -109,6 +129,7 @@ class Renderer(object):
         """Draw a ladder.
         """
         tiles = self.tiles
+        # FIXME: allow for ladder coloring (see editor)
 
         # top left position
         x = ladder.x * WORLD_SCALE
@@ -176,6 +197,22 @@ class Renderer(object):
                           ((3 * tileset_col + 2) * WORLD_SCALE, PLATFORM_ROW * WORLD_SCALE,
                            WORLD_SCALE, WORLD_SCALE * 2))
 
+    def draw_projectile(self, proj: platforms.Projectile) -> None:
+        """Draw a projectile.
+        """
+        # pos is centered, but needs to be topleft
+        x = proj.x * WORLD_SCALE - OBJECT_SCALE // 2
+        y = self.surface.get_height() - (proj.y * WORLD_SCALE + OBJECT_SCALE // 2)
+
+        variation_col = 0
+        clip = pygame.Rect(variation_col * OBJECT_SCALE, proj.object_type * OBJECT_SCALE, OBJECT_SCALE, OBJECT_SCALE)
+
+        angle = 2 * math.pi * proj.fly_ms / 360
+        angle *= 50
+        objects = self.get_rotated_surface_clip(self.objects, clip, angle, flip=proj.face_x < 0.0)
+
+        self.surface.blit(objects, (x, y))
+
     def draw(self, platformer: platforms.Physics, bg_col: int) -> None:
         # background
         self.surface.blit(self.background, (0, 0), (bg_col * RESOLUTION_X, 0, RESOLUTION_X, RESOLUTION_Y))
@@ -197,6 +234,9 @@ class Renderer(object):
 
         for s in self.sprites:
             self.draw_sprite(s)
+
+        for proj in platformer.projectiles:
+            self.draw_projectile(proj)
 
         # draw FPS
         fps_surface = self.font.render(f'FPS: {int(self.clock.get_fps()):02d}', False, 'white')

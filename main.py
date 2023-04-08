@@ -36,9 +36,9 @@ class Game(platforms.PhysicsListener, animations.AnimationListener):
         self.obj_manager.create_platform(x=0, y=1, width=3, height=2)
         self.obj_manager.create_platform(x=2, y=2, width=2)
         self.obj_manager.create_platform(x=0, y=4, width=3)
-        #self.obj_manager.create_platform(x=4, y=1, width=6,
-        #                                 hover=platforms.Hovering(x=math.cos, y=math.sin, amplitude=1.5))
-        self.obj_manager.create_platform(x=4, y=4, width=6, height=10)
+        self.obj_manager.create_platform(x=4, y=1, width=6,
+                                         hover=platforms.Hovering(x=math.cos, y=math.sin, amplitude=1.5))
+        self.obj_manager.create_platform(x=4, y=4, width=1, height=11)
         self.obj_manager.create_platform(x=5, y=6, width=4)
 
         # NOTE: h=0 necessary to avoid collisions when jumping "into" the platform
@@ -128,7 +128,7 @@ class Game(platforms.PhysicsListener, animations.AnimationListener):
         sprite = [sprite for sprite in self.obj_manager.renderer.sprites if sprite.animation == ani][0]
         self.obj_manager.create_projectile(x=sprite.actor.x + sprite.actor.face_x,
                                            y=sprite.actor.y + sprite.actor.radius, radius=platforms.OBJECT_RADIUS,
-                                           speed=10.0, face_x=sprite.actor.face_x, object_type=WEAPON_OBJ)
+                                           face_x=sprite.actor.face_x, object_type=WEAPON_OBJ)
         print('swing!')
 
     def on_impact_platform(self, proj: platforms.Projectile, platform: platforms.Platform) -> None:
@@ -144,7 +144,6 @@ class Game(platforms.PhysicsListener, animations.AnimationListener):
         self.obj_manager.destroy_actor_sprite(sprite)
         self.obj_manager.create_object(x=proj.x, y=proj.y - platforms.OBJECT_RADIUS, object_type=proj.object_type)
         self.obj_manager.destroy_projectile(proj)
-
 
 
 def main():
@@ -213,7 +212,7 @@ def main():
         # draw game
         buffer.fill('black')
         render.draw(phys, 0)
-        phys.draw(buffer)
+        # phys.draw(buffer)
 
         score_surface = render.font.render(f'SCORE: {game.score}', False, 'black')
         wrapper.buffer.blit(score_surface, (0, 0))
