@@ -10,10 +10,12 @@ ANIMATION_FRAME_DURATION: int = 100
 
 IDLE_ACTION: int = 0
 MOVE_ACTION: int = 1
-ATTACK_ACTION: int = 2
-JUMP_ACTION: int = 3
-LANDING_ACTION: int = 4
-DIE_ACTION: int = 5
+HOLD_ACTION: int = 2
+CLIMB_ACTION: int = 3
+ATTACK_ACTION: int = 4
+JUMP_ACTION: int = 5
+LANDING_ACTION: int = 6
+DIE_ACTION: int = 7
 
 
 @dataclass
@@ -72,6 +74,12 @@ class AnimationListener(object):
         pass
 
     @abstractmethod
+    def on_climb(self, ani: Animation) -> None:
+        """Triggered when a cycle of a climbing animation finished.
+        """
+        pass
+
+    @abstractmethod
     def on_attack(self, ani: Animation) -> None:
         """Triggered when an attack animation finished.
         """
@@ -110,13 +118,17 @@ class Animating(object):
         # handle animation type (loop, reset, freeze)
         self.notify_animation(ani)
 
-        if ani.action_id in [IDLE_ACTION, MOVE_ACTION]:
+        if ani.action_id in [IDLE_ACTION, MOVE_ACTION, HOLD_ACTION]:
             # loop
             ani.frame_id = 0
         elif ani.action_id in [ATTACK_ACTION, LANDING_ACTION]:
             # reset to idle
             ani.frame_id = 0
             ani.action_id = IDLE_ACTION
+        elif ani.action_id == CLIMB_ACTION:
+            # reset to hold
+            ani.frame_id = 0
+            ani.action_id = HOLD_ACTION
         else:
             # freeze at last frame
             ani.frame_id -= 1

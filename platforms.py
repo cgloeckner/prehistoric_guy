@@ -16,6 +16,7 @@ JUMP_DURATION: int = 500
 COLLISION_REPEAT_DELAY: int = 150
 
 MOVE_SPEED_FACTOR: float = 3.5
+CLIMB_SPEED_FACTOR: float = MOVE_SPEED_FACTOR * 0.75
 JUMP_SPEED_FACTOR: float = 0.5
 
 
@@ -134,7 +135,7 @@ def is_inside_platform(actor: Actor, platform: Platform) -> bool:
 def ladder_in_reach(actor: Actor, ladder: Ladder) -> bool:
     """Test whether the actor is in reach of the ladder.
     """
-    return ladder.x <= actor.x < ladder.x + 1 and\
+    return ladder.x + 0.5 - OBJECT_RADIUS <= actor.x < ladder.x + 0.5 + OBJECT_RADIUS and\
         ladder.y - actor.radius <= actor.y < ladder.y + ladder.height + OBJECT_RADIUS
 
 
@@ -435,12 +436,15 @@ class Physics(object):
         """
         self.grab_ladder(actor)
 
+        # FIXME: is this really necessary? it basically disables x-wise jumping onto a ladder :o
+        """
         if actor.force_x != 0.0:
             if actor.ladder is not None:
                 self.event_listener.on_leave_ladder(actor, actor.ladder)
                 actor.ladder = None
                 actor.force_y = 0.0
             return
+        """
 
         if actor.ladder is None:
             return
@@ -449,7 +453,7 @@ class Physics(object):
         actor.jump_ms = 0
         actor.fall_from_y = None
 
-        delta_y = actor.force_y * elapsed_ms * MOVE_SPEED_FACTOR / 1000
+        delta_y = actor.force_y * elapsed_ms * CLIMB_SPEED_FACTOR / 1000
         if delta_y == 0.0:
             return
 
@@ -475,7 +479,6 @@ class Physics(object):
         # reset actor to avoid leaving the ladder's end
         actor.force_y = 0.0
         actor.x, actor.y = last_pos
-        print('reaching end of ladder', actor)
 
 
     def check_actor_collision(self, actor: Actor, elapsed_ms: int) -> None:
