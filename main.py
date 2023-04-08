@@ -128,7 +128,7 @@ class Game(platforms.PhysicsListener, animations.AnimationListener):
         sprite = [sprite for sprite in self.obj_manager.renderer.sprites if sprite.animation == ani][0]
         self.obj_manager.create_projectile(x=sprite.actor.x + sprite.actor.face_x,
                                            y=sprite.actor.y + sprite.actor.radius, radius=platforms.OBJECT_RADIUS,
-                                           face_x=sprite.actor.face_x, object_type=WEAPON_OBJ)
+                                           face_x=sprite.actor.face_x, object_type=FOOD_OBJ)
         print('swing!')
 
     def on_impact_platform(self, proj: platforms.Projectile, platform: platforms.Platform) -> None:
