@@ -2,7 +2,7 @@ import pygame
 import random
 import math
 import imgui
-from typing import Optional, List
+from typing import Optional
 
 from imgui_wrapper import OpenGlWrapper
 
@@ -29,13 +29,13 @@ class Game(platforms.PhysicsListener, animations.AnimationListener):
 
     def populate_demo_scene(self, guy_sheet: pygame.Surface) -> None:
         self.obj_manager.create_actor(sprite_sheet=guy_sheet, x=1.5, y=3.5)
-        #self.obj_manager.create_actor(sprite_sheet=guy_sheet, x=7.5, y=4.5)
 
         # horizontal platforms
         self.obj_manager.create_platform(x=0, y=1, width=3, height=2)
         self.obj_manager.create_platform(x=1, y=2, width=2)
         self.obj_manager.create_platform(x=0, y=4.5, width=4)
-        self.obj_manager.create_platform(x=3, y=1, width=6, hover=platforms.Hovering(x=math.cos, y=math.sin))
+        self.obj_manager.create_platform(x=3, y=0.5, width=6,
+                                         hover=platforms.Hovering(x=math.cos, y=math.sin, amplitude=1.5))
         self.obj_manager.create_platform(x=6, y=6, width=4)
 
         # NOTE: h=0 necessary to avoid collisions when jumping "into" the platform
@@ -191,9 +191,9 @@ def main():
 
             else:
                 delta_x = 0.0
-                if keys[pygame.K_a]:
+                if keys[pygame.K_LEFT]:
                     delta_x -= 1.0
-                if keys[pygame.K_d]:
+                if keys[pygame.K_RIGHT]:
                     delta_x += 1.0
                 if render.sprites[0].animation.action_id in [animations.IDLE_ACTION, animations.MOVE_ACTION]:
                     if delta_x != 0.0:
@@ -205,9 +205,9 @@ def main():
                 has_ladder = render.sprites[0].actor.ladder is not None
 
                 delta_y = 0.0
-                if keys[pygame.K_w]:
+                if keys[pygame.K_UP]:
                     delta_y = 1.0
-                if keys[pygame.K_s]:
+                if keys[pygame.K_DOWN]:
                     delta_y = -1.0
 
                 if delta_y != 0.0:
@@ -217,31 +217,6 @@ def main():
                     elif not has_ladder and delta_y > 0.0:
                         animations.start(render.sprites[0].animation, animations.JUMP_ACTION)
                         render.sprites[0].actor.force_y = delta_y
-
-        """
-        if render.sprites[1].animation.action_id != animations.DIE_ACTION:
-            if keys[pygame.K_RETURN]:
-                animations.start(render.sprites[1].animation, animations.ATTACK_ACTION)
-                render.sprites[1].actor.force_x = 0
-
-            else:
-                if keys[pygame.K_UP]:
-                    render.sprites[1].actor.force_y = 1
-                    animations.start(render.sprites[1].animation, animations.JUMP_ACTION)
-
-                delta_x = 0.0
-                if keys[pygame.K_LEFT]:
-                    delta_x -= 1.0
-                if keys[pygame.K_RIGHT]:
-                    delta_x += 1.0
-
-                if render.sprites[1].animation.action_id in [animations.IDLE_ACTION, animations.MOVE_ACTION]:
-                    if delta_x != 0.0:
-                        animations.start(render.sprites[1].animation, animations.MOVE_ACTION)
-                    else:
-                        animations.start(render.sprites[1].animation, animations.IDLE_ACTION)
-                render.sprites[1].actor.force_x = delta_x
-        """
 
         phys.update(elapsed)
 
@@ -253,11 +228,6 @@ def main():
                 game.score = 0
             phys.actors[0].y += RESOLUTION_Y // WORLD_SCALE
 
-        """
-        phys.actors[1].x = max(0, min(phys.actors[1].x, RESOLUTION_X // WORLD_SCALE))
-        if phys.actors[1].y < 0:
-            phys.actors[1].y += RESOLUTION_Y // WORLD_SCALE
-        """
         anis.update(elapsed)
 
         # draw game

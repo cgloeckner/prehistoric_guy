@@ -1,7 +1,7 @@
 import imgui
 import pygame
 import math
-from typing import List, Optional
+from typing import List
 
 from constants import *
 import platforms

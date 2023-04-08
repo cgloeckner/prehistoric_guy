@@ -283,11 +283,10 @@ class Physics(object):
 
         if old_ladder != closest_ladder:
             if closest_ladder is None:
-                self.event_listener.on_leave_ladder(actor, closest_ladder)
+                self.event_listener.on_leave_ladder(actor, old_ladder)
                 actor.force_y = 0
             else:
                 self.event_listener.on_reach_ladder(actor, closest_ladder)
-
 
     def is_falling(self, actor: Actor) -> bool:
         """The actor is falling if he does not stand on any platform.
@@ -463,15 +462,14 @@ class Physics(object):
         relevant = self.get_supporting_platforms(actor)
         if len(relevant) > 0:
             actor.anchor = relevant[0]
-            actor.ladder = None
             self.event_listener.on_leave_ladder(actor, actor.ladder)
+            actor.ladder = None
             actor.force_y = 0.0
             return
 
         # reset actor to avoid leaving the ladder's end
         actor.force_y = 0.0
         actor.x, actor.y = last_pos
-
 
     def check_actor_collision(self, actor: Actor, elapsed_ms: int) -> None:
         """This checks for collisions between the actor and other actors in mutual distance. For each such collision,
@@ -576,7 +574,7 @@ class Physics(object):
         for ladder in self.ladders:
             # top left position
             x = ladder.x * WORLD_SCALE
-            y = target.get_height() - (ladder.y) * WORLD_SCALE
+            y = target.get_height() - ladder.y * WORLD_SCALE
 
             w = WORLD_SCALE
             h = ladder.height * WORLD_SCALE
@@ -601,6 +599,6 @@ class Physics(object):
 
 if __name__ == '__main__':
     # minimal unit testing
-    x, y = test_line_intersection(-3.5, 4, 4, -1, -3, -3, 4, 2)
-    assert abs(x - 1.8276) < 0.01
-    assert abs(y - 0.4483) < 0.01
+    px, py = test_line_intersection(-3.5, 4, 4, -1, -3, -3, 4, 2)
+    assert abs(px - 1.8276) < 0.01
+    assert abs(py - 0.4483) < 0.01
