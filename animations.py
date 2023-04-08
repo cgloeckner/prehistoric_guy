@@ -1,4 +1,5 @@
 import pygame
+import math
 from dataclasses import dataclass
 from abc import abstractmethod
 from typing import Optional
@@ -6,7 +7,10 @@ from typing import Optional
 from constants import ANIMATION_NUM_FRAMES
 
 
-ANIMATION_FRAME_DURATION: int = 100
+ANIMATION_FRAME_DURATION: int = 120
+
+MOVEMENT_SWING: float = 1.0
+CLIMB_SWING: float = 7.0
 
 IDLE_ACTION: int = 0
 MOVE_ACTION: int = 1
@@ -26,6 +30,9 @@ class Animation:
     frame_id: int = 0
     frame_duration_ms: int = ANIMATION_FRAME_DURATION
     frame_max_duration_ms: int = ANIMATION_FRAME_DURATION
+    # movement animation
+    delta_y: float = 0.0
+    total_frame_time_ms: int = 0
     # color animation
     color: Optional[pygame.Color] = None
     color_duration_ms: int = ANIMATION_FRAME_DURATION
@@ -56,6 +63,7 @@ def start(ani: Animation, action_id: int, duration_ms: int = ANIMATION_FRAME_DUR
     ani.frame_id = 0
     ani.frame_duration_ms = duration_ms
     ani.frame_max_duration_ms = duration_ms
+    ani.total_frame_time_ms = 0
 
 
 def flash(ani: Animation, color: pygame.Color, duration_ms: int = ANIMATION_FRAME_DURATION) -> None:
@@ -144,7 +152,22 @@ class Animating(object):
         ani.color_duration_ms = 0
         ani.color = None
 
-        # FIXME: trigger event using self.on_flashed?
+    def update_movement(self, ani: Animation, elapsed_ms: int) -> None:
+        """Updates the movement animation, where a small height difference is applied while moving and climbing.
+        """
+        if ani.action_id not in [MOVE_ACTION, CLIMB_ACTION]:
+            ani.total_frame_time_ms = 0
+            return
+
+        ani.total_frame_time_ms += elapsed_ms
+        if ani.action_id == MOVE_ACTION:
+            # |sin(x)|
+            angle = 2 * math.pi * ani.total_frame_time_ms / 360
+            ani.delta_y = MOVEMENT_SWING * math.sin(angle / MOVEMENT_SWING)
+        else:
+            # sawtooth
+            value = ani.total_frame_time_ms / 1000.0
+            ani.delta_y = CLIMB_SWING * (value - int(value))
 
     def update(self, elapsed_ms: int) -> None:
         """Updates all animations' frame durations. It automatically switches frames and loops/returns/freezes the
@@ -153,6 +176,7 @@ class Animating(object):
         for ani in self.animations:
             self.update_frame(ani, elapsed_ms)
             self.update_color(ani, elapsed_ms)
+            self.update_movement(ani, elapsed_ms)
 
 
 def main():
@@ -229,7 +253,7 @@ def main():
         x_offset = (0 if look_right else 1) * ANIMATION_NUM_FRAMES * SPRITE_SCALE
         rect = pygame.Rect(ani.animations[0].frame_id * SPRITE_SCALE + x_offset,
                            ani.animations[0].action_id * SPRITE_SCALE, SPRITE_SCALE, SPRITE_SCALE)
-        buffer.blit(guy, (0, 0), rect)
+        buffer.blit(guy, (0, -ani.animations[0].delta_y), rect)
         screen.blit(pygame.transform.scale_by(buffer, ui_scale_factor), (0, 0))
         pygame.display.flip()
 

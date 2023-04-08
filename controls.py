@@ -47,8 +47,11 @@ class Player(object):
         """
         delta, attack = self.get_inputs()
 
-        if self.sprite.animation.action_id in [animations.DIE_ACTION, animations.ATTACK_ACTION]:
+        if self.sprite.animation.action_id in [animations.DIE_ACTION, animations.ATTACK_ACTION,
+                                               animations.LANDING_ACTION]:
             # nothing allowed
+            self.sprite.actor.force_x = 0.0
+            self.sprite.actor.force_y = 0.0
             return
 
         if attack:
@@ -72,10 +75,12 @@ class Player(object):
                 self.sprite.actor.force_x = delta.x
                 return
 
-            # idle!
-            animations.start(self.sprite.animation, animations.IDLE_ACTION)
-            self.sprite.actor.force_x = 0.0
-            self.sprite.actor.force_y = 0.0
+            # idle?
+            if self.sprite.actor.force_y == 0.0:
+                animations.start(self.sprite.animation, animations.IDLE_ACTION)
+                self.sprite.actor.force_x = 0.0
+                self.sprite.actor.force_y = 0.0
+
             return
 
         # jumping off?

@@ -98,7 +98,7 @@ class Renderer(object):
 
         # pos is bottom center, needs to be top left
         x = sprite.actor.x * WORLD_SCALE - SPRITE_SCALE // 2
-        y = self.surface.get_height() - (sprite.actor.y * WORLD_SCALE + SPRITE_SCALE)
+        y = self.surface.get_height() - (sprite.actor.y * WORLD_SCALE + SPRITE_SCALE) - sprite.animation.delta_y
 
         x_offset = (0 if sprite.actor.face_x >= 0.0 else 1) * ANIMATION_NUM_FRAMES * SPRITE_SCALE
         clip = pygame.Rect(sprite.animation.frame_id * SPRITE_SCALE + x_offset,
@@ -184,7 +184,7 @@ class Renderer(object):
         platformer.platforms.sort(key=lambda plat: plat.y)
 
         # FIXME: needs a better spot
-        tileset_col = 1
+        tileset_col = 0
 
         for p in platformer.platforms:
             self.draw_platform(p, tileset_col)

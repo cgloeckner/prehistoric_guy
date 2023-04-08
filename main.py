@@ -34,8 +34,8 @@ class Game(platforms.PhysicsListener, animations.AnimationListener):
         # horizontal platforms
         self.obj_manager.create_platform(x=0, y=1, width=3, height=2)
         self.obj_manager.create_platform(x=2, y=2, width=2)
-        self.obj_manager.create_platform(x=0, y=4.5, width=4)
-        self.obj_manager.create_platform(x=4, y=0.5, width=6,
+        self.obj_manager.create_platform(x=0, y=4, width=3)
+        self.obj_manager.create_platform(x=4, y=1, width=6,
                                          hover=platforms.Hovering(x=math.cos, y=math.sin, amplitude=1.5))
         self.obj_manager.create_platform(x=5, y=6, width=4)
 
@@ -44,8 +44,8 @@ class Game(platforms.PhysicsListener, animations.AnimationListener):
                                          hover=platforms.Hovering(y=math.cos, amplitude=-1))
 
         # ladders
-        self.obj_manager.create_ladder(x=1, y=1.5, height=3)
-        self.obj_manager.create_ladder(x=8, y=3.5, height=3)
+        self.obj_manager.create_ladder(x=1, y=1, height=7)
+        self.obj_manager.create_ladder(x=8, y=3, height=3)
 
         for i in range(10):
             self.create_food()
@@ -101,12 +101,6 @@ class Game(platforms.PhysicsListener, animations.AnimationListener):
     def on_reach_ladder(self, actor: platforms.Actor, ladder: platforms.Ladder) -> None:
         """Triggered when the actor reaches a ladder.
         """
-        # trigger HOLD animation
-        if actor.ladder == ladder:
-            print('GRAB IT!')
-            sprite = [sprite for sprite in self.obj_manager.renderer.sprites if sprite.actor == actor][0]
-            animations.start(sprite.animation, animations.HOLD_ACTION)
-
         print('reached ladder')
 
     def on_leave_ladder(self, actor: platforms.Actor, ladder: platforms.Ladder) -> None:

@@ -136,7 +136,7 @@ def ladder_in_reach(actor: Actor, ladder: Ladder) -> bool:
     """Test whether the actor is in reach of the ladder.
     """
     return ladder.x + 0.5 - OBJECT_RADIUS <= actor.x < ladder.x + 0.5 + OBJECT_RADIUS and\
-        ladder.y - actor.radius <= actor.y < ladder.y + ladder.height + OBJECT_RADIUS
+        ladder.y <= actor.y < ladder.y + ladder.height + OBJECT_RADIUS
 
 
 def within_ladder(actor: Actor) -> bool:
@@ -305,7 +305,7 @@ class Physics(object):
         if actor.ladder is not None:
             return False
 
-        if actor.force_y != 0:
+        if actor.force_y != 0.0:
             return False
 
         return len(self.get_supporting_platforms(actor)) == 0
