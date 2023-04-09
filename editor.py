@@ -7,6 +7,7 @@ from constants import *
 import platforms
 import tiles
 import factory
+import resources
 
 
 def get_dict_key_index(dictionary, value) -> int:
@@ -155,10 +156,10 @@ class SceneEditor(object):
 
         # update coloring for hovered elements
         for elem in self.hovered_elements:
-            elem.color = None
+            elem.hsl = None
         self.hovered_elements = self.get_hovered()
         for elem in self.hovered_elements:
-            elem.color = pygame.Color('gold')
+            elem.hsl = resources.HslTransform(hue=0.14, saturation=1.0)
 
         # select first hovered element on click
         left_click = pygame.mouse.get_pressed()[0]

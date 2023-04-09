@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from typing import Tuple, Optional, List
 from abc import abstractmethod
 
+import resources
 
 GRAVITY: float = 9.81
 
@@ -59,8 +60,8 @@ class Platform:
     height: int = 0
     # floating information
     hover: Optional[Hovering] = None
-    # editor UI related
-    color: Optional[pygame.Color] = None
+    # optional coloring
+    hsl: Optional[resources.HslTransform] = None
 
 
 @dataclass
@@ -91,8 +92,8 @@ class Actor:
     # prevents another collision/touch event for a couple of ms
     collision_repeat_cooldown: int = 0
     touch_repeat_cooldown: int = 0
-    # editor UI related
-    color: Optional[pygame.Color] = None
+    # optional coloring
+    hsl: Optional[resources.HslTransform] = None
 
 
 @dataclass
@@ -102,8 +103,8 @@ class Object:
     y: float
     # object type id
     object_type: int
-    # editor UI related
-    color: Optional[pygame.Color] = None
+    # optional coloring
+    hsl: Optional[resources.HslTransform] = None
 
 
 @dataclass

@@ -45,8 +45,8 @@ class Renderer(object):
         """Draw an object.
         """
         objects = self.objects
-        if obj.color is not None:
-            objects = self.cache.get_colored_surface(objects, obj.color)
+        if obj.hsl is not None:
+            objects = self.cache.get_hsl_transformed(objects, obj.hsl)
 
         # pos is bottom center, needs to be top left
         x = obj.x * WORLD_SCALE - OBJECT_SCALE // 2
@@ -62,13 +62,13 @@ class Renderer(object):
         """
         # color sprite with based on flashing animation (or else because of editor)
         sprite_sheet = sprite.sprite_sheet
-        color = None
-        if sprite.animation.color is not None:
-            color = sprite.animation.color
-        elif sprite.actor.color is not None:
-            color = sprite.actor.color
-        if color is not None:
-            sprite_sheet = self.cache.get_colored_surface(sprite_sheet, color)
+        hsl = None
+        if sprite.animation.hsl is not None:
+            hsl = sprite.animation.hsl
+        elif sprite.actor.hsl is not None:
+            hsl = sprite.actor.hsl
+        if hsl is not None:
+            sprite_sheet = self.cache.get_hsl_transformed(sprite_sheet, hsl)
 
         # pos is bottom center, needs to be top left
         x = sprite.actor.x * WORLD_SCALE - SPRITE_SCALE // 2
@@ -109,8 +109,8 @@ class Renderer(object):
         """Draw a platform.
         """
         tiles = self.tiles
-        if platform.color is not None:
-            tiles = self.cache.get_colored_surface(tiles, platform.color)
+        if platform.hsl is not None:
+            tiles = self.cache.get_hsl_transformed(tiles, platform.hsl)
 
         x = platform.x * WORLD_SCALE
         y = self.surface.get_height() - platform.y * WORLD_SCALE

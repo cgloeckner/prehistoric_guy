@@ -1,13 +1,65 @@
 import pygame
 import os
-from typing import Dict, Tuple
+from dataclasses import dataclass
+from typing import Dict, Tuple, List, Optional
 
 from constants import *
-import animations
+
+
+@dataclass
+class HslTransform:
+    hue: Optional[float] = None
+    saturation: Optional[float] = None
+    lightness: Optional[float] = None
+
+
+def transform_image_hsl(surface: pygame.Surface, transform: HslTransform, color_strings: List[str] = None) -> None:
+    """Rotates a surface's colors in place. Only pixels are modified whose color is in the given list. The alteration
+    is based on the given delta tuple: hue, saturation, lightness. Transparent pixels are ignored.
+    """
+    pixels = pygame.PixelArray(surface)
+    matching = [pygame.Color(c) for c in color_strings] if color_strings is not None else []
+
+    for y in range(surface.get_height()):
+        for x in range(surface.get_width()):
+            if pixels[x, y] & 0xff000000 == 0:
+                continue
+
+            color = surface.unmap_rgb(pixels[x, y])
+            if len(matching) > 0 and color not in matching:
+                continue
+
+            # change pixel's hue (rotated) and saturation / lightness (bound)
+            hue, sat, light, alpha = color.hsla
+            if transform.hue is not None:
+                hue = int(transform.hue * 360) % 360
+            if transform.saturation is not None:
+                sat = max(0, min(100, int(transform.saturation * 100)))
+            if transform.lightness is not None:
+                light = max(0, min(100, int(transform.lightness * 100)))
+            color.hsla = hue, sat, light, alpha
+            pixels[x, y] = surface.map_rgb(color)
+
+    pixels.close()
+
+
+def flip_sprite_sheet(src: pygame.Surface, tile_size: int) -> pygame.Surface:
+    """Splits all sprite frames but keeps the logical order of the entire sprite sheet.
+    A new sprite sheet is returned which holds all sprites (left: original, right: flipped frames).
+    """
+    size = src.get_size()
+    mirr = pygame.transform.flip(src, flip_x=True, flip_y=False)
+    dst = pygame.Surface((size[0] * 2, size[1]), flags=pygame.SRCALPHA)
+
+    dst.blit(src, (0, 0))
+    for column in range(src.get_width() // tile_size):
+        dst.blit(mirr, (size[0] + column * tile_size, 0), (size[0] - (column + 1) * tile_size, 0, tile_size, size[1]))
+
+    return dst
 
 
 def fill_pixels(surface: pygame.Surface, color: pygame.Color):
-    """Replaces all non-transparent pixels with the given color.
+    """Replaces all non-transparent pixels with the given color in place.
     """
     pixels = pygame.PixelArray(surface)
 
@@ -21,6 +73,7 @@ def fill_pixels(surface: pygame.Surface, color: pygame.Color):
 
 COLOR_TUPLE = Tuple[int, int, int]
 RECT_TUPLE = Tuple[int, int, int, int]
+HSL_TUPLE = Tuple[float, float, float]
 
 
 class Cache(object):
@@ -39,9 +92,9 @@ class Cache(object):
         # sprites include their flipped frames
         self.sprites: Dict[str, pygame.Surface] = dict()
 
-        # colored and rotated surfaces
-        self.colored: Dict[Tuple[pygame.Surface, COLOR_TUPLE]] = dict()
-        self.rotated: Dict[Tuple[pygame.Surface, RECT_TUPLE, bool]] = dict()
+        # hsl-transformed and rotated surfaces
+        self.hsl_transforms: Dict[Tuple[pygame.Surface, HSL_TUPLE, Optional[COLOR_TUPLE]]] = dict()
+        self.rotated: Dict[Tuple[pygame.Surface, RECT_TUPLE, bool], List[pygame.Surface]] = dict()
 
     def get_image(self, filename: str) -> pygame.Surface:
         """Loads the image via filename. If already loaded, it's taken from the cache.
@@ -59,7 +112,7 @@ class Cache(object):
         """
         if filename not in self.sprites:
             image = self.get_image(filename)
-            self.sprites[filename] = animations.flip_sprite_sheet(image, SPRITE_SCALE)
+            self.sprites[filename] = flip_sprite_sheet(image, SPRITE_SCALE)
 
         return self.sprites[filename]
 
@@ -73,17 +126,22 @@ class Cache(object):
         # FIXME: implement font loading
         raise NotImplementedError()
 
-    def get_colored_surface(self, surface: pygame.Surface, color: pygame.Color) -> pygame.Surface:
+    def get_hsl_transformed(self, surface: pygame.Surface, hsl: HslTransform, colors: List[str] = None)\
+            -> pygame.Surface:
         """If not cached, a copy of the given surface is created and all non-transparent pixels are replaced with the
         given color. If cached, the existing copy is used.
+        Only colors specified are altered.
         Returns the colored surface.
         """
-        key = (surface, (color.r, color.g, color.b))
-        if key not in self.colored:
-            self.colored[key] = surface.copy()
-            fill_pixels(self.colored[key], color)
+        hsl_tuple = (hsl.hue, hsl.saturation, hsl.lightness)
+        color_tuple = tuple(colors) if colors is not None else None
+        key = (surface, hsl_tuple, color_tuple)
+        if key not in self.hsl_transforms:
+            copy = surface.copy()
+            transform_image_hsl(copy, hsl, colors)
+            self.hsl_transforms[key] = copy
 
-        return self.colored[key]
+        return self.hsl_transforms[key]
 
     def get_rotated_surface_clip(self, surface: pygame.Surface, rect: pygame.Rect, angle: float, flip: bool)\
             -> pygame.Surface:

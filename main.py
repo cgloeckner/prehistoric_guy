@@ -22,7 +22,6 @@ class DemoState(state_machine.State):
     def __init__(self, engine: state_machine.Engine):
         super().__init__(engine)
         self.cache = resources.Cache()
-        self.guy = self.cache.get_sprite_sheet('guy')
 
         self.manager = game.Manager()
         self.phys = platforms.Physics(self.manager)
@@ -30,7 +29,7 @@ class DemoState(state_machine.State):
         self.render = tiles.Renderer(self.cache, engine.buffer, engine.clock)
 
         self.manager.factory = factory.ObjectManager(self.phys, self.anis, self.render)
-        self.manager.populate_demo_scene(self.guy)
+        self.manager.populate_demo_scene(self.cache)
 
         self.editor_ui = editor.SceneEditor(engine.screen, self.manager.factory)
         self.ctrl = controls.Player(self.manager.player_character,

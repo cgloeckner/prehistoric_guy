@@ -1,8 +1,8 @@
-import pygame
 import random
 import math
 from typing import Optional
 
+import resources
 from constants import *
 import platforms
 import animations
@@ -31,10 +31,14 @@ class Manager(platforms.PhysicsListener, animations.AnimationListener):
 
         self.factory.create_object(x=p.x + x, y=p.y + 0.5, object_type=random.randrange(MAX_OBJECT_TYPE))
 
-    def populate_demo_scene(self, guy_sheet: pygame.Surface) -> None:
-        self.player_character = self.factory.create_character(sprite_sheet=guy_sheet, x=2, y=5)
-        self.enemies.append(self.factory.create_character(sprite_sheet=guy_sheet, x=6.5, y=6.5))
-        self.enemies.append(self.factory.create_character(sprite_sheet=guy_sheet, x=6.5, y=4.5))
+    def populate_demo_scene(self, cache: resources.Cache) -> None:
+        generic_guy = cache.get_sprite_sheet('guy')
+        blue_guy = cache.get_hsl_transformed(generic_guy, resources.HslTransform(hue=0.6), SPRITE_CLOTHES_COLORS)
+        grey_guy = cache.get_hsl_transformed(generic_guy, resources.HslTransform(saturation=0.0), SPRITE_CLOTHES_COLORS)
+
+        self.player_character = self.factory.create_character(sprite_sheet=blue_guy, x=2, y=5)
+        self.enemies.append(self.factory.create_character(sprite_sheet=grey_guy, x=6.5, y=6.5))
+        self.enemies.append(self.factory.create_character(sprite_sheet=grey_guy, x=6.5, y=4.5))
 
         # horizontal platforms
         self.factory.create_platform(x=0, y=1, width=3, height=2)
@@ -74,7 +78,7 @@ class Manager(platforms.PhysicsListener, animations.AnimationListener):
                         c.hit_points -= damage
                         if damage > 0:
                             # FIXME: on_player_wounded
-                            animations.flash(sprite.animation, pygame.Color('white'))
+                            animations.flash(sprite.animation, resources.HslTransform(lightness=1.0), 200)
                             if c.hit_points <= 0:
                                 action = animations.DIE_ACTION
 

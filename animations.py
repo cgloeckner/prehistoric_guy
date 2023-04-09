@@ -5,6 +5,7 @@ from abc import abstractmethod
 from typing import Optional
 
 from constants import ANIMATION_NUM_FRAMES
+import resources
 
 
 ANIMATION_FRAME_DURATION: int = 120
@@ -34,24 +35,9 @@ class Animation:
     # movement animation
     delta_y: float = 0.0
     total_frame_time_ms: int = 0
-    # color animation
-    color: Optional[pygame.Color] = None
-    color_duration_ms: int = ANIMATION_FRAME_DURATION
-
-
-def flip_sprite_sheet(src: pygame.Surface, tile_size: int) -> pygame.Surface:
-    """Splits all sprite frames but keeps the logical order of the entire sprite sheet.
-    A new sprite sheet is returned which holds all sprites (left: original, right: flipped frames).
-    """
-    size = src.get_size()
-    mirr = pygame.transform.flip(src, flip_x=True, flip_y=False)
-    dst = pygame.Surface((size[0] * 2, size[1]), flags=pygame.SRCALPHA)
-
-    dst.blit(src, (0, 0))
-    for column in range(src.get_width() // tile_size):
-        dst.blit(mirr, (size[0] + column * tile_size, 0), (size[0] - (column + 1) * tile_size, 0, tile_size, size[1]))
-
-    return dst
+    # hsl animation
+    hsl: Optional[resources.HslTransform] = None
+    hsl_duration_ms: int = ANIMATION_FRAME_DURATION
 
 
 def start(ani: Animation, action_id: int, duration_ms: int = ANIMATION_FRAME_DURATION) -> None:
@@ -67,11 +53,11 @@ def start(ani: Animation, action_id: int, duration_ms: int = ANIMATION_FRAME_DUR
     ani.total_frame_time_ms = 0
 
 
-def flash(ani: Animation, color: pygame.Color, duration_ms: int = ANIMATION_FRAME_DURATION) -> None:
+def flash(ani: Animation, hsl: resources.HslTransform, duration_ms: int = ANIMATION_FRAME_DURATION) -> None:
     """Resets the color animation with the given color.
     """
-    ani.color = color
-    ani.color_duration_ms = duration_ms
+    ani.hsl = hsl
+    ani.hsl_duration_ms = duration_ms
 
 
 class AnimationListener(object):
@@ -150,16 +136,16 @@ class Animating(object):
             # freeze at last frame
             ani.frame_id -= 1
 
-    def update_color(self, ani: Animation, elapsed_ms: int) -> None:
-        if ani.color is None:
+    def update_hsl(self, ani: Animation, elapsed_ms: int) -> None:
+        if ani.hsl is None:
             return
 
-        ani.color_duration_ms -= elapsed_ms
-        if ani.color_duration_ms > 0:
+        ani.hsl_duration_ms -= elapsed_ms
+        if ani.hsl_duration_ms > 0:
             return
 
-        ani.color_duration_ms = 0
-        ani.color = None
+        ani.hsl_duration_ms = 0
+        ani.hsl = None
 
     def update_movement(self, ani: Animation, elapsed_ms: int) -> None:
         """Updates the movement animation, where a small height difference is applied while moving and climbing.
@@ -184,22 +170,26 @@ class Animating(object):
         """
         for ani in self.animations:
             self.update_frame(ani, elapsed_ms)
-            self.update_color(ani, elapsed_ms)
+            self.update_hsl(ani, elapsed_ms)
             self.update_movement(ani, elapsed_ms)
 
 
 def main():
     from constants import SPRITE_SCALE
+    import resources
 
     class DemoListener(AnimationListener):
         def on_step(self, a: Animation) -> None:
-            print(f'{a} steps')
+            pass
 
         def on_climb(self, a: Animation) -> None:
-            print(f'{a} climbs')
+            pass
 
         def on_attack(self, a: Animation) -> None:
-            print(f'{a} finished attack')
+            pass
+
+        def on_throw(self, a: Animation) -> None:
+            pass
 
     pygame.init()
 
@@ -218,8 +208,9 @@ def main():
     buffer = pygame.Surface((SPRITE_SCALE, SPRITE_SCALE))
     clock = pygame.time.Clock()
 
-    guy = pygame.image.load('data/guy.png')
-    guy = flip_sprite_sheet(guy, SPRITE_SCALE)
+    cache = resources.Cache()
+    guy = cache.get_sprite_sheet('guy')
+    guy = cache.get_hsl_transformed(guy, resources.HslTransform(saturation=0.0))
     look_right = True
 
     listener = DemoListener()
@@ -250,10 +241,12 @@ def main():
         if keys[pygame.K_5]:
             start(ani.animations[0], ATTACK_ACTION, ANIMATION_FRAME_DURATION)
         if keys[pygame.K_6]:
-            start(ani.animations[0], JUMP_ACTION, ANIMATION_FRAME_DURATION)
+            start(ani.animations[0], THROW_ACTION, ANIMATION_FRAME_DURATION)
         if keys[pygame.K_7]:
-            start(ani.animations[0], LANDING_ACTION, ANIMATION_FRAME_DURATION)
+            start(ani.animations[0], JUMP_ACTION, ANIMATION_FRAME_DURATION)
         if keys[pygame.K_8]:
+            start(ani.animations[0], LANDING_ACTION, ANIMATION_FRAME_DURATION)
+        if keys[pygame.K_9]:
             start(ani.animations[0], DIE_ACTION, ANIMATION_FRAME_DURATION)
 
         ani.update(elapsed)
