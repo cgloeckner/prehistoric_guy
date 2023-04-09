@@ -130,12 +130,9 @@ class SceneEditor(object):
         self.selected = None
 
     def get_mouse_world_pos(self) -> pygame.math.Vector2:
-        # transform screen coordinates to game coordinates (keep in mind that the screen was upscaled by x2)
+        # transform screen coordinates to game coordinates
         x, y = pygame.mouse.get_pos()
         y = self.screen.get_height() - y
-        # FIXME: query REAL upscale ratio (debug is 2 atm but that's not always true)
-        x //= 2
-        y //= 2
         x /= WORLD_SCALE
         y /= WORLD_SCALE
         return pygame.math.Vector2(x, y)

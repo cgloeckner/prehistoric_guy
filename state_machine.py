@@ -8,21 +8,12 @@ from constants import *
 
 class Engine(object):
     def __init__(self):
+        """Creates an OpenGL screen and a SDL surface buffer. The OpenGL screen is used for ImGui rendering.
+        All 2d drawing options are done with the buffer. Later the buffer content is rendered to screen using OpenGL.
+        """
         pygame.init()
 
-        # get native resolution and factor for scaling
-        native_width, native_height = pygame.display.get_desktop_sizes()[0]
-        native_width //= RESOLUTION_X
-        native_height //= RESOLUTION_Y
-        # self.ui_scale_factor = max(1, min(native_width, native_height))
-        # override it for debugging purpose
-        self.ui_scale_factor = 2
-
-        # calculate window resolution and initialize screen
-        window_width = RESOLUTION_X * self.ui_scale_factor
-        window_height = RESOLUTION_Y * self.ui_scale_factor
-        print(f'Resolution: {window_width}x{window_height}; Resize: {self.ui_scale_factor}')
-        self.screen = pygame.display.set_mode((window_width, window_height), OpenGlWrapper.get_display_flags())
+        self.screen = pygame.display.set_mode((RESOLUTION_X, RESOLUTION_Y), OpenGlWrapper.get_display_flags())
         self.buffer = pygame.Surface((RESOLUTION_X, RESOLUTION_Y))
         self.wrapper = OpenGlWrapper(self.screen)
         self.clock = pygame.time.Clock()

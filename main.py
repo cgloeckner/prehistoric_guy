@@ -100,8 +100,7 @@ class DemoState(state_machine.State):
         # draw imgui UI
         imgui.new_frame()
         self.editor_ui.draw()
-        self.engine.wrapper.buffer.blit(pygame.transform.scale_by(self.engine.buffer, self.engine.ui_scale_factor),
-                                        (0, 0))
+        self.engine.wrapper.buffer.blit(self.engine.buffer, (0, 0))
         self.engine.wrapper.render()
 
 
