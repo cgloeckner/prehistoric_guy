@@ -106,6 +106,21 @@ def object_ui(obj: platforms.Object) -> bool:
     return not opened
 
 
+def ladder_ui(ladder: platforms.Ladder) -> bool:
+    """Shows an ImGui-based UI for editing a given ladder. Values are updated automatically.
+    Returns True if the close button was clicked.
+    """
+    _, opened = imgui.begin('Ladder', True)
+
+    _, ladder.x = imgui.input_float('x', ladder.x, 0.1)
+    _, ladder.y = imgui.input_float('y', ladder.y, 0.1)
+    _, ladder.height = imgui.input_int('height', ladder.height, 1)
+
+    imgui.end()
+
+    return not opened
+
+
 class SceneEditor(object):
     def __init__(self, screen: pygame.Surface, obj_manager: factory.ObjectManager):
         self.screen = screen
@@ -147,6 +162,10 @@ class SceneEditor(object):
             if distance <= platforms.OBJECT_RADIUS ** 2:
                 hovered.append(obj)
 
+        for ladder in self.obj_manager.physics.ladders:
+            if platforms.ladder_in_reach(pos.x, pos.y, ladder):
+                hovered.append(ladder)
+
         return hovered
 
     def update_hover(self) -> None:
@@ -179,4 +198,7 @@ class SceneEditor(object):
                 self.selected = None
 
         if isinstance(self.selected, platforms.Object) and object_ui(self.selected):
+            self.selected = None
+
+        if isinstance(self.selected, platforms.Ladder) and ladder_ui(self.selected):
             self.selected = None

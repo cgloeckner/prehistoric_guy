@@ -71,6 +71,8 @@ class Ladder:
     y: float
     # size (uniform width)
     height: int
+    # optional coloring
+    hsl: Optional[resources.HslTransform] = None
 
 
 @dataclass
@@ -157,17 +159,17 @@ def is_inside_platform(x: float, y: float, platform: Platform) -> bool:
         platform.y - platform.height < y < platform.y
 
 
-def ladder_in_reach(actor: Actor, ladder: Ladder) -> bool:
-    """Test whether the actor is in reach of the ladder.
+def ladder_in_reach(x: float, y: float, ladder: Ladder) -> bool:
+    """Test whether the position is in reach of the ladder.
     """
-    return ladder.x + 0.5 - OBJECT_RADIUS <= actor.x < ladder.x + 0.5 + OBJECT_RADIUS and\
-        ladder.y <= actor.y < ladder.y + ladder.height + OBJECT_RADIUS
+    return ladder.x + 0.5 - OBJECT_RADIUS <= x < ladder.x + 0.5 + OBJECT_RADIUS and\
+        ladder.y <= y < ladder.y + ladder.height + OBJECT_RADIUS
 
 
 def within_ladder(actor: Actor) -> bool:
     """Test whether the actor is at the middle part of his ladder.
     """
-    if actor.ladder is None or not ladder_in_reach(actor, actor.ladder):
+    if actor.ladder is None or not ladder_in_reach(actor.x, actor.y, actor.ladder):
         return False
 
     return actor.ladder.y < actor.y < actor.ladder.y + actor.ladder.height
@@ -309,7 +311,7 @@ class Physics(object):
         min_ladder = None
         min_dist = None
         for ladder in self.ladders:
-            if not ladder_in_reach(actor, ladder):
+            if not ladder_in_reach(actor.x, actor.y, ladder):
                 continue
 
             distance = abs(ladder.x - actor.x)
@@ -503,7 +505,7 @@ class Physics(object):
         last_pos = pygame.math.Vector2(actor.x, actor.y)
         actor.y += delta_y
 
-        if ladder_in_reach(actor, actor.ladder):
+        if ladder_in_reach(actor.x, actor.y, actor.ladder):
             return
 
         # search for platform to stand at

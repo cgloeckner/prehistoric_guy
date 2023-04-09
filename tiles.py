@@ -83,7 +83,8 @@ class Renderer(object):
         """Draw a ladder.
         """
         tiles = self.tiles
-        # FIXME: allow for ladder coloring (see editor)
+        if ladder.hsl is not None:
+            tiles = self.cache.get_hsl_transformed(tiles, ladder.hsl)
 
         # top left position
         x = ladder.x * WORLD_SCALE
