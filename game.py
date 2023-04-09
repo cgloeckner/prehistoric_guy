@@ -125,9 +125,9 @@ class Manager(platforms.PhysicsListener, animations.AnimationListener):
         """Triggered when an attack animation finished.
         """
         sprite = [sprite for sprite in self.factory.renderer.sprites if sprite.animation == ani][0]
-        self.factory.create_projectile(x=sprite.actor.x + sprite.actor.face_x,
+        self.factory.create_projectile(origin=sprite.actor, x=sprite.actor.x,
                                        y=sprite.actor.y + sprite.actor.radius, radius=platforms.OBJECT_RADIUS,
-                                       face_x=sprite.actor.face_x, object_type=FOOD_OBJ)
+                                       face_x=sprite.actor.face_x, object_type=WEAPON_OBJ)
         print('throw!')
 
     def on_impact_platform(self, proj: platforms.Projectile, platform: platforms.Platform) -> None:

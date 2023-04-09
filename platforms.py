@@ -121,6 +121,8 @@ class Projectile:
     spin_speed: float = PROJECTILE_SPIN
     # flying time
     fly_ms: int = JUMP_DURATION // 4
+    # origin actor
+    origin: Optional[Actor] = None
 
 
 def test_line_intersection(x1: float, y1: float, x2: float, y2: float, x3: float, y3: float,
@@ -602,6 +604,9 @@ class Physics(object):
 
         pos = pygame.math.Vector2(proj.x, proj.y)
         for actor in self.actors:
+            if actor == proj.origin:
+                # ignore projectile's origin
+                continue
             distance = pos.distance_squared_to(pygame.math.Vector2(actor.x, actor.y))
             threshold = actor.radius + proj.radius
             if distance <= threshold ** 2:
