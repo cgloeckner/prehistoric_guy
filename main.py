@@ -4,6 +4,7 @@ import math
 import imgui
 from typing import Optional
 
+import widgets
 from imgui_wrapper import OpenGlWrapper
 
 from constants import *
@@ -13,6 +14,7 @@ import animations
 import factory
 import editor
 import controls
+import widgets
 
 
 class Game(platforms.PhysicsListener, animations.AnimationListener):
@@ -185,7 +187,7 @@ def main():
     editor_ui = editor.SceneEditor(screen, game.obj_manager)
     ctrl = controls.Player(render.sprites[0],
                            controls.Keybinding(left=pygame.K_a, right=pygame.K_d, up=pygame.K_w, down=pygame.K_s,
-                                               attack=pygame.K_SPACE, throw=pygame.K_RETURN))
+                                               attack=pygame.K_SPACE))
 
     running = True
     elapsed = 0
@@ -198,10 +200,11 @@ def main():
                 # FIXME: pygame.display.toggle_fullscreen() does not work correctly when leaving fullscreen
                 pass
 
+            ctrl.process_event(event)
             wrapper.process_event(event)
 
         editor_ui.update()
-        ctrl.update()
+        ctrl.update(elapsed)
         phys.update(elapsed)
 
         # limit pos to screen
@@ -220,7 +223,14 @@ def main():
         # phys.draw(buffer)
 
         score_surface = render.font.render(f'SCORE: {game.score}', False, 'black')
-        wrapper.buffer.blit(score_surface, (0, 0))
+        buffer.blit(score_surface, (0, 0))
+
+        throw_perc = ctrl.get_throwing_process()
+        if throw_perc > 0.5:
+            widgets.progress_bar(buffer,
+                                 int(ctrl.sprite.actor.x * WORLD_SCALE),
+                                 RESOLUTION_Y - int(ctrl.sprite.actor.y * WORLD_SCALE + WORLD_SCALE),
+                                 15, 3, throw_perc)
 
         # draw imgui UI
         imgui.new_frame()

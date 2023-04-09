@@ -1,10 +1,19 @@
 import pygame
 from dataclasses import dataclass
-from typing import Tuple
+from typing import Optional
 
 import platforms
 import tiles
 import animations
+
+
+NO_ACTION: int = 0
+ATTACK_ACTION: int = 1
+THROW_ACTION: int = 2
+
+
+# keypress time required to throw
+THROW_THRESHOLD: int = int(animations.ANIMATION_NUM_FRAMES * animations.ANIMATION_FRAME_DURATION)
 
 
 @dataclass
@@ -13,8 +22,8 @@ class Keybinding:
     right: int
     up: int
     down: int
+    # for both, attack and throw
     attack: int
-    throw: int
 
 
 class Player(object):
@@ -22,33 +31,58 @@ class Player(object):
         self.sprite = sprite
         self.binding = binding
 
-    def get_inputs(self) -> Tuple[pygame.math.Vector2, bool, bool]:
+        self.delta = pygame.math.Vector2()
+        self.action = NO_ACTION
+
+        self.attack_held_ms = -1
+
+    def get_throwing_process(self) -> float:
+        """Returns a float in [0.0; 1.0] that yields the percentage of the keydown-for-throwing duration.
+        """
+        if self.attack_held_ms == -1:
+            return 0.0
+
+        return min(1.0, self.attack_held_ms / THROW_THRESHOLD)
+
+    def process_event(self, event: pygame.event.Event) -> None:
+        """Handles inputs and sets the action accordingly.
+        """
+        if event.type == pygame.KEYDOWN and event.key == self.binding.attack:
+            self.attack_held_ms = 0
+
+        elif event.type == pygame.KEYUP and event.key == self.binding.attack:
+            print(self.attack_held_ms, THROW_THRESHOLD)
+            if self.attack_held_ms > THROW_THRESHOLD:
+                self.action = THROW_ACTION
+            else:
+                self.action = ATTACK_ACTION
+            self.attack_held_ms = -1
+
+    def get_inputs(self, elapsed_ms: int) -> None:
         """Grabs the movement vector and whether it's an attack or not.
-        Returns the vector and the bool.
         """
         keys = pygame.key.get_pressed()
 
         # query movement vector
-        delta = pygame.math.Vector2()
         if keys[self.binding.left]:
-            delta.x -= 1
+            self.delta.x -= 1
         if keys[self.binding.right]:
-            delta.x += 1
+            self.delta.x += 1
         if keys[self.binding.up]:
-            delta.y += 1
+            self.delta.y += 1
         if keys[self.binding.down]:
-            delta.y -= 1
+            self.delta.y -= 1
 
-        attack = keys[self.binding.attack]
-        throw = keys[self.binding.throw]
+        # count how long the attack key is held
+        if self.attack_held_ms >= 0:
+            self.attack_held_ms += elapsed_ms
+            if self.attack_held_ms > THROW_THRESHOLD:
+                self.action = THROW_ACTION
+                self.attack_held_ms = 0.0
 
-        return delta, attack, throw
-
-    def update(self) -> None:
-        """Triggers movement/attack and animations.
+    def handle_inputs(self) -> None:
+        """Triggers movement, jumping, climbing, attacking etc.
         """
-        delta, attack, throw = self.get_inputs()
-
         if self.sprite.animation.action_id in [animations.DIE_ACTION, animations.ATTACK_ACTION,
                                                animations.THROW_ACTION, animations.LANDING_ACTION]:
             # nothing allowed
@@ -56,7 +90,7 @@ class Player(object):
             self.sprite.actor.force_y = 0.0
             return
 
-        if throw:
+        if self.action == THROW_ACTION:
             if self.sprite.animation.action_id in [animations.HOLD_ACTION, animations.CLIMB_ACTION]:
                 # not allowed
                 return
@@ -65,7 +99,7 @@ class Player(object):
             # FIXME: create projectile AFTER animation
             return
 
-        if attack:
+        if self.action == ATTACK_ACTION:
             if self.sprite.animation.action_id in [animations.HOLD_ACTION, animations.CLIMB_ACTION]:
                 # not allowed
                 return
@@ -76,18 +110,18 @@ class Player(object):
 
         if self.sprite.actor.ladder is None:
             # jumping?
-            if delta.y > 0.0:
+            if self.delta.y > 0.0:
                 # jump
                 animations.start(self.sprite.animation, animations.JUMP_ACTION)
-                self.sprite.actor.force_x = delta.x
-                self.sprite.actor.force_y = delta.y
+                self.sprite.actor.force_x = self.delta.x
+                self.sprite.actor.force_y = self.delta.y
                 return
 
             # moving?
-            if delta.x != 0.0:
+            if self.delta.x != 0.0:
                 # move around
                 animations.start(self.sprite.animation, animations.MOVE_ACTION)
-                self.sprite.actor.force_x = delta.x
+                self.sprite.actor.force_x = self.delta.x
                 return
 
             # idle?
@@ -99,18 +133,18 @@ class Player(object):
             return
 
         # jumping off?
-        if delta.x != 0.0:
+        if self.delta.x != 0.0:
             # jump off ladder
             animations.start(self.sprite.animation, animations.JUMP_ACTION)
-            self.sprite.actor.force_x = delta.x
-            self.sprite.actor.force_y = delta.y
+            self.sprite.actor.force_x = self.delta.x
+            self.sprite.actor.force_y = self.delta.y
             return
 
         # climbing?
-        if delta.y != 0.0:
+        if self.delta.y != 0.0:
             # climb on ladder
             animations.start(self.sprite.animation, animations.CLIMB_ACTION)
-            self.sprite.actor.force_y = delta.y
+            self.sprite.actor.force_y = self.delta.y
             return
 
         self.sprite.actor.force_x = 0.0
@@ -122,3 +156,14 @@ class Player(object):
             return
 
         animations.start(self.sprite.animation, animations.IDLE_ACTION)
+
+    def update(self, elapsed_ms: int) -> None:
+        """Triggers movement/attack and animations.
+        """
+        self.get_inputs(elapsed_ms)
+        self.handle_inputs()
+
+        # reset all input parameters
+        self.delta = pygame.math.Vector2()
+        self.action = NO_ACTION
+
