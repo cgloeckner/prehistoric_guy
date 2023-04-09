@@ -15,6 +15,9 @@ class Manager(platforms.PhysicsListener, animations.AnimationListener):
         self.score = 0
         self.factory: Optional[factory.ObjectManager] = None
 
+        self.player_sprite = None
+        self.enemy_sprites = list()
+
     def create_food(self) -> None:
         # pick random position on random platform
         p = random.choice(self.factory.physics.platforms)
@@ -23,25 +26,23 @@ class Manager(platforms.PhysicsListener, animations.AnimationListener):
         self.factory.create_object(x=p.x + x, y=p.y + 0.5, object_type=FOOD_OBJ)
 
     def populate_demo_scene(self, guy_sheet: pygame.Surface) -> None:
-        self.factory.create_actor_sprite(sprite_sheet=guy_sheet, x=2, y=5)
-        self.factory.create_actor_sprite(sprite_sheet=guy_sheet, x=6, y=5)
+        self.player_sprite = self.factory.create_actor_sprite(sprite_sheet=guy_sheet, x=2, y=5)
+        self.enemy_sprites.append(self.factory.create_actor_sprite(sprite_sheet=guy_sheet, x=6.5, y=6.5))
+        self.enemy_sprites.append(self.factory.create_actor_sprite(sprite_sheet=guy_sheet, x=6.5, y=4.5))
 
         # horizontal platforms
         self.factory.create_platform(x=0, y=1, width=3, height=2)
         self.factory.create_platform(x=2, y=2, width=2)
         self.factory.create_platform(x=0, y=4, width=3)
-        self.factory.create_platform(x=4, y=1, width=6,
-                                     hover=platforms.Hovering(x=math.cos, y=math.sin, amplitude=1.5))
+        self.factory.create_platform(x=6, y=1, width=3)
         self.factory.create_platform(x=4, y=4, width=1, height=11)
         self.factory.create_platform(x=5, y=6, width=4)
 
-        # NOTE: h=0 necessary to avoid collisions when jumping "into" the platform
-        self.factory.create_platform(x=2.0, y=6, width=RESOLUTION_X // WORLD_SCALE - 2 - 3, height=0,
-                                     hover=platforms.Hovering(y=math.cos, amplitude=-1))
+        self.factory.create_platform(x=3, y=6, width=1, hover=platforms.Hovering(x=math.cos, amplitude=-2))
 
         # ladders
         self.factory.create_ladder(x=1, y=1, height=7)
-        self.factory.create_ladder(x=8, y=3, height=3)
+        self.factory.create_ladder(x=8, y=1, height=5)
 
         for i in range(10):
             self.create_food()

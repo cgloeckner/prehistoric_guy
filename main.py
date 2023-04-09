@@ -29,9 +29,9 @@ class DemoState(state_machine.State):
         self.manager.populate_demo_scene(self.guy)
 
         self.editor_ui = editor.SceneEditor(engine.screen, self.manager.factory)
-        self.ctrl = controls.Player(self.render.sprites[0], controls.Keybinding(left=pygame.K_a, right=pygame.K_d,
-                                                                                up=pygame.K_w, down=pygame.K_s,
-                                                                                attack=pygame.K_SPACE))
+        self.ctrl = controls.Player(self.manager.player_sprite,
+                                    controls.Keybinding(left=pygame.K_a, right=pygame.K_d, up=pygame.K_w,
+                                                        down=pygame.K_s, attack=pygame.K_SPACE))
 
     def process_event(self, event: pygame.event.Event) -> None:
         if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
@@ -49,6 +49,18 @@ class DemoState(state_machine.State):
         self.ctrl.update(elapsed_ms)
         self.phys.update(elapsed_ms)
         self.anis.update(elapsed_ms)
+
+        for enemy in self.manager.enemy_sprites:
+            if enemy.actor.anchor is None:
+                continue
+            left_bound = enemy.actor.anchor.x + enemy.actor.anchor.width * 0.05
+            right_bound = enemy.actor.anchor.x + enemy.actor.anchor.width * 0.95
+            if enemy.actor.x < left_bound:
+                enemy.actor.face_x = 1.0
+            elif enemy.actor.x > right_bound:
+                enemy.actor.face_x = -1.0
+            enemy.actor.force_x = enemy.actor.face_x
+            animations.start(enemy.animation, animations.MOVE_ACTION)
 
         # limit pos to screen
         self.ctrl.sprite.actor.x = max(0.0, min(self.ctrl.sprite.actor.x, RESOLUTION_X / WORLD_SCALE))
