@@ -29,7 +29,7 @@ class DemoState(state_machine.State):
         self.manager.populate_demo_scene(self.guy)
 
         self.editor_ui = editor.SceneEditor(engine.screen, self.manager.factory)
-        self.ctrl = controls.Player(self.manager.player_sprite,
+        self.ctrl = controls.Player(self.manager.player_character,
                                     controls.Keybinding(left=pygame.K_a, right=pygame.K_d, up=pygame.K_w,
                                                         down=pygame.K_s, attack=pygame.K_SPACE))
 
@@ -50,25 +50,25 @@ class DemoState(state_machine.State):
         self.phys.update(elapsed_ms)
         self.anis.update(elapsed_ms)
 
-        for enemy in self.manager.enemy_sprites:
-            if enemy.actor.anchor is None:
+        for enemy in self.manager.enemies:
+            if enemy.sprite.actor.anchor is None:
                 continue
-            left_bound = enemy.actor.anchor.x + enemy.actor.anchor.width * 0.05
-            right_bound = enemy.actor.anchor.x + enemy.actor.anchor.width * 0.95
-            if enemy.actor.x < left_bound:
-                enemy.actor.face_x = 1.0
-            elif enemy.actor.x > right_bound:
-                enemy.actor.face_x = -1.0
-            enemy.actor.force_x = enemy.actor.face_x
-            animations.start(enemy.animation, animations.MOVE_ACTION)
+            left_bound = enemy.sprite.actor.anchor.x + enemy.sprite.actor.anchor.width * 0.05
+            right_bound = enemy.sprite.actor.anchor.x + enemy.sprite.actor.anchor.width * 0.95
+            if enemy.sprite.actor.x < left_bound:
+                enemy.sprite.actor.face_x = 1.0
+            elif enemy.sprite.actor.x > right_bound:
+                enemy.sprite.actor.face_x = -1.0
+            enemy.sprite.actor.force_x = enemy.sprite.actor.face_x
+            animations.start(enemy.sprite.animation, animations.MOVE_ACTION)
 
         # limit pos to screen
-        self.ctrl.sprite.actor.x = max(0.0, min(self.ctrl.sprite.actor.x, RESOLUTION_X / WORLD_SCALE))
-        if self.ctrl.sprite.actor.y < 0:
+        self.ctrl.character.sprite.actor.x = max(0.0, min(self.ctrl.character.sprite.actor.x, RESOLUTION_X / WORLD_SCALE))
+        if self.ctrl.character.sprite.actor.y < 0:
             self.manager.score -= 3
             if self.manager.score < 0:
                 self.manager.score = 0
-            self.ctrl.sprite.actor.y += RESOLUTION_Y // WORLD_SCALE
+            self.ctrl.character.sprite.actor.y += RESOLUTION_Y // WORLD_SCALE
 
     def draw(self) -> None:
         self.render.draw(self.phys, 0)
@@ -80,8 +80,8 @@ class DemoState(state_machine.State):
         throw_perc = self.ctrl.get_throwing_process()
         if throw_perc > 0.5:
             widgets.progress_bar(self.engine.buffer,
-                                 int(self.ctrl.sprite.actor.x * WORLD_SCALE),
-                                 RESOLUTION_Y - int(self.ctrl.sprite.actor.y * WORLD_SCALE + WORLD_SCALE),
+                                 int(self.ctrl.character.sprite.actor.x * WORLD_SCALE),
+                                 RESOLUTION_Y - int(self.ctrl.character.sprite.actor.y * WORLD_SCALE + WORLD_SCALE),
                                  15, 3, throw_perc)
 
         # draw imgui UI

@@ -15,8 +15,8 @@ class Manager(platforms.PhysicsListener, animations.AnimationListener):
         self.score = 0
         self.factory: Optional[factory.ObjectManager] = None
 
-        self.player_sprite = None
-        self.enemy_sprites = list()
+        self.player_character = None
+        self.enemies = list()
 
     def create_food(self) -> None:
         # pick random position on random platform
@@ -26,9 +26,9 @@ class Manager(platforms.PhysicsListener, animations.AnimationListener):
         self.factory.create_object(x=p.x + x, y=p.y + 0.5, object_type=FOOD_OBJ)
 
     def populate_demo_scene(self, guy_sheet: pygame.Surface) -> None:
-        self.player_sprite = self.factory.create_actor_sprite(sprite_sheet=guy_sheet, x=2, y=5)
-        self.enemy_sprites.append(self.factory.create_actor_sprite(sprite_sheet=guy_sheet, x=6.5, y=6.5))
-        self.enemy_sprites.append(self.factory.create_actor_sprite(sprite_sheet=guy_sheet, x=6.5, y=4.5))
+        self.player_character = self.factory.create_character(sprite_sheet=guy_sheet, x=2, y=5)
+        self.enemies.append(self.factory.create_character(sprite_sheet=guy_sheet, x=6.5, y=6.5))
+        self.enemies.append(self.factory.create_character(sprite_sheet=guy_sheet, x=6.5, y=4.5))
 
         # horizontal platforms
         self.factory.create_platform(x=0, y=1, width=3, height=2)
@@ -141,6 +141,6 @@ class Manager(platforms.PhysicsListener, animations.AnimationListener):
         """Triggered when a projectile hits an actor.
         """
         sprite = [sprite for sprite in self.factory.renderer.sprites if sprite.actor == actor][0]
-        self.factory.destroy_actor_sprite(sprite)
+        self.factory.destroy_sprite(sprite)
         self.factory.create_object(x=proj.x, y=proj.y - platforms.OBJECT_RADIUS, object_type=proj.object_type)
         self.factory.destroy_projectile(proj)

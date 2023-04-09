@@ -3,6 +3,7 @@ import pygame
 import platforms
 import animations
 import tiles
+import controls
 
 
 class ObjectManager(object):
@@ -16,6 +17,8 @@ class ObjectManager(object):
         self.physics = physics
         self.animation = animation
         self.renderer = renderer
+
+        self.characters = list()
 
     def create_platform(self, **kwargs) -> platforms.Platform:
         """Create a new platform.
@@ -67,7 +70,7 @@ class ObjectManager(object):
         """Remove an existing projectile."""
         self.physics.projectiles.remove(proj)
 
-    def create_actor_sprite(self, sprite_sheet: pygame.Surface, **kwargs) -> tiles.Sprite:
+    def create_sprite(self, sprite_sheet: pygame.Surface, **kwargs) -> tiles.Sprite:
         """Create an actor sprite object such as player or enemy characters.
         Returns a sprite which links to the actor and its animations.
         """
@@ -83,9 +86,25 @@ class ObjectManager(object):
 
         return sprite
 
-    def destroy_actor_sprite(self, sprite: tiles.Sprite) -> None:
+    def destroy_sprite(self, sprite: tiles.Sprite) -> None:
         """Remove an actor sprite (as well as its animation) from by using the related sprite object.
         """
         self.physics.actors.remove(sprite.actor)
         self.animation.animations.remove(sprite.animation)
         self.renderer.sprites.remove(sprite)
+
+    def create_character(self, **kwargs) -> controls.Character:
+        """Create a character.
+        Returns the character
+        """
+        sprite = self.create_sprite(**kwargs)
+        character = controls.Character(sprite)
+        self.characters.append(character)
+
+        return character
+
+    def destroy_character(self, character: controls.Character) -> None:
+        """Remove a character.
+        """
+        self.destroy_sprite(character.sprite)
+        self.characters.remove(character)
