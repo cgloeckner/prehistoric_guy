@@ -65,17 +65,16 @@ class DemoState(state_machine.State):
         # limit pos to screen
         self.ctrl.character.sprite.actor.x = max(0.0, min(self.ctrl.character.sprite.actor.x, RESOLUTION_X / WORLD_SCALE))
         if self.ctrl.character.sprite.actor.y < 0:
-            self.manager.score -= 3
-            if self.manager.score < 0:
-                self.manager.score = 0
             self.ctrl.character.sprite.actor.y += RESOLUTION_Y // WORLD_SCALE
 
     def draw(self) -> None:
         self.render.draw(self.phys, 0)
         # phys.draw(buffer)
 
-        score_surface = self.render.font.render(f'SCORE: {self.manager.score}', False, 'black')
-        self.engine.buffer.blit(score_surface, (0, 0))
+        c = self.ctrl.character
+        hud_str = f'{c.hit_points}/{c.max_hit_points} HP, {c.num_axes}/{c.max_num_axes} Axes'
+        hud_surface = self.render.font.render(hud_str, False, 'white')
+        self.engine.buffer.blit(hud_surface, (0, 0))
 
         throw_perc = self.ctrl.get_throwing_process()
         if throw_perc > 0.5:

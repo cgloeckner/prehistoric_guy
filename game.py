@@ -9,10 +9,16 @@ import animations
 import factory
 
 
+def get_falling_damage(height: float) -> int:
+    """Calculates falling damage based on falling height.
+    Returns integer damage.
+    """
+    return int(height / 4.0)
+
+
 class Manager(platforms.PhysicsListener, animations.AnimationListener):
 
     def __init__(self):
-        self.score = 0
         self.factory: Optional[factory.ObjectManager] = None
 
         self.player_character = None
@@ -44,8 +50,7 @@ class Manager(platforms.PhysicsListener, animations.AnimationListener):
         self.factory.create_ladder(x=1, y=1, height=7)
         self.factory.create_ladder(x=8, y=1, height=5)
 
-        for i in range(10):
-            self.create_food()
+        self.create_food()
 
     # --- Physics Events ----------------------------------------------------------------------------------------------
 
@@ -57,12 +62,21 @@ class Manager(platforms.PhysicsListener, animations.AnimationListener):
             if sprite.actor == actor:
                 action = animations.IDLE_ACTION
                 delta_h = actor.fall_from_y - sprite.actor.y
+                damage = get_falling_damage(delta_h)
 
-                if delta_h > 2.5:
+                if delta_h > 1.5:
                     action = animations.LANDING_ACTION
 
-                if delta_h > 4.0:
-                    action = animations.DIE_ACTION
+                    # find character
+                    relevant = [c for c in self.factory.characters if c.sprite.actor == actor]
+                    if len(relevant) > 0:
+                        c = relevant[0]
+                        c.hit_points -= damage
+                        if damage > 0:
+                            # FIXME: on_player_wounded
+                            animations.flash(sprite.animation, pygame.Color('white'))
+                            if c.hit_points <= 0:
+                                action = animations.DIE_ACTION
 
                 animations.start(sprite.animation, action)
                 return
@@ -70,66 +84,85 @@ class Manager(platforms.PhysicsListener, animations.AnimationListener):
     def on_falling(self, actor: platforms.Actor) -> None:
         """Triggered when the actor starts falling.
         """
-        print('falling')
+        pass
 
     def on_collide_platform(self, actor: platforms.Actor, platform: platforms.Platform) -> None:
         """Triggered when the actor runs into a platform.
         """
-        print('colliding')
+        pass
 
     def on_switch_platform(self, actor: platforms.Actor, platform: platforms.Platform) -> None:
         """Triggered when the actor switches to the given platform as an anchor.
         """
-        print('switching')
+        pass
 
     def on_touch_actor(self, actor: platforms.Actor, other: platforms.Actor) -> None:
         """Triggered when the actor touches another actor.
         """
-        print('touched actor')
+        pass
 
     def on_reach_object(self, actor: platforms.Actor, obj: platforms.Object) -> None:
         """Triggered when the actor reaches an object.
         """
-        self.score += 1
-        self.factory.destroy_object(obj)
+        # find character
+        relevant = [c for c in self.factory.characters if c.sprite.actor == actor]
+        if len(relevant) > 0:
+            if obj.object_type == FOOD_OBJ:
+                # heal him
+                relevant[0].hit_points += 1
+                # FIXME: on_player_healed
+                self.create_food()
 
-        self.create_food()
+            elif obj.object_type == WEAPON_OBJ:
+                # grab axe
+                relevant[0].num_axes += 1
+                # FIXME: on_weapon_collected
+
+        self.factory.destroy_object(obj)
 
     def on_reach_ladder(self, actor: platforms.Actor, ladder: platforms.Ladder) -> None:
         """Triggered when the actor reaches a ladder.
         """
-        print('reached ladder')
+        pass
 
     def on_leave_ladder(self, actor: platforms.Actor, ladder: platforms.Ladder) -> None:
         """Triggered when the actor leaves a ladder.
         """
-        print('left ladder')
+        pass
 
     # --- Animation Events -
 
     def on_step(self, ani: animations.Animation) -> None:
         """Triggered when a cycle of a move animation finished.
         """
-        print('step!')
+        pass
 
     def on_climb(self, ani: animations.Animation) -> None:
         """Triggered when a cycle of a climbing animation finished.
         """
-        print('climb!')
+        pass
 
     def on_attack(self, ani: animations.Animation) -> None:
         """Triggered when an attack animation finished.
         """
-        print('swing!')
+        pass
 
     def on_throw(self, ani: animations.Animation) -> None:
         """Triggered when an attack animation finished.
         """
-        sprite = [sprite for sprite in self.factory.renderer.sprites if sprite.animation == ani][0]
+        relevant = [c for c in self.factory.characters if c.sprite.animation == ani]
+        if len(relevant) == 0:
+            return
+
+        character = relevant[0]
+        if character.num_axes == 0:
+            return
+
+        character.num_axes -= 1
+        sprite = character.sprite
         self.factory.create_projectile(origin=sprite.actor, x=sprite.actor.x,
                                        y=sprite.actor.y + sprite.actor.radius, radius=platforms.OBJECT_RADIUS,
                                        face_x=sprite.actor.face_x, object_type=WEAPON_OBJ)
-        print('throw!')
 
     def on_impact_platform(self, proj: platforms.Projectile, platform: platforms.Platform) -> None:
         """Triggered when a projectile hits a platform.

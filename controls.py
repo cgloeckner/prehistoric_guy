@@ -19,7 +19,9 @@ THROW_THRESHOLD: int = int(animations.ANIMATION_NUM_FRAMES * animations.ANIMATIO
 class Character:
     sprite: tiles.Sprite
     hit_points: int = 5
+    max_hit_points: int = hit_points
     num_axes: int = 5
+    max_num_axes: int = num_axes
 
 
 @dataclass
