@@ -24,12 +24,12 @@ class Manager(platforms.PhysicsListener, animations.AnimationListener):
         self.player_character = None
         self.enemies = list()
 
-    def create_food(self) -> None:
+    def create_random_object(self) -> None:
         # pick random position on random platform
         p = random.choice(self.factory.physics.platforms)
         x = random.randrange(p.width)
 
-        self.factory.create_object(x=p.x + x, y=p.y + 0.5, object_type=FOOD_OBJ)
+        self.factory.create_object(x=p.x + x, y=p.y + 0.5, object_type=random.randrange(MAX_OBJECT_TYPE))
 
     def populate_demo_scene(self, guy_sheet: pygame.Surface) -> None:
         self.player_character = self.factory.create_character(sprite_sheet=guy_sheet, x=2, y=5)
@@ -50,7 +50,7 @@ class Manager(platforms.PhysicsListener, animations.AnimationListener):
         self.factory.create_ladder(x=1, y=1, height=7)
         self.factory.create_ladder(x=8, y=1, height=5)
 
-        self.create_food()
+        self.create_random_object()
 
     # --- Physics Events ----------------------------------------------------------------------------------------------
 
@@ -111,7 +111,6 @@ class Manager(platforms.PhysicsListener, animations.AnimationListener):
                 # heal him
                 relevant[0].hit_points += 1
                 # FIXME: on_player_healed
-                self.create_food()
 
             elif obj.object_type == WEAPON_OBJ:
                 # grab axe
@@ -119,6 +118,7 @@ class Manager(platforms.PhysicsListener, animations.AnimationListener):
                 # FIXME: on_weapon_collected
 
         self.factory.destroy_object(obj)
+        self.create_random_object()
 
     def on_reach_ladder(self, actor: platforms.Actor, ladder: platforms.Ladder) -> None:
         """Triggered when the actor reaches a ladder.

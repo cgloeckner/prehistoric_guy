@@ -13,6 +13,10 @@ import game
 import state_machine
 
 
+HEART_HUD: int = 0
+WEAPON_HUD: int = 1
+
+
 class DemoState(state_machine.State):
     def __init__(self, engine: state_machine.Engine):
         super().__init__(engine)
@@ -32,6 +36,8 @@ class DemoState(state_machine.State):
         self.ctrl = controls.Player(self.manager.player_character,
                                     controls.Keybinding(left=pygame.K_a, right=pygame.K_d, up=pygame.K_w,
                                                         down=pygame.K_s, attack=pygame.K_SPACE))
+
+        self.hud = pygame.image.load('data/hud.png')
 
     def process_event(self, event: pygame.event.Event) -> None:
         if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
@@ -72,9 +78,17 @@ class DemoState(state_machine.State):
         # phys.draw(buffer)
 
         c = self.ctrl.character
+        for i in range(c.hit_points):
+            self.engine.buffer.blit(self.hud, (i * OBJECT_SCALE, 0),
+                                    (0 * OBJECT_SCALE, HEART_HUD * OBJECT_SCALE, OBJECT_SCALE, OBJECT_SCALE))
+        for i in range(c.num_axes):
+            self.engine.buffer.blit(self.hud, (i * OBJECT_SCALE, OBJECT_SCALE),
+                                    (0 * OBJECT_SCALE, WEAPON_HUD * OBJECT_SCALE, OBJECT_SCALE, OBJECT_SCALE))
+        """
         hud_str = f'{c.hit_points}/{c.max_hit_points} HP, {c.num_axes}/{c.max_num_axes} Axes'
         hud_surface = self.render.font.render(hud_str, False, 'white')
         self.engine.buffer.blit(hud_surface, (0, 0))
+        """
 
         throw_perc = self.ctrl.get_throwing_process()
         if throw_perc > 0.5:

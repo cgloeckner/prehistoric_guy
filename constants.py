@@ -12,3 +12,4 @@ FOOD_OBJ: int = 0
 DANGER_OBJ: int = 1
 BONUS_OBJ: int = 2
 WEAPON_OBJ: int = 3
+MAX_OBJECT_TYPE: int = WEAPON_OBJ
