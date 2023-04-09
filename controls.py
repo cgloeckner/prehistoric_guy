@@ -166,4 +166,3 @@ class Player(object):
         # reset all input parameters
         self.delta = pygame.math.Vector2()
         self.action = NO_ACTION
-

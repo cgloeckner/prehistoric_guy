@@ -51,7 +51,7 @@ class DemoState(state_machine.State):
         self.anis.update(elapsed_ms)
 
         # limit pos to screen
-        self.ctrl.sprite.actor.x = max(0, min(self.ctrl.sprite.actor.x, RESOLUTION_X // WORLD_SCALE))
+        self.ctrl.sprite.actor.x = max(0.0, min(self.ctrl.sprite.actor.x, RESOLUTION_X / WORLD_SCALE))
         if self.ctrl.sprite.actor.y < 0:
             self.manager.score -= 3
             if self.manager.score < 0:
