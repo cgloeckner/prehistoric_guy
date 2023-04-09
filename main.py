@@ -50,6 +50,16 @@ class DemoState(state_machine.State):
         self.ctrl.process_event(event)
 
     def update(self, elapsed_ms: int) -> None:
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_LEFT]:
+            self.render.move_camera(-1, 0)
+        if keys[pygame.K_RIGHT]:
+            self.render.move_camera(1, 0)
+        if keys[pygame.K_UP]:
+            self.render.move_camera(0, 1)
+        if keys[pygame.K_DOWN]:
+            self.render.move_camera(0, -1)
+
         self.editor_ui.update()
         self.ctrl.update(elapsed_ms)
         self.phys.update(elapsed_ms)
@@ -93,8 +103,8 @@ class DemoState(state_machine.State):
         throw_perc = self.ctrl.get_throwing_process()
         if throw_perc > 0.5:
             widgets.progress_bar(self.engine.buffer,
-                                 int(self.ctrl.character.sprite.actor.x * WORLD_SCALE),
-                                 RESOLUTION_Y - int(self.ctrl.character.sprite.actor.y * WORLD_SCALE + WORLD_SCALE),
+                                 int(self.ctrl.character.sprite.actor.x * WORLD_SCALE) - self.render.camera.x,
+                                 RESOLUTION_Y - (-self.render.camera.y + int(self.ctrl.character.sprite.actor.y * WORLD_SCALE + WORLD_SCALE)),
                                  15, 3, throw_perc)
 
         # draw imgui UI

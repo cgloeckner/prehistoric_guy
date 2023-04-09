@@ -4,7 +4,7 @@ SPRITE_SCALE: int = WORLD_SCALE * 2
 
 ANIMATION_NUM_FRAMES: int = 4
 
-RESOLUTION_X: int = WORLD_SCALE * 10
+RESOLUTION_X: int = WORLD_SCALE * 20
 RESOLUTION_Y: int = int(RESOLUTION_X * 0.75)
 
 # objects row offsets
