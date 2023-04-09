@@ -2,6 +2,7 @@ import pygame
 import imgui
 
 from constants import *
+import resources
 import platforms
 import tiles
 import animations
@@ -20,14 +21,13 @@ WEAPON_HUD: int = 1
 class DemoState(state_machine.State):
     def __init__(self, engine: state_machine.Engine):
         super().__init__(engine)
-
-        self.guy = animations.flip_sprite_sheet(pygame.image.load('data/guy.png'), SPRITE_SCALE)
+        self.cache = resources.Cache()
+        self.guy = self.cache.get_sprite_sheet('guy')
 
         self.manager = game.Manager()
-
         self.phys = platforms.Physics(self.manager)
         self.anis = animations.Animating(self.manager)
-        self.render = tiles.Renderer(engine.buffer, engine.clock)
+        self.render = tiles.Renderer(self.cache, engine.buffer, engine.clock)
 
         self.manager.factory = factory.ObjectManager(self.phys, self.anis, self.render)
         self.manager.populate_demo_scene(self.guy)
@@ -69,7 +69,8 @@ class DemoState(state_machine.State):
             animations.start(enemy.sprite.animation, animations.MOVE_ACTION)
 
         # limit pos to screen
-        self.ctrl.character.sprite.actor.x = max(0.0, min(self.ctrl.character.sprite.actor.x, RESOLUTION_X / WORLD_SCALE))
+        self.ctrl.character.sprite.actor.x = max(0.0,
+                                                 min(self.ctrl.character.sprite.actor.x, RESOLUTION_X / WORLD_SCALE))
         if self.ctrl.character.sprite.actor.y < 0:
             self.ctrl.character.sprite.actor.y += RESOLUTION_Y // WORLD_SCALE
 

@@ -59,7 +59,6 @@ class Player(object):
             self.attack_held_ms = 0
 
         elif event.type == pygame.KEYUP and event.key == self.binding.attack:
-            print(self.attack_held_ms, THROW_THRESHOLD)
             if self.attack_held_ms > THROW_THRESHOLD:
                 self.action = THROW_ACTION
             else:

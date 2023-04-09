@@ -2,9 +2,10 @@ import pygame
 import math
 from dataclasses import dataclass
 
+from constants import *
+import resources
 import platforms
 import animations
-from constants import *
 
 
 # tiles row offsets
@@ -23,76 +24,29 @@ class Sprite:
     animation: animations.Animation
 
 
-def fill_pixels(surface: pygame.Surface, color: pygame.Color):
-    """Replaces all non-transparent pixels with the given color.
-    """
-    pixels = pygame.PixelArray(surface)
-
-    for y in range(surface.get_height()):
-        for x in range(surface.get_width()):
-            if pixels[x, y] & 0xff000000 != 0:
-                pixels[x, y] = color
-
-    pixels.close()
-
-
 class Renderer(object):
     """Handles drawing the tiled environment.
     """
-    def __init__(self, surface: pygame.Surface, clock: pygame.time.Clock):
+    def __init__(self, cache: resources.Cache, surface: pygame.Surface, clock: pygame.time.Clock):
+        self.cache = cache
         self.surface = surface
         self.clock = clock
 
         self.x = 0
         self.sprites = list()
-        self.colored_cache = dict()
-        self.rotated_cache = dict()
 
         # load resources
-        self.font = pygame.font.SysFont(pygame.font.get_default_font(), 18)
-        self.background = pygame.image.load('data/background.png')
-        self.tiles = pygame.image.load('data/tiles.png')
-        self.objects = pygame.image.load('data/objects.png')
-
-    def get_colored_surface(self, surface: pygame.Surface, color: pygame.Color) -> pygame.Surface:
-        """If not cached, a copy of the given surface is created and all non-transparent pixels are replaced with the
-        given color. If cached, the existing copy is used.
-        Returns the colored surface.
-        """
-        key = (surface, (color.r, color.g, color.b))
-        if key in self.colored_cache:
-            return self.colored_cache[key]
-
-        copy = surface.copy()
-        fill_pixels(copy, color)
-        self.colored_cache[key] = copy
-
-        return copy
-
-    def get_rotated_surface_clip(self, surface: pygame.Surface, rect: pygame.Rect, angle: float, flip: bool)\
-            -> pygame.Surface:
-        """If not cached, a part of the surface, described by the given rect, is created and rotated. This copy is
-        cached for each integer angle in [0; 360). Flipping the frame x-wise is also supported.
-        Returns the rotated surface.
-        """
-        key = (surface, tuple(rect), flip)
-        if key not in self.rotated_cache:
-            # grab and rotate frame
-            frame = surface.subsurface(rect)
-            if flip:
-                frame = pygame.transform.flip(frame, flip_x=True, flip_y=False)
-                self.rotated_cache[key] = [pygame.transform.rotate(frame, alpha) for alpha in range(360)]
-            else:
-                self.rotated_cache[key] = [pygame.transform.rotate(frame, -alpha) for alpha in range(360)]
-
-        return self.rotated_cache[key][int(angle) % 360]
+        self.font = self.cache.get_font()
+        self.background = self.cache.get_image('background')
+        self.tiles = self.cache.get_image('tiles')
+        self.objects = self.cache.get_image('objects')
 
     def draw_object(self, obj: platforms.Object) -> None:
         """Draw an object.
         """
         objects = self.objects
         if obj.color is not None:
-            objects = self.get_colored_surface(objects, obj.color)
+            objects = self.cache.get_colored_surface(objects, obj.color)
 
         # pos is bottom center, needs to be top left
         x = obj.x * WORLD_SCALE - OBJECT_SCALE // 2
@@ -114,7 +68,7 @@ class Renderer(object):
         elif sprite.actor.color is not None:
             color = sprite.actor.color
         if color is not None:
-            sprite_sheet = self.get_colored_surface(sprite_sheet, color)
+            sprite_sheet = self.cache.get_colored_surface(sprite_sheet, color)
 
         # pos is bottom center, needs to be top left
         x = sprite.actor.x * WORLD_SCALE - SPRITE_SCALE // 2
@@ -156,7 +110,7 @@ class Renderer(object):
         """
         tiles = self.tiles
         if platform.color is not None:
-            tiles = self.get_colored_surface(tiles, platform.color)
+            tiles = self.cache.get_colored_surface(tiles, platform.color)
 
         x = platform.x * WORLD_SCALE
         y = self.surface.get_height() - platform.y * WORLD_SCALE
@@ -200,7 +154,7 @@ class Renderer(object):
     def draw_projectile(self, proj: platforms.Projectile) -> None:
         """Draw a projectile.
         """
-        # pos is centered, but needs to be topleft
+        # pos is centered, but needs to be top left
         x = proj.x * WORLD_SCALE - OBJECT_SCALE // 2
         y = self.surface.get_height() - (proj.y * WORLD_SCALE + OBJECT_SCALE // 2)
 
@@ -209,7 +163,7 @@ class Renderer(object):
 
         angle = 2 * math.pi * proj.fly_ms / 360
         angle *= proj.spin_speed
-        objects = self.get_rotated_surface_clip(self.objects, clip, angle, flip=proj.face_x < 0.0)
+        objects = self.cache.get_rotated_surface_clip(self.objects, clip, angle, flip=proj.face_x < 0.0)
 
         self.surface.blit(objects, (x, y))
 
