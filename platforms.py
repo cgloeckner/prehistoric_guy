@@ -22,6 +22,7 @@ JUMP_SPEED_FACTOR: float = 0.5
 # altering projectiles' ballistic trajectory
 PROJECTILE_GRAVITY: float = 0.1
 PROJECTILE_SPEED: float = 12.5
+PROJECTILE_SPIN: float = 50.0
 
 
 @dataclass
@@ -116,6 +117,8 @@ class Projectile:
     face_x: int
     # object type id
     object_type: int
+    # spinning speed
+    spin_speed: float = PROJECTILE_SPIN
     # flying time
     fly_ms: int = JUMP_DURATION // 4
 

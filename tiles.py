@@ -208,7 +208,7 @@ class Renderer(object):
         clip = pygame.Rect(variation_col * OBJECT_SCALE, proj.object_type * OBJECT_SCALE, OBJECT_SCALE, OBJECT_SCALE)
 
         angle = 2 * math.pi * proj.fly_ms / 360
-        angle *= 50
+        angle *= proj.spin_speed
         objects = self.get_rotated_surface_clip(self.objects, clip, angle, flip=proj.face_x < 0.0)
 
         self.surface.blit(objects, (x, y))
