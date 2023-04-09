@@ -50,7 +50,7 @@ class Player(object):
         delta, attack, throw = self.get_inputs()
 
         if self.sprite.animation.action_id in [animations.DIE_ACTION, animations.ATTACK_ACTION,
-                                               animations.LANDING_ACTION]:
+                                               animations.THROW_ACTION, animations.LANDING_ACTION]:
             # nothing allowed
             self.sprite.actor.force_x = 0.0
             self.sprite.actor.force_y = 0.0
@@ -61,7 +61,7 @@ class Player(object):
                 # not allowed
                 return
 
-            animations.start(self.sprite.animation, animations.ATTACK_ACTION)
+            animations.start(self.sprite.animation, animations.THROW_ACTION)
             # FIXME: create projectile AFTER animation
             return
 

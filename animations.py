@@ -17,9 +17,10 @@ MOVE_ACTION: int = 1
 HOLD_ACTION: int = 2
 CLIMB_ACTION: int = 3
 ATTACK_ACTION: int = 4
-JUMP_ACTION: int = 5
-LANDING_ACTION: int = 6
-DIE_ACTION: int = 7
+THROW_ACTION: int = 5
+JUMP_ACTION: int = 6
+LANDING_ACTION: int = 7
+DIE_ACTION: int = 8
 
 
 @dataclass
@@ -93,6 +94,12 @@ class AnimationListener(object):
         """
         pass
 
+    @abstractmethod
+    def on_throw(self, ani: Animation) -> None:
+        """Triggered when a throwing animation finished.
+        """
+        pass
+
 
 class Animating(object):
     """Handles all frame set animations.
@@ -108,6 +115,8 @@ class Animating(object):
             self.event_listener.on_step(ani)
         elif ani.action_id == ATTACK_ACTION:
             self.event_listener.on_attack(ani)
+        elif ani.action_id == THROW_ACTION:
+            self.event_listener.on_throw(ani)
 
     def update_frame(self, ani: Animation, elapsed_ms: int) -> None:
         """Update a single frame animation.
@@ -129,7 +138,7 @@ class Animating(object):
         if ani.action_id in [IDLE_ACTION, MOVE_ACTION, HOLD_ACTION]:
             # loop
             ani.frame_id = 0
-        elif ani.action_id in [ATTACK_ACTION, LANDING_ACTION]:
+        elif ani.action_id in [ATTACK_ACTION, THROW_ACTION, LANDING_ACTION]:
             # reset to idle
             ani.frame_id = 0
             ani.action_id = IDLE_ACTION

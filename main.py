@@ -125,11 +125,16 @@ class Game(platforms.PhysicsListener, animations.AnimationListener):
     def on_attack(self, ani: animations.Animation) -> None:
         """Triggered when an attack animation finished.
         """
+        print('swing!')
+
+    def on_throw(self, ani: animations.Animation) -> None:
+        """Triggered when an attack animation finished.
+        """
         sprite = [sprite for sprite in self.obj_manager.renderer.sprites if sprite.animation == ani][0]
         self.obj_manager.create_projectile(x=sprite.actor.x + sprite.actor.face_x,
                                            y=sprite.actor.y + sprite.actor.radius, radius=platforms.OBJECT_RADIUS,
                                            face_x=sprite.actor.face_x, object_type=FOOD_OBJ)
-        print('swing!')
+        print('throw!')
 
     def on_impact_platform(self, proj: platforms.Projectile, platform: platforms.Platform) -> None:
         """Triggered when a projectile hits a platform.
