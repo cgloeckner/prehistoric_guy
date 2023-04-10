@@ -255,11 +255,42 @@ class AnimatingTest(unittest.TestCase):
 
     # ------------------------------------------------------------------------------------------------------------------
 
-    # FIXME: test__update_movement
+    # Case 1: y-offset is not used for most animations
+    def test__update_movement__1(self):
+        for action in [animations.IDLE_ACTION, animations.HOLD_ACTION, animations.ATTACK_ACTION,
+                       animations.THROW_ACTION, animations.JUMP_ACTION, animations.LANDING_ACTION,
+                       animations.DIE_ACTION]:
+            self.actor.action_id = action
+            self.actor.total_frame_time_ms = 5
+            self.sys.update_movement(self.actor, 10)
+
+            self.assertEqual(self.actor.total_frame_time_ms, 0)
+            self.assertAlmostEqual(self.actor.delta_y, 0.0)
+
+    # Case 2: y-offset is calculated for movement and climbing, and never gets too large
+    def test__update_movement__2(self):
+        for action in [animations.MOVE_ACTION, animations.CLIMB_ACTION]:
+            self.actor.action_id = action
+            self.actor.total_frame_time_ms = 5
+            self.sys.update_movement(self.actor, 10)
+
+            for i in range(2000):
+                self.assertEqual(self.actor.total_frame_time_ms, 15)
+                self.assertLess(abs(self.actor.delta_y), 0.3)
+
+    '''
+    IDLE_ACTION: int = 0
+    MOVE_ACTION: int = 1
+    HOLD_ACTION: int = 2
+    CLIMB_ACTION: int = 3
+    ATTACK_ACTION: int = 4
+    THROW_ACTION: int = 5
+    JUMP_ACTION: int = 6
+    LANDING_ACTION: int = 7
+    DIE_ACTION: int = 8
+'''
 
     # ------------------------------------------------------------------------------------------------------------------
-
-    # FIXME: test__update
 
     def test__update(self):
         self.actor.hsl = resources.HslTransform(hue=25)
@@ -269,4 +300,4 @@ class AnimatingTest(unittest.TestCase):
 
         self.assertEqual(self.actor.frame_id, 2)
         self.assertEqual(self.actor.hsl_duration_ms, 20)
-        self.assertAlmostEquals(self.actor.delta_y, -0.766, 2)
+        self.assertAlmostEqual(self.actor.delta_y, -0.766, 2)
