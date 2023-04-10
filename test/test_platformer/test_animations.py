@@ -278,18 +278,6 @@ class AnimatingTest(unittest.TestCase):
                 self.assertEqual(self.actor.total_frame_time_ms, 15)
                 self.assertLess(abs(self.actor.delta_y), 0.3)
 
-    '''
-    IDLE_ACTION: int = 0
-    MOVE_ACTION: int = 1
-    HOLD_ACTION: int = 2
-    CLIMB_ACTION: int = 3
-    ATTACK_ACTION: int = 4
-    THROW_ACTION: int = 5
-    JUMP_ACTION: int = 6
-    LANDING_ACTION: int = 7
-    DIE_ACTION: int = 8
-'''
-
     # ------------------------------------------------------------------------------------------------------------------
 
     def test__update(self):
