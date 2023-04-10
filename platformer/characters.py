@@ -78,3 +78,7 @@ class Characters(object):
             self.event_listener.on_char_damaged(victim, damage)
         else:
             self.event_listener.on_char_died(victim, cause)
+
+    def update(self, elapsed_ms: int) -> None:
+        # FIXME: damage over time (e.g. poison)?
+        pass

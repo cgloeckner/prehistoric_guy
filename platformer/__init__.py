@@ -1,4 +1,4 @@
-from platformer.hud import *
+from platformer.ui import *
 from platformer.physics import *
 from platformer.animations import *
 from platformer.render import *

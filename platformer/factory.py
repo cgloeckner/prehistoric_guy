@@ -4,11 +4,13 @@ import math
 from typing import Optional
 
 from core.constants import *
+import core.resources as resources
+
 import platformer.physics as physics
 import platformer.animations as animations
 import platformer.render as render
 import platformer.characters as characters
-import core.resources as resources
+import platformer.ui as ui
 
 
 class ObjectManager(physics.PhysicsListener, animations.AnimationListener, characters.CharacterListener):
@@ -21,8 +23,7 @@ class ObjectManager(physics.PhysicsListener, animations.AnimationListener, chara
         self.animation = animations.Animating(self)
         self.renderer = render.Renderer(self.physics, self.animation, cache, target)
         self.chars = characters.Characters(self)
-
-        self.player_character = None
+        self.huds = ui.PlayerHuds(self.physics, self.renderer, self.chars, cache)
 
     def create_random_object(self) -> None:
         # pick random position on random platform
@@ -38,7 +39,7 @@ class ObjectManager(physics.PhysicsListener, animations.AnimationListener, chara
         grey_guy = cache.get_hsl_transformed(generic_guy, resources.HslTransform(saturation=0.0),
                                              SPRITE_CLOTHES_COLORS)
 
-        self.player_character = self.create_character(sprite_sheet=blue_guy, x=2, y=5)
+        self.huds.player_ids.append(self.create_character(sprite_sheet=blue_guy, x=2, y=5).object_id)
         self.create_character(sprite_sheet=grey_guy, x=6.5, y=6.5)
         self.create_character(sprite_sheet=grey_guy, x=6.5, y=4.5)
 
@@ -313,3 +314,5 @@ class ObjectManager(physics.PhysicsListener, animations.AnimationListener, chara
         """
         self.physics.update(elapsed_ms)
         self.animation.update(elapsed_ms)
+        self.chars.update(elapsed_ms)
+        self.huds.update(elapsed_ms)

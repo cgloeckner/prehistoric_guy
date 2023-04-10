@@ -18,8 +18,9 @@ class DemoState(state_machine.State):
 
         self.editor_ui = editor.SceneEditor(engine.screen, self.manager)
 
-        phys_actor = self.manager.physics.get_by_id(self.manager.player_character.object_id)
-        ani_actor = self.manager.animation.get_by_id(self.manager.player_character.object_id)
+        # FIXME: allow for multiple keybindings and controls (multiple players
+        phys_actor = self.manager.physics.get_by_id(self.manager.huds.player_ids[0])
+        ani_actor = self.manager.animation.get_by_id(self.manager.huds.player_ids[0])
         keys = platformer.Keybinding(left=pygame.K_a, right=pygame.K_d, up=pygame.K_w, down=pygame.K_s,
                                      attack=pygame.K_SPACE)
         self.ctrl = platformer.Player(phys_actor, ani_actor, keys)
@@ -53,7 +54,7 @@ class DemoState(state_machine.State):
         self.manager.update(elapsed_ms)
 
         for enemy in self.manager.chars.characters:
-            if enemy == self.manager.player_character:
+            if enemy.object_id in self.manager.huds.player_ids:
                 continue
             ani_enemy = self.manager.animation.get_by_id(enemy.object_id)
             if ani_enemy.action_id in [platformer.DIE_ACTION, platformer.ATTACK_ACTION,
@@ -78,21 +79,8 @@ class DemoState(state_machine.State):
 
     def draw(self) -> None:
         self.manager.renderer.draw()
+        self.manager.huds.draw()
         # phys.draw(buffer)
-
-        char_pc = self.manager.player_character
-        platformer.hud.hud_icons(self.engine.buffer, self.hud, char_pc)
-
-        """
-        hud_str = f'{c.hit_points}/{c.max_hit_points} HP, {c.num_axes}/{c.max_num_axes} Axes'
-        hud_surface = self.render.font.render(hud_str, False, 'white')
-        self.engine.buffer.blit(hud_surface, (0, 0))
-        """
-
-        throw_perc = self.ctrl.get_throwing_process()
-        phys_pc = self.manager.physics.get_by_id(char_pc.object_id)
-        if throw_perc > 0.5:
-            platformer.hud.throw_progress(self.engine.buffer, self.manager.renderer.camera, phys_pc, throw_perc)
 
         # draw FPS
         fps_surface = self.font.render(f'FPS: {int(self.engine.num_fps):02d}', False, 'white')
