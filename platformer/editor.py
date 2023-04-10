@@ -3,7 +3,13 @@ import pygame
 import math
 from typing import List
 
-import platformer
+from core.constants import *
+from core import resources
+
+from platformer import physics
+from platformer import animations
+from platformer import render
+from platformer import factory
 
 
 def get_dict_key_index(dictionary, value) -> int:
@@ -14,7 +20,7 @@ def get_dict_key_index(dictionary, value) -> int:
         index += 1
 
 
-def platform_ui(platform: platformer.Platform) -> bool:
+def platform_ui(platform: physics.Platform) -> bool:
     """Shows an ImGui-based UI for editing the given platform. Values are updated automatically.
     Returns True if the close button was clicked.
     """
@@ -34,7 +40,7 @@ def platform_ui(platform: platformer.Platform) -> bool:
 
     _, enabled = imgui.checkbox('does hover?', platform.hover is not None)
     if enabled and platform.hover is None:
-        platform.hover = platformer.Hovering()
+        platform.hover = physics.Hovering()
     if not enabled and platform.hover is not None:
         platform.hover = None
 
@@ -54,37 +60,39 @@ def platform_ui(platform: platformer.Platform) -> bool:
     return not opened
 
 
-def sprite_ui(sprite: platformer.Actor) -> bool:
+def actor_ui(phys_actor: physics.Actor, ani_actor: animations.Actor, render_actor: render.Actor) -> bool:
     """Shows an ImGui-based UI for editing a given actor. Values are updated automatically.
     Returns True if the close button was clicked.
     """
     _, opened = imgui.begin('Sprite', True)
 
-    _, sprite.actor.x = imgui.input_float('x', sprite.actor.x, 0.1)
-    _, sprite.actor.y = imgui.input_float('y', sprite.actor.y, 0.1)
-    imgui.text(f'face_x={sprite.actor.face_x}')
-    imgui.text(f'force_x={sprite.actor.force_x}')
-    imgui.text(f'force_y={sprite.actor.force_y}')
-    imgui.text(f'fall_from_y={sprite.actor.fall_from_y}')
-    imgui.text(f'anchor={sprite.actor.anchor}')
-    imgui.text(f'ladder={sprite.actor.ladder}')
-    _, sprite.actor.radius = imgui.input_float('y', sprite.actor.radius, 0.1)
-    imgui.text(f'action_id={sprite.animation.action_id}')
+    _, phys_actor.x = imgui.input_float('x', phys_actor.x, 0.1)
+    _, phys_actor.y = imgui.input_float('y', phys_actor.y, 0.1)
+    imgui.text(f'face_x={phys_actor.face_x}')
+    imgui.text(f'force_x={phys_actor.force_x}')
+    imgui.text(f'force_y={phys_actor.force_y}')
+    imgui.text(f'fall_from_y={phys_actor.fall_from_y}')
+    imgui.text(f'anchor={phys_actor.anchor}')
+    imgui.text(f'ladder={phys_actor.ladder}')
+    _, phys_actor.radius = imgui.input_float('y', phys_actor.radius, 0.1)
+    imgui.text(f'action_id={ani_actor.action_id}')
+    imgui.text(f'action_id={ani_actor.action_id}')
+    imgui.text(f'sprite_sheet={render_actor.sprite_sheet}')
 
     imgui.end()
 
     return not opened
 
 
-def object_ui(obj: platformer.Object) -> bool:
+def object_ui(obj: physics.Object) -> bool:
     """Shows an ImGui-based UI for editing a given object. Values are updated automatically.
     Returns True if the close button was clicked.
     """
     opts_dict = {
-        'FOOD_OBJ': platformer.FOOD_OBJ,
-        'DANGER_OBJ': platformer.DANGER_OBJ,
-        'BONUS_OBJ': platformer.BONUS_OBJ,
-        'WEAPON_OBJ': platformer.WEAPON_OBJ
+        'FOOD_OBJ': FOOD_OBJ,
+        'DANGER_OBJ': DANGER_OBJ,
+        'BONUS_OBJ': BONUS_OBJ,
+        'WEAPON_OBJ': WEAPON_OBJ
     }
     opts_keys = list(opts_dict.keys())
 
@@ -102,7 +110,7 @@ def object_ui(obj: platformer.Object) -> bool:
     return not opened
 
 
-def ladder_ui(ladder: platformer.Ladder) -> bool:
+def ladder_ui(ladder: physics.Ladder) -> bool:
     """Shows an ImGui-based UI for editing a given ladder. Values are updated automatically.
     Returns True if the close button was clicked.
     """
@@ -118,7 +126,7 @@ def ladder_ui(ladder: platformer.Ladder) -> bool:
 
 
 class SceneEditor(object):
-    def __init__(self, screen: pygame.Surface, obj_manager: platformer.ObjectManager):
+    def __init__(self, screen: pygame.Surface, obj_manager: factory.ObjectManager):
         self.screen = screen
         self.obj_manager = obj_manager
 
@@ -135,7 +143,7 @@ class SceneEditor(object):
         # collect all hoverable objects
         hovered = list()
         for platform in self.obj_manager.physics.platforms:
-            h = platform.height if platform.height > 0.0 else platformer.OBJECT_RADIUS
+            h = platform.height if platform.height > 0.0 else physics.OBJECT_RADIUS
             if platform.x <= pos.x <= platform.x + platform.width and platform.y - h <= pos.y <= platform.y:
                 hovered.append(platform)
 
@@ -146,13 +154,13 @@ class SceneEditor(object):
                 hovered.append(actor)
 
         for obj in self.obj_manager.physics.objects:
-            obj_pos = pygame.math.Vector2(obj.x, obj.y + platformer.OBJECT_RADIUS)
+            obj_pos = pygame.math.Vector2(obj.x, obj.y + physics.OBJECT_RADIUS)
             distance = pos.distance_squared_to(obj_pos)
-            if distance <= platformer.OBJECT_RADIUS ** 2:
+            if distance <= physics.OBJECT_RADIUS ** 2:
                 hovered.append(obj)
 
         for ladder in self.obj_manager.physics.ladders:
-            if platformer.ladder_in_reach(pos.x, pos.y, ladder):
+            if physics.ladder_in_reach(pos.x, pos.y, ladder):
                 hovered.append(ladder)
 
         return hovered
@@ -167,7 +175,7 @@ class SceneEditor(object):
             elem.hsl = None
         self.hovered_elements = self.get_hovered()
         for elem in self.hovered_elements:
-            elem.hsl = platformer.HslTransform(hue=0.14, saturation=1.0)
+            elem.hsl = resources.HslTransform(hue=0.14, saturation=1.0)
 
         # select first hovered element on click
         left_click = pygame.mouse.get_pressed()[0]
@@ -178,16 +186,17 @@ class SceneEditor(object):
         self.update_hover()
 
     def draw(self) -> None:
-        if isinstance(self.selected, platformer.Platform) and platform_ui(self.selected):
+        if isinstance(self.selected, physics.Platform) and platform_ui(self.selected):
             self.selected = None
 
-        if isinstance(self.selected, platformer.Actor):
-            sprite = [sprite for sprite in self.obj_manager.renderer.sprites if sprite.actor == self.selected][0]
-            if sprite_ui(sprite):
+        if isinstance(self.selected, physics.Actor):
+            ani_actor = self.obj_manager.animation.get_by_id(self.selected.object_id)
+            render_actor = self.obj_manager.renderer.get_by_id(self.selected.object_id)
+            if actor_ui(self.selected, ani_actor, render_actor):
                 self.selected = None
 
-        if isinstance(self.selected, platformer.Object) and object_ui(self.selected):
+        if isinstance(self.selected, physics.Object) and object_ui(self.selected):
             self.selected = None
 
-        if isinstance(self.selected, platformer.Ladder) and ladder_ui(self.selected):
+        if isinstance(self.selected, physics.Ladder) and ladder_ui(self.selected):
             self.selected = None

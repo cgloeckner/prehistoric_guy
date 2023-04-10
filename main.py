@@ -3,7 +3,7 @@ import imgui
 
 import core
 import platformer
-import editor
+from platformer import editor
 import state_machine
 
 
