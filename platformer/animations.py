@@ -5,8 +5,7 @@ from abc import abstractmethod
 from typing import Optional
 
 from core.constants import *
-
-import core.resources as resources
+from core import resources
 
 
 ANIMATION_FRAME_DURATION: int = 120

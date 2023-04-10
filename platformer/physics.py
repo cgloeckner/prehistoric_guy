@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from typing import Tuple, Optional, List
 from abc import abstractmethod
 
-import core.resources as resources
+from core import resources
 
 
 GRAVITY: float = 9.81

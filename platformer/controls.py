@@ -1,9 +1,9 @@
 import pygame
 from dataclasses import dataclass
 
-import platformer.animations as animations
-import platformer.physics as physics
-import platformer.characters as characters
+from platformer import animations
+from platformer import physics
+from platformer import characters
 
 
 # keypress time required to throw

@@ -3,10 +3,10 @@ import math
 from dataclasses import dataclass
 
 from core.constants import *
+from core import resources
 
-import platformer.animations as animations
-import platformer.physics as physics
-import core.resources as resources
+from platformer import animations
+from platformer import physics
 
 # tiles row offsets
 PLATFORM_ROW: int = 0

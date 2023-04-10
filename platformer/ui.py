@@ -2,11 +2,11 @@ import pygame
 from dataclasses import dataclass
 
 from core.constants import *
-import core.resources as resources
+from core import resources
 
-import platformer.physics as physics
-import platformer.render as render
-import platformer.characters as characters
+from platformer import physics
+from platformer import render
+from platformer import characters
 
 
 HEART_HUD: int = 0

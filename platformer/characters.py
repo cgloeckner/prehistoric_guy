@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Optional
 from abc import abstractmethod
 
-import platformer.physics as physics
+from platformer import physics
 
 
 NO_ACTION: int = 0

@@ -4,13 +4,13 @@ import math
 from typing import Optional
 
 from core.constants import *
-import core.resources as resources
+from core import resources
 
-import platformer.physics as physics
-import platformer.animations as animations
-import platformer.render as render
-import platformer.characters as characters
-import platformer.ui as ui
+from platformer import physics
+from platformer import animations
+from platformer import render
+from platformer import characters
+from platformer import ui
 
 
 class ObjectManager(physics.PhysicsListener, animations.AnimationListener, characters.CharacterListener):
