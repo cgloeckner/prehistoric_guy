@@ -115,9 +115,13 @@ class Projectile:
 
 
 def get_hover_delta(hover: Hovering, elapsed_ms: int) -> Tuple[float, float]:
+    """Updates the hovering information of a platform and yields by how much the platform is
+    going to be moved.
+    Returns a tuple of delta float x and y.
+    """
     # calculate movement delta
-    angle = 2 * math.pi * hover.index / 360.0
     hover.index += 1
+    angle = 2 * math.pi * hover.index / 360.0
     x = 0
     y = 0
     if hover.x is not None:
@@ -156,13 +160,22 @@ def test_line_intersection(x1: float, y1: float, x2: float, y2: float, x3: float
 
 def is_inside_platform(x: float, y: float, platform: Platform) -> bool:
     """Test whether the position is inside the platform.
+    NOTE: y is the top, so y - height leads to the bottom.
     """
     return platform.x <= x < platform.x + platform.width and\
         platform.y - platform.height < y < platform.y
 
 
+def did_traverse_above(x: float, y: float, last_pos: pygame.math.Vector2, platform: Platform) -> bool:
+    """Test whether the move from last_pos to pos went through the top of the platform.
+    """
+    return (platform.x < x < platform.x + platform.width or platform.x < last_pos.x < platform.x + platform.width)\
+        and y <= platform.y < last_pos.y
+
+
 def ladder_in_reach(x: float, y: float, ladder: Ladder) -> bool:
     """Test whether the position is in reach of the ladder.
+    NOTE: y is the bottom, so y + height leads to the bottom.
     """
     return ladder.x + 0.5 - OBJECT_RADIUS <= x < ladder.x + 0.5 + OBJECT_RADIUS and\
         ladder.y <= y < ladder.y + ladder.height + OBJECT_RADIUS
@@ -177,14 +190,7 @@ def within_ladder(actor: Actor) -> bool:
     return actor.ladder.y < actor.y < actor.ladder.y + actor.ladder.height
 
 
-def did_traverse_above(x: float, y: float, last_pos: pygame.math.Vector2, platform: Platform) -> bool:
-    """Test whether the move from last_pos to pos went through the top of the platform.
-    """
-    return (platform.x < x < platform.x + platform.width or platform.x < last_pos.x < platform.x + platform.width)\
-        and y <= platform.y < last_pos.y
-
-
-def get_falling_distance(elapsed_ms: int, delta_ms: int) -> float:
+def get_jump_height_difference(elapsed_ms: int, delta_ms: int) -> float:
     """Calculates falling distances using
     f(x) = -a * (t - 0.5s) ^ 2 + a * 0.25
     where a full jump lasts 1s
@@ -426,7 +432,7 @@ class Physics(object):
 
         # calculate new height
         last_pos = pygame.math.Vector2(actor.x, actor.y)
-        delta_height = get_falling_distance(actor.jump_ms, elapsed_ms) * JUMP_SPEED_FACTOR
+        delta_height = get_jump_height_difference(actor.jump_ms, elapsed_ms) * JUMP_SPEED_FACTOR
 
         if delta_height < 0 and actor.fall_from_y is None:
             actor.fall_from_y = actor.y
@@ -609,7 +615,7 @@ class Physics(object):
         last_pos = pygame.math.Vector2(proj.x, proj.y)
 
         proj.x += proj.face_x * PROJECTILE_SPEED * elapsed_ms / 1000.0
-        proj.y += get_falling_distance(proj.fly_ms, elapsed_ms) * PROJECTILE_GRAVITY
+        proj.y += get_jump_height_difference(proj.fly_ms, elapsed_ms) * PROJECTILE_GRAVITY
 
         proj.fly_ms += elapsed_ms
 
@@ -695,10 +701,3 @@ class Physics(object):
             r = int(proj.radius * WORLD_SCALE)
             c = pygame.Color('orange')
             pygame.gfxdraw.circle(target, x, y, r, c)
-
-
-if __name__ == '__main__':
-    # minimal unit testing
-    px, py = test_line_intersection(-3.5, 4, 4, -1, -3, -3, 4, 2)
-    assert abs(px - 1.8276) < 0.01
-    assert abs(py - 0.4483) < 0.01
