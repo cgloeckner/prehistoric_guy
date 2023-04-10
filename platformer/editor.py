@@ -175,7 +175,7 @@ class SceneEditor(object):
             elem.hsl = None
         self.hovered_elements = self.get_hovered()
         for elem in self.hovered_elements:
-            elem.hsl = resources.HslTransform(hue=0.14, saturation=1.0)
+            elem.hsl = resources.HslTransform(hue=50, saturation=100)
 
         # select first hovered element on click
         left_click = pygame.mouse.get_pressed()[0]

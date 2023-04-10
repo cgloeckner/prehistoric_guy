@@ -169,7 +169,7 @@ class ObjectManager(physics.PhysicsListener, animations.AnimationListener, chara
         """Triggered when an actor got damaged.
         """
         ani_actor = self.animation.get_by_id(actor.object_id)
-        animations.flash(ani_actor, resources.HslTransform(lightness=1.0), 200)
+        animations.flash(ani_actor, resources.HslTransform(lightness=100), 200)
 
     def on_char_died(self, char_actor: characters.Actor, cause: Optional[characters.Actor]) -> None:
         """Triggered when an actor died. An optional cause can be provided.

@@ -234,7 +234,7 @@ def main():
 
     cache = resources.Cache('../data')
     guy = cache.get_sprite_sheet('guy')
-    guy = cache.get_hsl_transformed(guy, resources.HslTransform(hue=0.2), SPRITE_CLOTHES_COLORS)
+    guy = cache.get_hsl_transformed(guy, resources.HslTransform(hue=72), SPRITE_CLOTHES_COLORS)
     look_right = True
 
     listener = DemoListener()

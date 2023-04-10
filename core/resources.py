@@ -8,6 +8,11 @@ from core.constants import *
 
 @dataclass
 class HslTransform:
+    """
+    hue: [0; 360)
+    saturation: [0; 100]
+    lightness: [0; 100]
+    """
     hue: Optional[float] = None
     saturation: Optional[float] = None
     lightness: Optional[float] = None
@@ -32,11 +37,11 @@ def transform_image_hsl(surface: pygame.Surface, transform: HslTransform, color_
             # change pixel's hue (rotated) and saturation / lightness (bound)
             hue, sat, light, alpha = color.hsla
             if transform.hue is not None:
-                hue = int(transform.hue * 360) % 360
+                hue = transform.hue % 360.0
             if transform.saturation is not None:
-                sat = max(0, min(100, int(transform.saturation * 100)))
+                sat = max(0.0, min(100.0, transform.saturation))
             if transform.lightness is not None:
-                light = max(0, min(100, int(transform.lightness * 100)))
+                light = max(0.0, min(100.0, transform.lightness))
             color.hsla = hue, sat, light, alpha
             pixels[x, y] = surface.map_rgb(color)
 

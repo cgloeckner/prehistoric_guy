@@ -21,9 +21,9 @@ class GameState(state_machine.State):
         # --- loading some resources ----------------------------------------------------------------------------------
         self.font = self.cache.get_font()
         generic_guy = self.cache.get_sprite_sheet('guy')
-        blue_guy = self.cache.get_hsl_transformed(generic_guy, resources.HslTransform(hue=0.6),
+        blue_guy = self.cache.get_hsl_transformed(generic_guy, resources.HslTransform(hue=216),
                                                   SPRITE_CLOTHES_COLORS)
-        grey_guy = self.cache.get_hsl_transformed(generic_guy, resources.HslTransform(saturation=0.0),
+        grey_guy = self.cache.get_hsl_transformed(generic_guy, resources.HslTransform(saturation=0),
                                                   SPRITE_CLOTHES_COLORS)
 
         # --- setup object manager with player character ---------------------------------------------------------------

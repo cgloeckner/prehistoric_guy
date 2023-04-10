@@ -1,2 +1,7 @@
+# Requirements for running the application
 pygame~=2.3.0
 imgui~=1.4.1
+
+# Requirements for testing (only needed in development)
+pytest=7.3.0
+unittest=1.4.33
