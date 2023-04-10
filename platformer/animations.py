@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from abc import abstractmethod
 from typing import Optional
 
-from platformer.constants import ANIMATION_NUM_FRAMES
+from platformer.constants import *
 import platformer.resources as resources
 
 
@@ -25,8 +25,9 @@ DIE_ACTION: int = 8
 
 
 @dataclass
-class Animation:
-    id: int
+class Actor:
+    object_id: int
+
     # frame animation: row and column index, animation delay until frame is switched
     action_id: int = 0
     frame_id: int = 0
@@ -40,7 +41,7 @@ class Animation:
     hsl_duration_ms: int = ANIMATION_FRAME_DURATION
 
 
-def start(ani: Animation, action_id: int, duration_ms: int = ANIMATION_FRAME_DURATION) -> None:
+def start(ani: Actor, action_id: int, duration_ms: int = ANIMATION_FRAME_DURATION) -> None:
     """Resets the frame animation with the given action.
     """
     if ani.action_id == action_id:
@@ -53,7 +54,7 @@ def start(ani: Animation, action_id: int, duration_ms: int = ANIMATION_FRAME_DUR
     ani.total_frame_time_ms = 0
 
 
-def flash(ani: Animation, hsl: resources.HslTransform, duration_ms: int = ANIMATION_FRAME_DURATION) -> None:
+def flash(ani: Actor, hsl: resources.HslTransform, duration_ms: int = ANIMATION_FRAME_DURATION) -> None:
     """Resets the color animation with the given color.
     """
     ani.hsl = hsl
@@ -63,26 +64,32 @@ def flash(ani: Animation, hsl: resources.HslTransform, duration_ms: int = ANIMAT
 class AnimationListener(object):
 
     @abstractmethod
-    def on_step(self, ani: Animation) -> None:
+    def on_step(self, ani: Actor) -> None:
         """Triggered when a cycle of a move animation finished.
         """
         pass
 
     @abstractmethod
-    def on_climb(self, ani: Animation) -> None:
+    def on_climb(self, ani: Actor) -> None:
         """Triggered when a cycle of a climbing animation finished.
         """
         pass
 
     @abstractmethod
-    def on_attack(self, ani: Animation) -> None:
+    def on_attack(self, ani: Actor) -> None:
         """Triggered when an attack animation finished.
         """
         pass
 
     @abstractmethod
-    def on_throw(self, ani: Animation) -> None:
+    def on_throw(self, ani: Actor) -> None:
         """Triggered when a throwing animation finished.
+        """
+        pass
+
+    @abstractmethod
+    def on_died(self, ani: Actor) -> None:
+        """Triggered when a dying animation finished.
         """
         pass
 
@@ -94,7 +101,13 @@ class Animating(object):
         self.animations = list()
         self.event_listener = animation_listener
 
-    def notify_animation(self, ani: Animation) -> None:
+    def get_by_id(self, object_id: int) -> Actor:
+        """Returns the animation who matches the given object_id.
+        May throw an IndexError.
+        """
+        return [a for a in self.animations if a.object_id == object_id][0]
+
+    def notify_animation(self, ani: Actor) -> None:
         """Notify about a finished animation.
         """
         if ani.action_id == MOVE_ACTION:
@@ -104,7 +117,7 @@ class Animating(object):
         elif ani.action_id == THROW_ACTION:
             self.event_listener.on_throw(ani)
 
-    def update_frame(self, ani: Animation, elapsed_ms: int) -> None:
+    def update_frame(self, ani: Actor, elapsed_ms: int) -> None:
         """Update a single frame animation.
         """
         # continue animation
@@ -136,7 +149,7 @@ class Animating(object):
             # freeze at last frame
             ani.frame_id -= 1
 
-    def update_hsl(self, ani: Animation, elapsed_ms: int) -> None:
+    def update_hsl(self, ani: Actor, elapsed_ms: int) -> None:
         if ani.hsl is None:
             return
 
@@ -147,7 +160,7 @@ class Animating(object):
         ani.hsl_duration_ms = 0
         ani.hsl = None
 
-    def update_movement(self, ani: Animation, elapsed_ms: int) -> None:
+    def update_movement(self, ani: Actor, elapsed_ms: int) -> None:
         """Updates the movement animation, where a small height difference is applied while moving and climbing.
         """
         if ani.action_id not in [MOVE_ACTION, CLIMB_ACTION]:
@@ -179,16 +192,19 @@ def main():
     import resources
 
     class DemoListener(AnimationListener):
-        def on_step(self, a: Animation) -> None:
+        def on_step(self, a: Actor) -> None:
             pass
 
-        def on_climb(self, a: Animation) -> None:
+        def on_climb(self, a: Actor) -> None:
             pass
 
-        def on_attack(self, a: Animation) -> None:
+        def on_attack(self, a: Actor) -> None:
             pass
 
-        def on_throw(self, a: Animation) -> None:
+        def on_throw(self, a: Actor) -> None:
+            pass
+
+        def on_died(self, a: Actor) -> None:
             pass
 
     pygame.init()
@@ -208,14 +224,14 @@ def main():
     buffer = pygame.Surface((SPRITE_SCALE, SPRITE_SCALE))
     clock = pygame.time.Clock()
 
-    cache = resources.Cache()
+    cache = resources.Cache('../data')
     guy = cache.get_sprite_sheet('guy')
-    guy = cache.get_hsl_transformed(guy, resources.HslTransform(saturation=0.0))
+    guy = cache.get_hsl_transformed(guy, resources.HslTransform(hue=0.2), SPRITE_CLOTHES_COLORS)
     look_right = True
 
     listener = DemoListener()
     ani = Animating(listener)
-    ani.animations.append(Animation(1))
+    ani.animations.append(Actor(1))
 
     running = True
     elapsed = 0

@@ -54,7 +54,7 @@ def platform_ui(platform: platformer.Platform) -> bool:
     return not opened
 
 
-def sprite_ui(sprite: platformer.Sprite) -> bool:
+def sprite_ui(sprite: platformer.Actor) -> bool:
     """Shows an ImGui-based UI for editing a given actor. Values are updated automatically.
     Returns True if the close button was clicked.
     """

@@ -19,6 +19,7 @@ class Engine(object):
         self.running = False
         self.fill_color = 'black'
         self.max_fps = 60
+        self.num_fps = 0
         self.queue = list()
 
     def __del__(self):
@@ -61,6 +62,7 @@ class Engine(object):
 
             # limit fps
             elapsed = self.clock.tick(self.max_fps)
+            self.num_fps = self.clock.get_fps()
 
 
 class State(object):

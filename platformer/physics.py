@@ -77,7 +77,7 @@ class Ladder:
 
 @dataclass
 class Actor:
-    id: int
+    object_id: int
     # bottom center position
     x: float
     y: float
@@ -89,6 +89,7 @@ class Actor:
     fall_from_y: Optional[float] = None
     # collision data
     radius: float = 0.5
+    can_collide: bool = True
     anchor: Optional[Platform] = None
     ladder: Optional[Ladder] = None
     # prevents another collision/touch event for a couple of ms
@@ -283,6 +284,12 @@ class Physics(object):
         self.projectiles = list()
 
         self.event_listener = event_listener
+
+    def get_by_id(self, object_id: int) -> Actor:
+        """Returns the actor who matches the given object_id.
+        May throw an IndexError.
+        """
+        return [a for a in self.actors if a.object_id == object_id][0]
 
     def get_supporting_platforms(self, actor: Actor) -> List[Platform]:
         """Returns a list of all platforms that will support the actor's position.
@@ -607,7 +614,7 @@ class Physics(object):
 
         pos = pygame.math.Vector2(proj.x, proj.y)
         for actor in self.actors:
-            if actor == proj.origin:
+            if actor == proj.origin or not actor.can_collide:
                 # ignore projectile's origin
                 continue
             distance = pos.distance_squared_to(pygame.math.Vector2(actor.x, actor.y))

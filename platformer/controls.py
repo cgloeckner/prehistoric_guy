@@ -3,24 +3,11 @@ from dataclasses import dataclass
 
 import platformer.animations as animations
 import platformer.physics as physics
-import platformer.render as render
-
-NO_ACTION: int = 0
-ATTACK_ACTION: int = 1
-THROW_ACTION: int = 2
+import platformer.characters as characters
 
 
 # keypress time required to throw
 THROW_THRESHOLD: int = int(animations.ANIMATION_NUM_FRAMES * animations.ANIMATION_FRAME_DURATION)
-
-
-@dataclass
-class Character:
-    sprite: render.Sprite
-    hit_points: int = 5
-    max_hit_points: int = hit_points
-    num_axes: int = 5
-    max_num_axes: int = num_axes
 
 
 @dataclass
@@ -34,12 +21,13 @@ class Keybinding:
 
 
 class Player(object):
-    def __init__(self, character: Character, binding: Keybinding):
-        self.character = character
+    def __init__(self, phys_actor: physics.Actor, ani_actor: animations.Actor, binding: Keybinding):
+        self.phys_actor = phys_actor
+        self.ani_actor = ani_actor
         self.binding = binding
 
         self.delta = pygame.math.Vector2()
-        self.action = NO_ACTION
+        self.action = characters.NO_ACTION
 
         self.attack_held_ms = -1
 
@@ -59,9 +47,9 @@ class Player(object):
 
         elif event.type == pygame.KEYUP and event.key == self.binding.attack:
             if self.attack_held_ms > THROW_THRESHOLD:
-                self.action = THROW_ACTION
+                self.action = characters.THROW_ACTION
             else:
-                self.action = ATTACK_ACTION
+                self.action = characters.ATTACK_ACTION
             self.attack_held_ms = -1
 
     def get_inputs(self, elapsed_ms: int) -> None:
@@ -83,87 +71,85 @@ class Player(object):
         if self.attack_held_ms >= 0:
             self.attack_held_ms += elapsed_ms
             if self.attack_held_ms > THROW_THRESHOLD:
-                self.action = THROW_ACTION
+                self.action = characters.THROW_ACTION
                 self.attack_held_ms = 0.0
 
     def handle_inputs(self) -> None:
         """Triggers movement, jumping, climbing, attacking etc.
         """
-        sprite = self.character.sprite
-
-        if sprite.animation.action_id in [animations.DIE_ACTION, animations.ATTACK_ACTION,
-                                          animations.THROW_ACTION, animations.LANDING_ACTION]:
+        if self.ani_actor.action_id in [animations.DIE_ACTION, animations.ATTACK_ACTION,
+                                        animations.THROW_ACTION, animations.LANDING_ACTION]:
             # nothing allowed
-            sprite.actor.force_x = 0.0
-            sprite.actor.force_y = 0.0
+            self.phys_actor.force_x = 0.0
+            self.phys_actor.force_y = 0.0
             return
 
-        if self.action == THROW_ACTION:
-            if sprite.animation.action_id in [animations.HOLD_ACTION, animations.CLIMB_ACTION]:
+        if self.action == characters.THROW_ACTION:
+            if self.ani_actor.action_id in [animations.HOLD_ACTION, animations.CLIMB_ACTION]:
                 # not allowed
                 return
 
-            animations.start(sprite.animation, animations.THROW_ACTION)
+            animations.start(self.ani_actor, animations.THROW_ACTION)
             # FIXME: create projectile AFTER animation
             return
 
-        if self.action == ATTACK_ACTION:
-            if sprite.animation.action_id in [animations.HOLD_ACTION, animations.CLIMB_ACTION]:
+        if self.action == characters.ATTACK_ACTION:
+            if self.ani_actor.action_id in [animations.HOLD_ACTION, animations.CLIMB_ACTION]:
                 # not allowed
                 return
 
             # attack!
-            animations.start(sprite.animation, animations.ATTACK_ACTION)
+            animations.start(self.ani_actor, animations.ATTACK_ACTION)
             return
 
-        if sprite.actor.ladder is None:
+        if self.phys_actor.ladder is None:
             # jumping?
             if self.delta.y > 0.0:
                 # jump
-                animations.start(sprite.animation, animations.JUMP_ACTION)
-                sprite.actor.force_x = self.delta.x
-                sprite.actor.force_y = self.delta.y
+                animations.start(self.ani_actor, animations.JUMP_ACTION)
+                self.phys_actor.force_x = self.delta.x
+                self.phys_actor.force_y = self.delta.y
                 return
 
             # moving?
             if self.delta.x != 0.0:
                 # move around
-                animations.start(sprite.animation, animations.MOVE_ACTION)
-                sprite.actor.force_x = self.delta.x
+                animations.start(self.ani_actor, animations.MOVE_ACTION)
+                self.phys_actor.force_x = self.delta.x
                 return
 
             # idle?
-            if sprite.actor.force_y == 0.0:
-                animations.start(sprite.animation, animations.IDLE_ACTION)
-                sprite.actor.force_x = 0.0
-                sprite.actor.force_y = 0.0
+            if self.phys_actor.force_y == 0.0:
+                animations.start(self.ani_actor, animations.IDLE_ACTION)
+                self.phys_actor.force_x = 0.0
+                self.phys_actor.force_y = 0.0
 
             return
 
         # jumping off?
         if self.delta.x != 0.0:
             # jump off ladder
-            animations.start(sprite.animation, animations.JUMP_ACTION)
-            sprite.actor.force_x = self.delta.x
-            sprite.actor.force_y = self.delta.y
+            animations.start(self.ani_actor, animations.JUMP_ACTION)
+            self.phys_actor.force_x = self.delta.x
+            self.phys_actor.force_y = self.delta.y
             return
 
         # climbing?
         if self.delta.y != 0.0:
             # climb on ladder
-            animations.start(sprite.animation, animations.CLIMB_ACTION)
-            sprite.actor.force_y = self.delta.y
+            animations.start(self.ani_actor, animations.CLIMB_ACTION)
+            self.phys_actor.force_y = self.delta.y
             return
 
-        sprite.actor.force_x = 0.0
-        sprite.actor.force_y = 0.0
+        self.phys_actor.force_x = 0.0
+        self.phys_actor.force_y = 0.0
 
         # idle at top or bottom of the ladder?
-        if physics.within_ladder(sprite.actor):
-            animations.start(sprite.animation, animations.HOLD_ACTION)
+        if physics.within_ladder(self.phys_actor):
+            animations.start(self.ani_actor, animations.HOLD_ACTION)
             return
 
-        animations.start(sprite.animation, animations.IDLE_ACTION)
+        animations.start(self.ani_actor, animations.IDLE_ACTION)
 
     def update(self, elapsed_ms: int) -> None:
         """Triggers movement/attack and animations.
@@ -173,4 +159,4 @@ class Player(object):
 
         # reset all input parameters
         self.delta = pygame.math.Vector2()
-        self.action = NO_ACTION
+        self.action = characters.NO_ACTION

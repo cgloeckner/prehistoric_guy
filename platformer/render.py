@@ -14,32 +14,42 @@ LADDER_ROW: int = 3
 
 
 @dataclass
-class Sprite:
-    # link to related actor
-    actor: physics.Actor
+class Actor:
+    object_id: int
     # sprite frames
     sprite_sheet: pygame.Surface
-    # animation related stuff
-    animation: animations.Animation
 
 
 class Renderer(object):
     """Handles drawing the tiled environment.
     """
-    def __init__(self, cache: resources.Cache, surface: pygame.Surface, clock: pygame.time.Clock):
+    def __init__(self, phys_system: physics.Physics, ani_system: animations.Animating, cache: resources.Cache,
+                 target: pygame.Surface):
+        """
+        :param phys_system: Physics System to fetch data from
+        :param ani_system: Animations System to fetch data from
+        :param cache: Resource Cache to acquire images from
+        :param target: Rendering target
+        """
+        self.phys_system = phys_system
+        self.ani_system = ani_system
         self.camera = pygame.Rect(0, 0, RESOLUTION_X, RESOLUTION_Y)
         self.cache = cache
-        self.surface = surface
-        self.clock = clock
+        self.target = target
 
         self.x = 0
         self.sprites = list()
 
         # load resources
-        self.font = self.cache.get_font()
         self.background = self.cache.get_image('background')
         self.tiles = self.cache.get_image('tiles')
         self.objects = self.cache.get_image('objects')
+
+    def get_by_id(self, object_id: int) -> Actor:
+        """Returns the sprite who matches the given object_id.
+        May throw an IndexError.
+        """
+        return [a for a in self.sprites if a.object_id == object_id][0]
 
     def move_camera(self, delta_x: int, delta_y: int) -> None:
         """Moves the camera rect by some pixels.
@@ -54,7 +64,7 @@ class Renderer(object):
         Returns a vector of integer coordinates.
         """
         x = int(x * WORLD_SCALE) - self.camera.x
-        y = self.surface.get_height() - (int(y * WORLD_SCALE) - self.camera.y)
+        y = self.target.get_height() - (int(y * WORLD_SCALE) - self.camera.y)
         return pygame.math.Vector2(x, y)
 
     def screen_to_world_coord(self, x: int, y: int) -> pygame.math.Vector2:
@@ -62,7 +72,7 @@ class Renderer(object):
         Returns a vector of float coordinates.
         """
         x = self.camera.x + x / WORLD_SCALE
-        y = self.camera.y + (self.surface.get_height() - y) / WORLD_SCALE
+        y = self.camera.y + (self.target.get_height() - y) / WORLD_SCALE
         return pygame.math.Vector2(x, y)
 
     def draw_object(self, obj: physics.Object) -> None:
@@ -79,31 +89,33 @@ class Renderer(object):
 
         variation_col = 0
         clip = (variation_col * OBJECT_SCALE, obj.object_type * OBJECT_SCALE, OBJECT_SCALE, OBJECT_SCALE)
-        self.surface.blit(objects, (pos.x, pos.y), clip)
+        self.target.blit(objects, (pos.x, pos.y), clip)
 
-    def draw_sprite(self, sprite: Sprite) -> None:
+    def draw_sprite(self, sprite: Actor) -> None:
         """Draw an actor's sprite.
         Note that all sprite sheet pixels are doubled (SPRITE_SCALE).
         """
         # color sprite with based on flashing animation (or else because of editor)
         sprite_sheet = sprite.sprite_sheet
+        phys_data = self.phys_system.get_by_id(sprite.object_id)
+        ani_data = self.ani_system.get_by_id(sprite.object_id)
         hsl = None
-        if sprite.animation.hsl is not None:
-            hsl = sprite.animation.hsl
-        elif sprite.actor.hsl is not None:
-            hsl = sprite.actor.hsl
+        if ani_data.hsl is not None:
+            hsl = ani_data.hsl
+        elif phys_data.hsl is not None:
+            hsl = phys_data.hsl
         if hsl is not None:
             sprite_sheet = self.cache.get_hsl_transformed(sprite_sheet, hsl)
 
         # pos is bottom center, needs to be top left
-        pos = self.world_to_screen_coord(sprite.actor.x, sprite.actor.y)
+        pos = self.world_to_screen_coord(phys_data.x, phys_data.y)
         pos.x -= SPRITE_SCALE // 2
-        pos.y -= SPRITE_SCALE + sprite.animation.delta_y
+        pos.y -= SPRITE_SCALE + ani_data.delta_y
 
-        x_offset = (0 if sprite.actor.face_x >= 0.0 else 1) * ANIMATION_NUM_FRAMES * SPRITE_SCALE
-        clip = pygame.Rect(sprite.animation.frame_id * SPRITE_SCALE + x_offset,
-                           sprite.animation.action_id * SPRITE_SCALE, SPRITE_SCALE, SPRITE_SCALE)
-        self.surface.blit(sprite_sheet, (pos.x, pos.y), clip)
+        x_offset = (0 if phys_data.face_x >= 0.0 else 1) * ANIMATION_NUM_FRAMES * SPRITE_SCALE
+        clip = pygame.Rect(ani_data.frame_id * SPRITE_SCALE + x_offset,
+                           ani_data.action_id * SPRITE_SCALE, SPRITE_SCALE, SPRITE_SCALE)
+        self.target.blit(sprite_sheet, (pos.x, pos.y), clip)
 
     def draw_ladder(self, ladder: physics.Ladder, tileset_col: int) -> None:
         """Draw a ladder.
@@ -118,19 +130,17 @@ class Renderer(object):
 
         # draw repeated ladder parts
         for i in range(ladder.height):
-            self.surface.blit(tiles, (pos.x, pos.y - i * WORLD_SCALE),
-                              ((3 * tileset_col + 1) * WORLD_SCALE, LADDER_ROW * WORLD_SCALE,
-                               WORLD_SCALE, WORLD_SCALE * 2))
+            self.target.blit(tiles, (pos.x, pos.y - i * WORLD_SCALE),
+                             ((3 * tileset_col + 1) * WORLD_SCALE, LADDER_ROW * WORLD_SCALE,
+                              WORLD_SCALE, WORLD_SCALE * 2))
 
         # draw upper ladder part
-        self.surface.blit(tiles, (pos.x, pos.y - ladder.height * WORLD_SCALE),
-                          ((3 * tileset_col) * WORLD_SCALE, LADDER_ROW * WORLD_SCALE,
-                           WORLD_SCALE, WORLD_SCALE * 2))
+        self.target.blit(tiles, (pos.x, pos.y - ladder.height * WORLD_SCALE),
+                         ((3 * tileset_col) * WORLD_SCALE, LADDER_ROW * WORLD_SCALE, WORLD_SCALE, WORLD_SCALE * 2))
 
         # draw lower ladder part
-        self.surface.blit(tiles, (pos.x, pos.y + WORLD_SCALE),
-                          ((3 * tileset_col + 2) * WORLD_SCALE, LADDER_ROW * WORLD_SCALE,
-                           WORLD_SCALE, WORLD_SCALE * 2))
+        self.target.blit(tiles, (pos.x, pos.y + WORLD_SCALE),
+                         ((3 * tileset_col + 2) * WORLD_SCALE, LADDER_ROW * WORLD_SCALE, WORLD_SCALE, WORLD_SCALE * 2))
 
     def draw_platform(self, platform: physics.Platform, tileset_col: int) -> None:
         """Draw a platform.
@@ -144,38 +154,36 @@ class Renderer(object):
         for i in range(int(platform.width)):
             # draw texture below
             for j in range(int(platform.height)):
-                self.surface.blit(tiles,
-                                  (pos.x + i * WORLD_SCALE, pos.y + j * WORLD_SCALE),
-                                  ((3 * tileset_col+1) * WORLD_SCALE, TEXTURE_ROW * WORLD_SCALE,
-                                   WORLD_SCALE, WORLD_SCALE))
+                self.target.blit(tiles,
+                                 (pos.x + i * WORLD_SCALE, pos.y + j * WORLD_SCALE),
+                                 ((3 * tileset_col+1) * WORLD_SCALE, TEXTURE_ROW * WORLD_SCALE, WORLD_SCALE,
+                                  WORLD_SCALE))
 
             # draw platform on top
-            self.surface.blit(tiles,
-                              (pos.x + i * WORLD_SCALE, pos.y - WORLD_SCALE),
-                              ((3 * tileset_col+1) * WORLD_SCALE, PLATFORM_ROW * WORLD_SCALE,
-                               WORLD_SCALE, WORLD_SCALE * 2))
+            self.target.blit(tiles,
+                             (pos.x + i * WORLD_SCALE, pos.y - WORLD_SCALE),
+                             ((3 * tileset_col+1) * WORLD_SCALE, PLATFORM_ROW * WORLD_SCALE, WORLD_SCALE,
+                              WORLD_SCALE * 2))
 
         if platform.height > 0.0:
             # draw texture edges
             for j in range(int(platform.height)):
-                self.surface.blit(tiles,
-                                  (pos.x - WORLD_SCALE, pos.y + j * WORLD_SCALE),
-                                  (3 * tileset_col * WORLD_SCALE, TEXTURE_ROW * WORLD_SCALE,
-                                   WORLD_SCALE, WORLD_SCALE))
-                self.surface.blit(tiles,
-                                  (pos.x + int(platform.width) * WORLD_SCALE, pos.y + j * WORLD_SCALE),
-                                  ((3 * tileset_col + 2) * WORLD_SCALE, TEXTURE_ROW * WORLD_SCALE,
-                                   WORLD_SCALE, WORLD_SCALE))
+                self.target.blit(tiles,
+                                 (pos.x - WORLD_SCALE, pos.y + j * WORLD_SCALE),
+                                 (3 * tileset_col * WORLD_SCALE, TEXTURE_ROW * WORLD_SCALE, WORLD_SCALE, WORLD_SCALE))
+                self.target.blit(tiles,
+                                 (pos.x + int(platform.width) * WORLD_SCALE, pos.y + j * WORLD_SCALE),
+                                 ((3 * tileset_col + 2) * WORLD_SCALE, TEXTURE_ROW * WORLD_SCALE, WORLD_SCALE,
+                                  WORLD_SCALE))
 
         # draw platform edges
-        self.surface.blit(tiles,
-                          (pos.x - WORLD_SCALE, pos.y - WORLD_SCALE),
-                          (3 * tileset_col * WORLD_SCALE, PLATFORM_ROW * WORLD_SCALE,
-                           WORLD_SCALE, WORLD_SCALE * 2))
-        self.surface.blit(tiles,
-                          (pos.x + int(platform.width) * WORLD_SCALE, pos.y - WORLD_SCALE),
-                          ((3 * tileset_col + 2) * WORLD_SCALE, PLATFORM_ROW * WORLD_SCALE,
-                           WORLD_SCALE, WORLD_SCALE * 2))
+        self.target.blit(tiles,
+                         (pos.x - WORLD_SCALE, pos.y - WORLD_SCALE),
+                         (3 * tileset_col * WORLD_SCALE, PLATFORM_ROW * WORLD_SCALE, WORLD_SCALE, WORLD_SCALE * 2))
+        self.target.blit(tiles,
+                         (pos.x + int(platform.width) * WORLD_SCALE, pos.y - WORLD_SCALE),
+                         ((3 * tileset_col + 2) * WORLD_SCALE, PLATFORM_ROW * WORLD_SCALE, WORLD_SCALE,
+                          WORLD_SCALE * 2))
 
     def draw_projectile(self, proj: physics.Projectile) -> None:
         """Draw a projectile.
@@ -192,34 +200,30 @@ class Renderer(object):
         angle *= proj.spin_speed
         objects = self.cache.get_rotated_surface_clip(self.objects, clip, angle, flip=proj.face_x < 0.0)
 
-        self.surface.blit(objects, (pos.x, pos.y))
+        self.target.blit(objects, (pos.x, pos.y))
 
-    def draw(self, platformer: physics.Physics, bg_col: int) -> None:
+    def draw(self, bg_col: int) -> None:
         # background
         # FIXME: needs a better solution (also artistically) to work with the camera implementation
         # self.surface.blit(self.background, (0, 0), (bg_col * RESOLUTION_X, 0, RESOLUTION_X, RESOLUTION_Y))
 
         # foreground
-        platformer.platforms.sort(key=lambda plat: plat.y)
+        self.phys_system.platforms.sort(key=lambda plat: plat.y)
 
         # FIXME: needs a better spot
         tileset_col = 0
 
-        for p in platformer.platforms:
+        for p in self.phys_system.platforms:
             self.draw_platform(p, tileset_col)
 
-        for ladder in platformer.ladders:
+        for ladder in self.phys_system.ladders:
             self.draw_ladder(ladder, tileset_col)
 
-        for o in platformer.objects:
+        for o in self.phys_system.objects:
             self.draw_object(o)
 
         for s in self.sprites:
             self.draw_sprite(s)
 
-        for proj in platformer.projectiles:
+        for proj in self.phys_system.projectiles:
             self.draw_projectile(proj)
-
-        # draw FPS
-        fps_surface = self.font.render(f'FPS: {int(self.clock.get_fps()):02d}', False, 'white')
-        self.surface.blit(fps_surface, (0, self.surface.get_height() - fps_surface.get_height()))

@@ -1,13 +1,18 @@
 import pygame
 
 from platformer.constants import *
-import platformer.controls as controls
+import platformer.physics as physics
+import platformer.characters as characters
+
 
 HEART_HUD: int = 0
 WEAPON_HUD: int = 1
 
 
-def hud_icons(target: pygame.Surface, tileset: pygame.Surface, c: controls.Character) -> None:
+# FIXME: add Hud class, rename file to ui.py
+
+
+def hud_icons(target: pygame.Surface, tileset: pygame.Surface, c: characters.Actor) -> None:
     for i in range(c.hit_points):
         target.blit(tileset, (i * OBJECT_SCALE, 0),
                     (0 * OBJECT_SCALE, HEART_HUD * OBJECT_SCALE, OBJECT_SCALE, OBJECT_SCALE))
@@ -28,7 +33,7 @@ def progress_bar(target: pygame.Surface, x: int, y: int, width: int, height: int
     pygame.draw.rect(target, bar_color, (x+1, y+1, width * progress, height))
 
 
-def throw_progress(target: pygame.Surface, camera: pygame.Rect, c: controls.Character, throw_perc: float) -> None:
-    progress_bar(target, int(c.sprite.actor.x * WORLD_SCALE) - camera.x,
-                 RESOLUTION_Y - (-camera.y + int(c.sprite.actor.y * WORLD_SCALE + WORLD_SCALE)),
+def throw_progress(target: pygame.Surface, camera: pygame.Rect, phys_actor: physics.Actor, throw_perc: float) -> None:
+    progress_bar(target, int(phys_actor.x * WORLD_SCALE) - camera.x,
+                 RESOLUTION_Y - (-camera.y + int(phys_actor.y * WORLD_SCALE + WORLD_SCALE)),
                  15, 3, throw_perc)

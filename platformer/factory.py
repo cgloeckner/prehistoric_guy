@@ -1,24 +1,207 @@
 import pygame
+import random
+import math
 
+from platformer.constants import *
 import platformer.physics as physics
 import platformer.animations as animations
 import platformer.render as render
-import platformer.controls as controls
+import platformer.characters as characters
+import platformer.resources as resources
 
 
-class ObjectManager(object):
+def get_falling_damage(height: float) -> int:
+    """Calculates falling damage based on falling height.
+    Returns integer damage.
+    """
+    return int(height / 4.0)
+
+
+class ObjectManager(physics.PhysicsListener, animations.AnimationListener):
     """Factory for creating game objects.
     Creation and deletion of objects considers all relevant systems.
     """
-    def __init__(self, physics: physics.Physics, animation: animations.Animating, renderer: render.Renderer):
-        """Register all known systems that deal with game objects of any kind.
-        """
+    def __init__(self, cache: resources.Cache, target: pygame.Surface):
         self.next_obj_id = 0
-        self.physics = physics
-        self.animation = animation
-        self.renderer = renderer
+        self.physics = physics.Physics(self)
+        self.animation = animations.Animating(self)
+        self.renderer = render.Renderer(self.physics, self.animation, cache, target)
+        self.chars = characters.Characters()
 
-        self.characters = list()
+        self.player_character = None
+
+    def create_random_object(self) -> None:
+        # pick random position on random platform
+        p = random.choice(self.physics.platforms)
+        x = random.randrange(p.width)
+
+        self.create_object(x=p.x + x, y=p.y + 0.5, object_type=random.randrange(MAX_OBJECT_TYPE))
+
+    def populate_demo_scene(self, cache: resources.Cache) -> None:
+        generic_guy = cache.get_sprite_sheet('guy')
+        blue_guy = cache.get_hsl_transformed(generic_guy, resources.HslTransform(hue=0.6),
+                                             SPRITE_CLOTHES_COLORS)
+        grey_guy = cache.get_hsl_transformed(generic_guy, resources.HslTransform(saturation=0.0),
+                                             SPRITE_CLOTHES_COLORS)
+
+        self.player_character = self.create_character(sprite_sheet=blue_guy, x=2, y=5)
+        self.create_character(sprite_sheet=grey_guy, x=6.5, y=6.5)
+        self.create_character(sprite_sheet=grey_guy, x=6.5, y=4.5)
+
+        # horizontal platforms
+        self.create_platform(x=0, y=1, width=3, height=2)
+        self.create_platform(x=2, y=2, width=2)
+        self.create_platform(x=0, y=4, width=3)
+        self.create_platform(x=6, y=1, width=3)
+        self.create_platform(x=4, y=4, width=1, height=11)
+        self.create_platform(x=5, y=6, width=4)
+
+        self.create_platform(x=3, y=6, width=1, hover=physics.Hovering(x=math.cos, amplitude=-2))
+
+        # ladders
+        self.create_ladder(x=1, y=1, height=7)
+        self.create_ladder(x=8, y=1, height=5)
+
+        self.create_random_object()
+
+    # --- Physics Events ----------------------------------------------------------------------------------------------
+
+    def on_land_on_platform(self, phys_actor: physics.Actor, platform: physics.Platform) -> None:
+        """Triggered when the actor landed on a platform.
+        """
+        ani_actor = self.animation.get_by_id(phys_actor.object_id)
+        char_actor = self.chars.get_by_id(phys_actor.object_id)
+
+        action = animations.IDLE_ACTION
+        delta_h = phys_actor.fall_from_y - phys_actor.y
+        damage = get_falling_damage(delta_h)
+
+        if delta_h > 1.5:
+            action = animations.LANDING_ACTION
+
+        if damage > 0.0:
+            self.on_damage_char(char_actor, damage)
+
+        animations.start(ani_actor, action)
+
+    def on_falling(self, actor: physics.Actor) -> None:
+        """Triggered when the actor starts falling.
+        """
+        pass
+
+    def on_collide_platform(self, actor: physics.Actor, platform: physics.Platform) -> None:
+        """Triggered when the actor runs into a platform.
+        """
+        pass
+
+    def on_switch_platform(self, actor: physics.Actor, platform: physics.Platform) -> None:
+        """Triggered when the actor switches to the given platform as an anchor.
+        """
+        pass
+
+    def on_touch_actor(self, actor: physics.Actor, other: physics.Actor) -> None:
+        """Triggered when the actor touches another actor.
+        """
+        pass
+
+    def on_reach_object(self, phys_actor: physics.Actor, obj: physics.Object) -> None:
+        """Triggered when the actor reaches an object.
+        """
+        char_actor = self.chars.try_get_by_id(phys_actor.object_id)
+        if char_actor is not None:
+            if obj.object_type == FOOD_OBJ:
+                # heal him
+                char_actor.hit_points += 1
+                # FIXME: on_player_healed
+
+            elif obj.object_type == WEAPON_OBJ:
+                # grab axe
+                char_actor.num_axes += 1
+                # FIXME: on_weapon_collected
+
+        self.destroy_object(obj)
+        self.create_random_object()
+
+    def on_reach_ladder(self, actor: physics.Actor, ladder: physics.Ladder) -> None:
+        """Triggered when the actor reaches a ladder.
+        """
+        pass
+
+    def on_leave_ladder(self, actor: physics.Actor, ladder: physics.Ladder) -> None:
+        """Triggered when the actor leaves a ladder.
+        """
+        pass
+
+    def on_impact_platform(self, proj: physics.Projectile, platform: physics.Platform) -> None:
+        """Triggered when a projectile hits a platform.
+        """
+        self.create_object(x=proj.x, y=proj.y - physics.OBJECT_RADIUS, object_type=proj.object_type)
+        self.destroy_projectile(proj)
+
+    def on_impact_actor(self, proj: physics.Projectile, phys_actor: physics.Actor) -> None:
+        """Triggered when a projectile hits an actor.
+        """
+        char_actor = self.chars.try_get_by_id(phys_actor.object_id)
+        if char_actor is not None:
+            self.on_damage_char(char_actor)
+
+        # drop projectile as object
+        self.create_object(x=proj.x, y=proj.y - physics.OBJECT_RADIUS, object_type=proj.object_type)
+
+        self.destroy_projectile(proj)
+
+    # --- Animation Events -
+
+    def on_step(self, ani: animations.Actor) -> None:
+        """Triggered when a cycle of a move animation finished.
+        """
+        pass
+
+    def on_climb(self, ani: animations.Actor) -> None:
+        """Triggered when a cycle of a climbing animation finished.
+        """
+        pass
+
+    def on_attack(self, ani: animations.Actor) -> None:
+        """Triggered when an attack animation finished.
+        """
+        pass
+
+    def on_throw(self, ani_actor: animations.Actor) -> None:
+        """Triggered when an attack animation finished.
+        """
+        char_actor = self.chars.get_by_id(ani_actor.object_id)
+        phys_actor = self.physics.get_by_id(ani_actor.object_id)
+        if char_actor.num_axes == 0:
+            return
+
+        char_actor.num_axes -= 1
+        self.create_projectile(origin=phys_actor, x=phys_actor.x, y=phys_actor.y + phys_actor.radius,
+                               radius=physics.OBJECT_RADIUS, face_x=phys_actor.face_x, object_type=WEAPON_OBJ)
+
+    def on_died(self, ani: animations.Actor) -> None:
+        """Triggered when a dying animation finished.
+        """
+        pass
+
+    # --- Character events
+
+    def on_damage_char(self, char_actor: characters.Actor, points: int = 1) -> None:
+        """Triggered when a character is hit.
+        """
+        ani_actor = self.animation.get_by_id(char_actor.object_id)
+
+        char_actor.hit_points -= abs(points)
+        animations.flash(ani_actor, resources.HslTransform(lightness=1.0), 200)
+
+        if char_actor.hit_points <= 0:
+            char_actor.hit_points = 0
+            animations.start(ani_actor, animations.DIE_ACTION)
+            self.destroy_character(char_actor, keep_components=True)
+
+        print(char_actor)
+
+    # --- Factory methods
 
     def create_platform(self, **kwargs) -> physics.Platform:
         """Create a new platform.
@@ -70,41 +253,60 @@ class ObjectManager(object):
         """Remove an existing projectile."""
         self.physics.projectiles.remove(proj)
 
-    def create_sprite(self, sprite_sheet: pygame.Surface, **kwargs) -> render.Sprite:
-        """Create an actor sprite object such as player or enemy characters.
-        Returns a sprite which links to the actor and its animations.
+    def create_actor(self, sprite_sheet: pygame.Surface, **kwargs) -> int:
+        """Create an actor object such as player or enemy characters.
+        Returns the object id.
         """
-        actor = physics.Actor(id=self.next_obj_id, **kwargs)
-        animation = animations.Animation(id=self.next_obj_id)
-
-        sprite = render.Sprite(sprite_sheet=sprite_sheet, actor=actor, animation=animation)
-        self.physics.actors.append(actor)
-        self.animation.animations.append(animation)
-        self.renderer.sprites.append(sprite)
-
+        object_id = self.next_obj_id
         self.next_obj_id += 1
 
-        return sprite
+        kwargs['object_id'] = object_id
+        phys_actor = physics.Actor(**kwargs)
+        ani_actor = animations.Actor(object_id=object_id)
+        render_actor = render.Actor(object_id=object_id, sprite_sheet=sprite_sheet)
 
-    def destroy_sprite(self, sprite: render.Sprite) -> None:
-        """Remove an actor sprite (as well as its animation) from by using the related sprite object.
+        self.physics.actors.append(phys_actor)
+        self.animation.animations.append(ani_actor)
+        self.renderer.sprites.append(render_actor)
+
+        return object_id
+
+    def destroy_actor_by_id(self, object_id: int) -> None:
+        """Remove an actor (with all components) using the object id.
         """
-        self.physics.actors.remove(sprite.actor)
-        self.animation.animations.remove(sprite.animation)
-        self.renderer.sprites.remove(sprite)
+        phys_actor = self.physics.get_by_id(object_id)
+        ani_actor = self.animation.get_by_id(object_id)
+        render_actor = self.renderer.get_by_id(object_id)
+        self.physics.actors.remove(phys_actor)
+        self.animation.animations.remove(ani_actor)
+        self.renderer.sprites.remove(render_actor)
 
-    def create_character(self, **kwargs) -> controls.Character:
+    def create_character(self, sprite_sheet: pygame.Surface, **kwargs) -> characters.Actor:
         """Create a character.
         Returns the character
         """
-        sprite = self.create_sprite(**kwargs)
-        character = controls.Character(sprite)
-        self.characters.append(character)
+        object_id = self.create_actor(sprite_sheet, **kwargs)
+        character = characters.Actor(object_id)
+        self.chars.characters.append(character)
 
         return character
 
-    def destroy_character(self, character: controls.Character) -> None:
+    def destroy_character(self, character: characters.Actor, keep_components: bool = False) -> None:
         """Remove a character.
+        If keep_components is True, the underlying actor remains intact.
         """
-        self.destroy_sprite(character.sprite)
-        self.characters.remove(character)
+        if keep_components:
+            # stop movement and make unable to collide anymore
+            phys_actor = self.physics.get_by_id(character.object_id)
+            phys_actor.force_x = 0.0
+            phys_actor.can_collide = False
+        else:
+            # remove other actor components
+            self.destroy_actor_by_id(character.object_id)
+        self.chars.characters.remove(character)
+
+    def update(self, elapsed_ms: int) -> None:
+        """Update all related systems.
+        """
+        self.physics.update(elapsed_ms)
+        self.animation.update(elapsed_ms)
