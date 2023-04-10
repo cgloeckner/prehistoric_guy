@@ -9,6 +9,7 @@ from core import resources
 from platformer import animations
 from platformer import physics
 
+
 # tiles row offsets
 PLATFORM_ROW: int = 0
 TEXTURE_ROW: int = 2
