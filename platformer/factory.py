@@ -158,11 +158,6 @@ class ObjectManager(physics.PhysicsListener, animations.AnimationListener, chara
         self.create_projectile(origin=phys_actor, x=phys_actor.x, y=phys_actor.y + phys_actor.radius,
                                radius=physics.OBJECT_RADIUS, face_x=phys_actor.face_x, object_type=WEAPON_OBJ)
 
-    def on_died(self, ani: animations.Actor) -> None:
-        """Triggered when a dying animation finished.
-        """
-        pass
-
     # --- Character events
 
     def on_char_damaged(self, actor: characters.Actor, damage: int) -> None:
