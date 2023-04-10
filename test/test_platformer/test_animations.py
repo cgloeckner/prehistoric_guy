@@ -5,7 +5,7 @@ from core import resources
 from platformer import animations
 
 
-class AnimationsTest(unittest.TestCase):
+class AnimationFunctionsTest(unittest.TestCase):
 
     # Case 1: Can change animation
     def test__start__1(self):
@@ -78,7 +78,7 @@ class AnimationsTest(unittest.TestCase):
 
 # ----------------------------------------------------------------------------------------------------------------------
 
-class AnimatingTest(unittest.TestCase):
+class AnimatingSystemTest(unittest.TestCase):
 
     def setUp(self):
         class DemoListener(animations.AnimationListener):
@@ -133,6 +133,7 @@ class AnimatingTest(unittest.TestCase):
         self.actor.action_id = animations.MOVE_ACTION
         self.sys.notify_animation(self.actor)
 
+        self.assertIsNotNone(self.listener.last)
         self.assertEqual(self.listener.last[0], 'step')
         self.assertEqual(self.listener.last[1].object_id, self.actor.object_id)
 
@@ -141,6 +142,7 @@ class AnimatingTest(unittest.TestCase):
         self.actor.action_id = animations.ATTACK_ACTION
         self.sys.notify_animation(self.actor)
 
+        self.assertIsNotNone(self.listener.last)
         self.assertEqual(self.listener.last[0], 'attack')
         self.assertEqual(self.listener.last[1].object_id, self.actor.object_id)
 
@@ -149,7 +151,17 @@ class AnimatingTest(unittest.TestCase):
         self.actor.action_id = animations.THROW_ACTION
         self.sys.notify_animation(self.actor)
 
+        self.assertIsNotNone(self.listener.last)
         self.assertEqual(self.listener.last[0], 'throw')
+        self.assertEqual(self.listener.last[1].object_id, self.actor.object_id)
+
+    # Case 4: notify died
+    def test__notify__animation__4(self):
+        self.actor.action_id = animations.DIE_ACTION
+        self.sys.notify_animation(self.actor)
+
+        self.assertIsNotNone(self.listener.last)
+        self.assertEqual(self.listener.last[0], 'died')
         self.assertEqual(self.listener.last[1].object_id, self.actor.object_id)
 
     # ------------------------------------------------------------------------------------------------------------------

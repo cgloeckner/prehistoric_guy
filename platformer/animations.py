@@ -128,6 +128,8 @@ class Animating(object):
             self.event_listener.on_attack(ani)
         elif ani.action_id == THROW_ACTION:
             self.event_listener.on_throw(ani)
+        elif ani.action_id == DIE_ACTION:
+            self.event_listener.on_died(ani)
 
     def update_frame(self, ani: Actor, elapsed_ms: int) -> None:
         """Update a single frame animation.
