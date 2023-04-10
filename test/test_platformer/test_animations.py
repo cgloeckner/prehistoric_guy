@@ -260,3 +260,13 @@ class AnimatingTest(unittest.TestCase):
     # ------------------------------------------------------------------------------------------------------------------
 
     # FIXME: test__update
+
+    def test__update(self):
+        self.actor.hsl = resources.HslTransform(hue=25)
+        self.actor.hsl_duration_ms = 230
+        self.actor.action_id = animations.MOVE_ACTION
+        self.sys.update(210)
+
+        self.assertEqual(self.actor.frame_id, 2)
+        self.assertEqual(self.actor.hsl_duration_ms, 20)
+        self.assertAlmostEquals(self.actor.delta_y, -0.766, 2)
