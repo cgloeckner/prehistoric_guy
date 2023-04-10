@@ -1,13 +1,14 @@
 import pygame
+import math
 import imgui
 
 from core.constants import *
 from core import resources
 
 from platformer import animations
+from platformer import physics
 from platformer import factory
 from platformer import editor
-from platformer import controls
 
 import state_machine
 
@@ -16,21 +17,42 @@ class GameState(state_machine.State):
     def __init__(self, engine: state_machine.Engine):
         super().__init__(engine)
         self.cache = resources.Cache()
+
+        # --- loading some resources ----------------------------------------------------------------------------------
         self.font = self.cache.get_font()
+        generic_guy = self.cache.get_sprite_sheet('guy')
+        blue_guy = self.cache.get_hsl_transformed(generic_guy, resources.HslTransform(hue=0.6),
+                                                  SPRITE_CLOTHES_COLORS)
+        grey_guy = self.cache.get_hsl_transformed(generic_guy, resources.HslTransform(saturation=0.0),
+                                                  SPRITE_CLOTHES_COLORS)
 
+        # --- setup object manager with player character ---------------------------------------------------------------
         self.manager = factory.ObjectManager(self.cache, engine.buffer)
-        self.manager.populate_demo_scene(self.cache)
+        player_char_actor = self.manager.create_character(sprite_sheet=blue_guy, x=2, y=5)
+        self.manager.create_player(player_char_actor, left_key=pygame.K_a, right_key=pygame.K_d, up_key=pygame.K_w,
+                                   down_key=pygame.K_s, attack_key=pygame.K_SPACE)
 
-        self.editor_ui = editor.SceneEditor(engine.screen, self.manager)
+        # --- create demo scene ---------------------------------------------------------------------------------------
+        self.manager.create_character(sprite_sheet=grey_guy, x=6.5, y=6.5)
+        self.manager.create_character(sprite_sheet=grey_guy, x=6.5, y=4.5)
 
-        # FIXME: allow for multiple keybindings and controls (multiple players
-        phys_actor = self.manager.physics.get_by_id(self.manager.huds.player_ids[0])
-        ani_actor = self.manager.animation.get_by_id(self.manager.huds.player_ids[0])
-        keys = controls.Keybinding(left=pygame.K_a, right=pygame.K_d, up=pygame.K_w, down=pygame.K_s,
-                                   attack=pygame.K_SPACE)
-        self.ctrl = controls.Player(phys_actor, ani_actor, keys)
+        # horizontal platforms
+        self.manager.create_platform(x=0, y=1, width=3, height=2)
+        self.manager.create_platform(x=2, y=2, width=2)
+        self.manager.create_platform(x=0, y=4, width=3)
+        self.manager.create_platform(x=6, y=1, width=3)
+        self.manager.create_platform(x=4, y=4, width=1, height=11)
+        self.manager.create_platform(x=5, y=6, width=4)
 
-        self.hud = pygame.image.load('data/hud.png')
+        self.manager.create_platform(x=3, y=6, width=1, hover=physics.Hovering(x=math.cos, amplitude=-2))
+
+        # ladders
+        self.manager.create_ladder(x=1, y=1, height=7)
+        self.manager.create_ladder(x=8, y=1, height=5)
+
+        self.manager.create_random_object()
+
+        self.editor_ui = editor.SceneEditor(engine.buffer, self.manager)
 
     def process_event(self, event: pygame.event.Event) -> None:
         if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
@@ -41,9 +63,12 @@ class GameState(state_machine.State):
             # FIXME: pygame.display.toggle_fullscreen() does not work correctly when leaving fullscreen
             pass
 
-        self.ctrl.process_event(event)
+        self.manager.players.process_event(event)
 
     def update(self, elapsed_ms: int) -> None:
+        self.editor_ui.update()
+
+        # --- Demo Camera movement -------------------------------------------------------------------------------------
         keys = pygame.key.get_pressed()
         if keys[pygame.K_LEFT]:
             self.manager.renderer.move_camera(-1, 0)
@@ -54,38 +79,42 @@ class GameState(state_machine.State):
         if keys[pygame.K_DOWN]:
             self.manager.renderer.move_camera(0, -1)
 
-        self.editor_ui.update()
-        self.ctrl.update(elapsed_ms)
         self.manager.update(elapsed_ms)
 
+        # # --- Demo Enemy Ai ------------------------------------------------------------------------------------------
         for enemy in self.manager.chars.characters:
-            if enemy.object_id in self.manager.huds.player_ids:
+            if self.manager.players.try_get_by_id(enemy.object_id) is not None:
+                # ignore players
                 continue
+
             ani_enemy = self.manager.animation.get_by_id(enemy.object_id)
             if ani_enemy.action_id in [animations.DIE_ACTION, animations.ATTACK_ACTION,
                                        animations.THROW_ACTION, animations.LANDING_ACTION]:
                 continue
+
             phys_enemy = self.manager.physics.get_by_id(enemy.object_id)
             if phys_enemy.anchor is None:
                 continue
+
             left_bound = phys_enemy.anchor.x + phys_enemy.anchor.width * 0.05
             right_bound = phys_enemy.anchor.x + phys_enemy.anchor.width * 0.95
             if phys_enemy.x < left_bound:
                 phys_enemy.face_x = 1.0
             elif phys_enemy.x > right_bound:
                 phys_enemy.face_x = -1.0
+
             phys_enemy.force_x = phys_enemy.face_x
             animations.start(ani_enemy, animations.MOVE_ACTION)
 
-        # limit pos to screen
-        self.ctrl.phys_actor.x = max(0.0, min(self.ctrl.phys_actor.x, RESOLUTION_X / WORLD_SCALE))
-        if self.ctrl.phys_actor.y < 0:
-            self.ctrl.phys_actor.y += RESOLUTION_Y // WORLD_SCALE
+        # --- Demo: limit pos to screen --------------------------------------------------------------------------------
+        for player in self.manager.players.players:
+            phys_actor = self.manager.physics.get_by_id(player.object_id)
+            phys_actor.x = max(0.0, min(phys_actor.x, RESOLUTION_X / WORLD_SCALE))
+            if phys_actor.y < 0:
+                phys_actor.y += RESOLUTION_Y // WORLD_SCALE
 
     def draw(self) -> None:
-        self.manager.renderer.draw()
-        self.manager.huds.draw()
-        # phys.draw(buffer)
+        self.manager.draw()
 
         # draw FPS
         fps_surface = self.font.render(f'FPS: {int(self.engine.num_fps):02d}', False, 'white')

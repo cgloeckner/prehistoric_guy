@@ -2,7 +2,7 @@ import pygame
 import math
 from dataclasses import dataclass
 from abc import abstractmethod
-from typing import Optional
+from typing import Optional, List
 
 from core.constants import *
 from core import resources
@@ -23,6 +23,14 @@ JUMP_ACTION: int = 6
 LANDING_ACTION: int = 7
 DIE_ACTION: int = 8
 
+# animations that cannot be interrupted by user input
+BLOCKING_ANIMATIONS = [DIE_ACTION, ATTACK_ACTION, THROW_ACTION, LANDING_ACTION]
+
+# those loop until interrupted by user input
+LOOPED_ANIMATIONS = [IDLE_ACTION, MOVE_ACTION, HOLD_ACTION]
+
+# those animations lead to IDLE when finished
+RESET_TO_IDLE_ANIMATIONS = [ATTACK_ACTION, THROW_ACTION, LANDING_ACTION]
 
 @dataclass
 class Actor:
@@ -98,7 +106,7 @@ class Animating(object):
     """Handles all frame set animations.
     """
     def __init__(self, animation_listener: AnimationListener):
-        self.animations = list()
+        self.animations: List[Actor] = list()
         self.event_listener = animation_listener
 
     def get_by_id(self, object_id: int) -> Actor:
@@ -134,10 +142,10 @@ class Animating(object):
         # handle animation type (loop, reset, freeze)
         self.notify_animation(ani)
 
-        if ani.action_id in [IDLE_ACTION, MOVE_ACTION, HOLD_ACTION]:
+        if ani.action_id in LOOPED_ANIMATIONS:
             # loop
             ani.frame_id = 0
-        elif ani.action_id in [ATTACK_ACTION, THROW_ACTION, LANDING_ACTION]:
+        elif ani.action_id in RESET_TO_IDLE_ANIMATIONS:
             # reset to idle
             ani.frame_id = 0
             ani.action_id = IDLE_ACTION

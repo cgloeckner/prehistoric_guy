@@ -10,7 +10,7 @@ from platformer import physics
 from platformer import animations
 from platformer import render
 from platformer import characters
-from platformer import ui
+from platformer import players
 
 
 class ObjectManager(physics.PhysicsListener, animations.AnimationListener, characters.CharacterListener):
@@ -23,7 +23,7 @@ class ObjectManager(physics.PhysicsListener, animations.AnimationListener, chara
         self.animation = animations.Animating(self)
         self.renderer = render.Renderer(self.physics, self.animation, cache, target)
         self.chars = characters.Characters(self)
-        self.huds = ui.PlayerHuds(self.physics, self.renderer, self.chars, cache)
+        self.players = players.Players(self.physics, self.animation, self.renderer, self.chars, cache)
 
     def create_random_object(self) -> None:
         # pick random position on random platform
@@ -31,33 +31,6 @@ class ObjectManager(physics.PhysicsListener, animations.AnimationListener, chara
         x = random.randrange(p.width)
 
         self.create_object(x=p.x + x, y=p.y + 0.5, object_type=random.randrange(MAX_OBJECT_TYPE))
-
-    def populate_demo_scene(self, cache: resources.Cache) -> None:
-        generic_guy = cache.get_sprite_sheet('guy')
-        blue_guy = cache.get_hsl_transformed(generic_guy, resources.HslTransform(hue=0.6),
-                                             SPRITE_CLOTHES_COLORS)
-        grey_guy = cache.get_hsl_transformed(generic_guy, resources.HslTransform(saturation=0.0),
-                                             SPRITE_CLOTHES_COLORS)
-
-        self.huds.player_ids.append(self.create_character(sprite_sheet=blue_guy, x=2, y=5).object_id)
-        self.create_character(sprite_sheet=grey_guy, x=6.5, y=6.5)
-        self.create_character(sprite_sheet=grey_guy, x=6.5, y=4.5)
-
-        # horizontal platforms
-        self.create_platform(x=0, y=1, width=3, height=2)
-        self.create_platform(x=2, y=2, width=2)
-        self.create_platform(x=0, y=4, width=3)
-        self.create_platform(x=6, y=1, width=3)
-        self.create_platform(x=4, y=4, width=1, height=11)
-        self.create_platform(x=5, y=6, width=4)
-
-        self.create_platform(x=3, y=6, width=1, hover=physics.Hovering(x=math.cos, amplitude=-2))
-
-        # ladders
-        self.create_ladder(x=1, y=1, height=7)
-        self.create_ladder(x=8, y=1, height=5)
-
-        self.create_random_object()
 
     # --- Physics Events ----------------------------------------------------------------------------------------------
 
@@ -309,10 +282,24 @@ class ObjectManager(physics.PhysicsListener, animations.AnimationListener, chara
             self.destroy_actor_by_id(character.object_id)
         self.chars.characters.remove(character)
 
+    def create_player(self, character: characters.Actor, **kwargs) -> players.Actor:
+        """Create a player for an existing character actor.
+        Returns the player actor.
+        """
+        player_actor = players.Actor(object_id=character.object_id, **kwargs)
+        self.players.players.append(player_actor)
+        return player_actor
+
     def update(self, elapsed_ms: int) -> None:
         """Update all related systems.
         """
         self.physics.update(elapsed_ms)
         self.animation.update(elapsed_ms)
+        self.renderer.update(elapsed_ms)
         self.chars.update(elapsed_ms)
-        self.huds.update(elapsed_ms)
+        self.players.update(elapsed_ms)
+
+    def draw(self) -> None:
+        # self.physics.draw()
+        self.renderer.draw()
+        self.players.draw()

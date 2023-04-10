@@ -1,6 +1,7 @@
 import pygame
 import math
 from dataclasses import dataclass
+from typing import List
 
 from core.constants import *
 from core import resources
@@ -39,7 +40,7 @@ class Renderer(object):
         self.target = target
 
         self.tileset_col = 0
-        self.sprites = list()
+        self.sprites: List[Actor] = list()
 
         # load resources
         self.background = self.cache.get_image('background')
@@ -204,6 +205,9 @@ class Renderer(object):
         objects = self.cache.get_rotated_surface_clip(self.objects, clip, angle, flip=proj.face_x < 0.0)
 
         self.target.blit(objects, (pos.x, pos.y))
+
+    def update(self, elapsed_ms: int) -> None:
+        pass
 
     def draw(self) -> None:
         # background

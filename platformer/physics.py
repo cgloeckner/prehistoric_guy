@@ -278,11 +278,11 @@ class Physics(object):
     It holds actors and platforms, which have to be registered by appending them to the corresponding lists.
     """
     def __init__(self, event_listener: PhysicsListener):
-        self.actors = list()
-        self.platforms = list()
-        self.ladders = list()
-        self.objects = list()
-        self.projectiles = list()
+        self.actors: List[Actor] = list()
+        self.platforms: List[Platform] = list()
+        self.ladders: List[Ladder] = list()
+        self.objects: List[Object] = list()
+        self.projectiles: List[Projectile] = list()
 
         self.event_listener = event_listener
 
