@@ -2,10 +2,11 @@ import pygame
 import math
 from dataclasses import dataclass
 
-from platformer.constants import *
+from core.constants import *
+
 import platformer.animations as animations
 import platformer.physics as physics
-import platformer.resources as resources
+import core.resources as resources
 
 # tiles row offsets
 PLATFORM_ROW: int = 0
@@ -37,7 +38,7 @@ class Renderer(object):
         self.cache = cache
         self.target = target
 
-        self.x = 0
+        self.tileset_col = 0
         self.sprites = list()
 
         # load resources
@@ -117,7 +118,7 @@ class Renderer(object):
                            ani_data.action_id * SPRITE_SCALE, SPRITE_SCALE, SPRITE_SCALE)
         self.target.blit(sprite_sheet, (pos.x, pos.y), clip)
 
-    def draw_ladder(self, ladder: physics.Ladder, tileset_col: int) -> None:
+    def draw_ladder(self, ladder: physics.Ladder) -> None:
         """Draw a ladder.
         """
         tiles = self.tiles
@@ -131,18 +132,19 @@ class Renderer(object):
         # draw repeated ladder parts
         for i in range(ladder.height):
             self.target.blit(tiles, (pos.x, pos.y - i * WORLD_SCALE),
-                             ((3 * tileset_col + 1) * WORLD_SCALE, LADDER_ROW * WORLD_SCALE,
+                             ((3 * self.tileset_col + 1) * WORLD_SCALE, LADDER_ROW * WORLD_SCALE,
                               WORLD_SCALE, WORLD_SCALE * 2))
 
         # draw upper ladder part
         self.target.blit(tiles, (pos.x, pos.y - ladder.height * WORLD_SCALE),
-                         ((3 * tileset_col) * WORLD_SCALE, LADDER_ROW * WORLD_SCALE, WORLD_SCALE, WORLD_SCALE * 2))
+                         ((3 * self.tileset_col) * WORLD_SCALE, LADDER_ROW * WORLD_SCALE, WORLD_SCALE, WORLD_SCALE * 2))
 
         # draw lower ladder part
         self.target.blit(tiles, (pos.x, pos.y + WORLD_SCALE),
-                         ((3 * tileset_col + 2) * WORLD_SCALE, LADDER_ROW * WORLD_SCALE, WORLD_SCALE, WORLD_SCALE * 2))
+                         ((3 * self.tileset_col + 2) * WORLD_SCALE, LADDER_ROW * WORLD_SCALE, WORLD_SCALE,
+                          WORLD_SCALE * 2))
 
-    def draw_platform(self, platform: physics.Platform, tileset_col: int) -> None:
+    def draw_platform(self, platform: physics.Platform) -> None:
         """Draw a platform.
         """
         tiles = self.tiles
@@ -156,13 +158,13 @@ class Renderer(object):
             for j in range(int(platform.height)):
                 self.target.blit(tiles,
                                  (pos.x + i * WORLD_SCALE, pos.y + j * WORLD_SCALE),
-                                 ((3 * tileset_col+1) * WORLD_SCALE, TEXTURE_ROW * WORLD_SCALE, WORLD_SCALE,
+                                 ((3 * self.tileset_col+1) * WORLD_SCALE, TEXTURE_ROW * WORLD_SCALE, WORLD_SCALE,
                                   WORLD_SCALE))
 
             # draw platform on top
             self.target.blit(tiles,
                              (pos.x + i * WORLD_SCALE, pos.y - WORLD_SCALE),
-                             ((3 * tileset_col+1) * WORLD_SCALE, PLATFORM_ROW * WORLD_SCALE, WORLD_SCALE,
+                             ((3 * self.tileset_col+1) * WORLD_SCALE, PLATFORM_ROW * WORLD_SCALE, WORLD_SCALE,
                               WORLD_SCALE * 2))
 
         if platform.height > 0.0:
@@ -170,19 +172,20 @@ class Renderer(object):
             for j in range(int(platform.height)):
                 self.target.blit(tiles,
                                  (pos.x - WORLD_SCALE, pos.y + j * WORLD_SCALE),
-                                 (3 * tileset_col * WORLD_SCALE, TEXTURE_ROW * WORLD_SCALE, WORLD_SCALE, WORLD_SCALE))
+                                 (3 * self.tileset_col * WORLD_SCALE, TEXTURE_ROW * WORLD_SCALE, WORLD_SCALE,
+                                  WORLD_SCALE))
                 self.target.blit(tiles,
                                  (pos.x + int(platform.width) * WORLD_SCALE, pos.y + j * WORLD_SCALE),
-                                 ((3 * tileset_col + 2) * WORLD_SCALE, TEXTURE_ROW * WORLD_SCALE, WORLD_SCALE,
+                                 ((3 * self.tileset_col + 2) * WORLD_SCALE, TEXTURE_ROW * WORLD_SCALE, WORLD_SCALE,
                                   WORLD_SCALE))
 
         # draw platform edges
         self.target.blit(tiles,
                          (pos.x - WORLD_SCALE, pos.y - WORLD_SCALE),
-                         (3 * tileset_col * WORLD_SCALE, PLATFORM_ROW * WORLD_SCALE, WORLD_SCALE, WORLD_SCALE * 2))
+                         (3 * self.tileset_col * WORLD_SCALE, PLATFORM_ROW * WORLD_SCALE, WORLD_SCALE, WORLD_SCALE * 2))
         self.target.blit(tiles,
                          (pos.x + int(platform.width) * WORLD_SCALE, pos.y - WORLD_SCALE),
-                         ((3 * tileset_col + 2) * WORLD_SCALE, PLATFORM_ROW * WORLD_SCALE, WORLD_SCALE,
+                         ((3 * self.tileset_col + 2) * WORLD_SCALE, PLATFORM_ROW * WORLD_SCALE, WORLD_SCALE,
                           WORLD_SCALE * 2))
 
     def draw_projectile(self, proj: physics.Projectile) -> None:
@@ -202,7 +205,7 @@ class Renderer(object):
 
         self.target.blit(objects, (pos.x, pos.y))
 
-    def draw(self, bg_col: int) -> None:
+    def draw(self) -> None:
         # background
         # FIXME: needs a better solution (also artistically) to work with the camera implementation
         # self.surface.blit(self.background, (0, 0), (bg_col * RESOLUTION_X, 0, RESOLUTION_X, RESOLUTION_Y))
@@ -210,14 +213,11 @@ class Renderer(object):
         # foreground
         self.phys_system.platforms.sort(key=lambda plat: plat.y)
 
-        # FIXME: needs a better spot
-        tileset_col = 0
-
         for p in self.phys_system.platforms:
-            self.draw_platform(p, tileset_col)
+            self.draw_platform(p)
 
         for ladder in self.phys_system.ladders:
-            self.draw_ladder(ladder, tileset_col)
+            self.draw_ladder(ladder)
 
         for o in self.phys_system.objects:
             self.draw_object(o)

@@ -1,23 +1,17 @@
 import pygame
 import random
 import math
+from typing import Optional
 
-from platformer.constants import *
+from core.constants import *
 import platformer.physics as physics
 import platformer.animations as animations
 import platformer.render as render
 import platformer.characters as characters
-import platformer.resources as resources
+import core.resources as resources
 
 
-def get_falling_damage(height: float) -> int:
-    """Calculates falling damage based on falling height.
-    Returns integer damage.
-    """
-    return int(height / 4.0)
-
-
-class ObjectManager(physics.PhysicsListener, animations.AnimationListener):
+class ObjectManager(physics.PhysicsListener, animations.AnimationListener, characters.CharacterListener):
     """Factory for creating game objects.
     Creation and deletion of objects considers all relevant systems.
     """
@@ -26,7 +20,7 @@ class ObjectManager(physics.PhysicsListener, animations.AnimationListener):
         self.physics = physics.Physics(self)
         self.animation = animations.Animating(self)
         self.renderer = render.Renderer(self.physics, self.animation, cache, target)
-        self.chars = characters.Characters()
+        self.chars = characters.Characters(self)
 
         self.player_character = None
 
@@ -70,19 +64,25 @@ class ObjectManager(physics.PhysicsListener, animations.AnimationListener):
         """Triggered when the actor landed on a platform.
         """
         ani_actor = self.animation.get_by_id(phys_actor.object_id)
-        char_actor = self.chars.get_by_id(phys_actor.object_id)
-
         action = animations.IDLE_ACTION
-        delta_h = phys_actor.fall_from_y - phys_actor.y
-        damage = get_falling_damage(delta_h)
 
-        if delta_h > 1.5:
+        char_actor = self.chars.try_get_by_id(phys_actor.object_id)
+        if char_actor is None:
+            # go to IDLE
+            animations.start(ani_actor, action)
+            return
+
+        char_actor = self.chars.get_by_id(phys_actor.object_id)
+        delta_h = phys_actor.fall_from_y - phys_actor.y
+
+        if delta_h > characters.DANGEROUS_HEIGHT:
             action = animations.LANDING_ACTION
 
-        if damage > 0.0:
-            self.on_damage_char(char_actor, damage)
-
         animations.start(ani_actor, action)
+
+        damage = characters.get_falling_damage(delta_h)
+        if damage > 0:
+            self.chars.apply_falling_damage(char_actor, damage)
 
     def on_falling(self, actor: physics.Actor) -> None:
         """Triggered when the actor starts falling.
@@ -143,7 +143,12 @@ class ObjectManager(physics.PhysicsListener, animations.AnimationListener):
         """
         char_actor = self.chars.try_get_by_id(phys_actor.object_id)
         if char_actor is not None:
-            self.on_damage_char(char_actor)
+            # try to find projectile's causing character
+            cause = None
+            if proj.origin is not None:
+                cause = self.chars.try_get_by_id(proj.origin.object_id)
+
+            self.chars.apply_falling_damage(char_actor, 1, cause)
 
         # drop projectile as object
         self.create_object(x=proj.x, y=proj.y - physics.OBJECT_RADIUS, object_type=proj.object_type)
@@ -186,20 +191,18 @@ class ObjectManager(physics.PhysicsListener, animations.AnimationListener):
 
     # --- Character events
 
-    def on_damage_char(self, char_actor: characters.Actor, points: int = 1) -> None:
-        """Triggered when a character is hit.
+    def on_char_damaged(self, actor: characters.Actor, damage: int) -> None:
+        """Triggered when an actor got damaged.
         """
-        ani_actor = self.animation.get_by_id(char_actor.object_id)
-
-        char_actor.hit_points -= abs(points)
+        ani_actor = self.animation.get_by_id(actor.object_id)
         animations.flash(ani_actor, resources.HslTransform(lightness=1.0), 200)
 
-        if char_actor.hit_points <= 0:
-            char_actor.hit_points = 0
-            animations.start(ani_actor, animations.DIE_ACTION)
-            self.destroy_character(char_actor, keep_components=True)
-
-        print(char_actor)
+    def on_char_died(self, char_actor: characters.Actor, cause: Optional[characters.Actor]) -> None:
+        """Triggered when an actor died. An optional cause can be provided.
+        """
+        ani_actor = self.animation.get_by_id(char_actor.object_id)
+        animations.start(ani_actor, animations.DIE_ACTION)
+        self.destroy_character(char_actor, keep_components=True)
 
     # --- Factory methods
 

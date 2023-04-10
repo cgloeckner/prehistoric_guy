@@ -1,6 +1,7 @@
 import pygame
 import imgui
 
+import core
 import platformer
 import editor
 import state_machine
@@ -9,7 +10,7 @@ import state_machine
 class DemoState(state_machine.State):
     def __init__(self, engine: state_machine.Engine):
         super().__init__(engine)
-        self.cache = platformer.Cache()
+        self.cache = core.Cache()
         self.font = self.cache.get_font()
 
         self.manager = platformer.ObjectManager(self.cache, engine.buffer)
@@ -76,7 +77,7 @@ class DemoState(state_machine.State):
             self.ctrl.phys_actor.y += platformer.RESOLUTION_Y // platformer.WORLD_SCALE
 
     def draw(self) -> None:
-        self.manager.renderer.draw(0)
+        self.manager.renderer.draw()
         # phys.draw(buffer)
 
         char_pc = self.manager.player_character

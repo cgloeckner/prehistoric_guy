@@ -4,8 +4,9 @@ from dataclasses import dataclass
 from abc import abstractmethod
 from typing import Optional
 
-from platformer.constants import *
-import platformer.resources as resources
+from core.constants import *
+
+import core.resources as resources
 
 
 ANIMATION_FRAME_DURATION: int = 120
@@ -188,8 +189,8 @@ class Animating(object):
 
 
 def main():
-    from constants import SPRITE_SCALE
-    import resources
+    from core.constants import SPRITE_SCALE
+    from core import resources
 
     class DemoListener(AnimationListener):
         def on_step(self, a: Actor) -> None:

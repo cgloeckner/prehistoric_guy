@@ -4,7 +4,8 @@ from dataclasses import dataclass
 from typing import Tuple, Optional, List
 from abc import abstractmethod
 
-import platformer.resources as resources
+import core.resources as resources
+
 
 GRAVITY: float = 9.81
 
@@ -32,22 +33,6 @@ class Hovering:
     y: callable = None
     index: int = 0
     amplitude: float = 1.0
-
-
-def get_hover_delta(hover: Hovering, elapsed_ms: int) -> Tuple[float, float]:
-    # calculate movement delta
-    angle = 2 * math.pi * hover.index / 360.0
-    hover.index += 1
-    x = 0
-    y = 0
-    if hover.x is not None:
-        x = hover.x(angle) * elapsed_ms / 1000.0
-    if hover.y is not None:
-        y = hover.y(angle) * elapsed_ms / 1000.0
-    x *= hover.amplitude
-    y *= hover.amplitude
-
-    return x, y
 
 
 @dataclass
@@ -127,6 +112,22 @@ class Projectile:
     fly_ms: int = JUMP_DURATION // 4
     # origin actor
     origin: Optional[Actor] = None
+
+
+def get_hover_delta(hover: Hovering, elapsed_ms: int) -> Tuple[float, float]:
+    # calculate movement delta
+    angle = 2 * math.pi * hover.index / 360.0
+    hover.index += 1
+    x = 0
+    y = 0
+    if hover.x is not None:
+        x = hover.x(angle) * elapsed_ms / 1000.0
+    if hover.y is not None:
+        y = hover.y(angle) * elapsed_ms / 1000.0
+    x *= hover.amplitude
+    y *= hover.amplitude
+
+    return x, y
 
 
 def test_line_intersection(x1: float, y1: float, x2: float, y2: float, x3: float, y3: float,
@@ -650,7 +651,7 @@ class Physics(object):
         """Performs debug drawing of shapes.
         """
         import pygame.gfxdraw
-        from platformer.constants import WORLD_SCALE, OBJECT_SCALE
+        from core.constants import WORLD_SCALE, OBJECT_SCALE
 
         for p in self.platforms:
             # draw platform's top, left and right edges

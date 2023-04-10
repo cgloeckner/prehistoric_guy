@@ -1,6 +1,7 @@
 import pygame
 
-from platformer.constants import *
+from core.constants import *
+
 import platformer.physics as physics
 import platformer.characters as characters
 

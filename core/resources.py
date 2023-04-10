@@ -3,7 +3,7 @@ import os
 from dataclasses import dataclass
 from typing import Dict, Tuple, List, Optional
 
-from platformer.constants import *
+from core.constants import *
 
 
 @dataclass
