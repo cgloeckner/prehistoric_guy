@@ -70,7 +70,12 @@ class Characters(object):
             return None
 
     def apply_projectile_hit(self, victim: Actor, proj: physics.Projectile) -> None:
-        pass
+        # try to find projectile's causing character
+        cause = None
+        if proj.origin is not None:
+            cause = self.try_get_by_id(proj.origin.object_id)
+
+        self.apply_falling_damage(victim, 1, cause)
 
     def apply_falling_damage(self, victim: Actor, damage: int, cause: Optional[Actor] = None) -> None:
         apply_damage(victim, damage)

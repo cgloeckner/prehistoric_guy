@@ -117,12 +117,7 @@ class ObjectManager(physics.PhysicsListener, animations.AnimationListener, chara
         """
         char_actor = self.chars.try_get_by_id(phys_actor.object_id)
         if char_actor is not None:
-            # try to find projectile's causing character
-            cause = None
-            if proj.origin is not None:
-                cause = self.chars.try_get_by_id(proj.origin.object_id)
-
-            self.chars.apply_falling_damage(char_actor, 1, cause)
+            self.chars.apply_projectile_hit(phys_actor, proj)
 
         # drop projectile as object
         self.create_object(x=proj.x, y=proj.y - physics.OBJECT_RADIUS, object_type=proj.object_type)
