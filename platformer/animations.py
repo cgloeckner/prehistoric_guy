@@ -32,6 +32,10 @@ LOOPED_ANIMATIONS = [IDLE_ACTION, MOVE_ACTION, HOLD_ACTION]
 # those animations lead to IDLE when finished
 RESET_TO_IDLE_ANIMATIONS = [ATTACK_ACTION, THROW_ACTION, LANDING_ACTION]
 
+# those animations freeze in the last frame
+FREEZE_AT_END_ANIMATIONS = [JUMP_ACTION, DIE_ACTION]
+
+
 @dataclass
 class Actor:
     object_id: int
@@ -133,8 +137,9 @@ class Animating(object):
         if ani.frame_duration_ms > 0:
             return
 
-        ani.frame_duration_ms += ani.frame_max_duration_ms
-        ani.frame_id += 1
+        while ani.frame_duration_ms < 0:
+            ani.frame_duration_ms += ani.frame_max_duration_ms
+            ani.frame_id += 1
 
         if ani.frame_id < ANIMATION_NUM_FRAMES:
             return
