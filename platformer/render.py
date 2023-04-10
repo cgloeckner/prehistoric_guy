@@ -2,11 +2,10 @@ import pygame
 import math
 from dataclasses import dataclass
 
-from constants import *
-import resources
-import platforms
-import animations
-
+from platformer.constants import *
+import platformer.animations as animations
+import platformer.physics as physics
+import platformer.resources as resources
 
 # tiles row offsets
 PLATFORM_ROW: int = 0
@@ -17,7 +16,7 @@ LADDER_ROW: int = 3
 @dataclass
 class Sprite:
     # link to related actor
-    actor: platforms.Actor
+    actor: physics.Actor
     # sprite frames
     sprite_sheet: pygame.Surface
     # animation related stuff
@@ -66,7 +65,7 @@ class Renderer(object):
         y = self.camera.y + (self.surface.get_height() - y) / WORLD_SCALE
         return pygame.math.Vector2(x, y)
 
-    def draw_object(self, obj: platforms.Object) -> None:
+    def draw_object(self, obj: physics.Object) -> None:
         """Draw an object.
         """
         objects = self.objects
@@ -106,7 +105,7 @@ class Renderer(object):
                            sprite.animation.action_id * SPRITE_SCALE, SPRITE_SCALE, SPRITE_SCALE)
         self.surface.blit(sprite_sheet, (pos.x, pos.y), clip)
 
-    def draw_ladder(self, ladder: platforms.Ladder, tileset_col: int) -> None:
+    def draw_ladder(self, ladder: physics.Ladder, tileset_col: int) -> None:
         """Draw a ladder.
         """
         tiles = self.tiles
@@ -133,7 +132,7 @@ class Renderer(object):
                           ((3 * tileset_col + 2) * WORLD_SCALE, LADDER_ROW * WORLD_SCALE,
                            WORLD_SCALE, WORLD_SCALE * 2))
 
-    def draw_platform(self, platform: platforms.Platform, tileset_col: int) -> None:
+    def draw_platform(self, platform: physics.Platform, tileset_col: int) -> None:
         """Draw a platform.
         """
         tiles = self.tiles
@@ -178,7 +177,7 @@ class Renderer(object):
                           ((3 * tileset_col + 2) * WORLD_SCALE, PLATFORM_ROW * WORLD_SCALE,
                            WORLD_SCALE, WORLD_SCALE * 2))
 
-    def draw_projectile(self, proj: platforms.Projectile) -> None:
+    def draw_projectile(self, proj: physics.Projectile) -> None:
         """Draw a projectile.
         """
         # pos is centered, but needs to be top left
@@ -195,7 +194,7 @@ class Renderer(object):
 
         self.surface.blit(objects, (pos.x, pos.y))
 
-    def draw(self, platformer: platforms.Physics, bg_col: int) -> None:
+    def draw(self, platformer: physics.Physics, bg_col: int) -> None:
         # background
         # FIXME: needs a better solution (also artistically) to work with the camera implementation
         # self.surface.blit(self.background, (0, 0), (bg_col * RESOLUTION_X, 0, RESOLUTION_X, RESOLUTION_Y))

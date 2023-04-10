@@ -3,18 +3,16 @@ from abc import abstractmethod
 
 from imgui_wrapper import OpenGlWrapper
 
-from constants import *
-
 
 class Engine(object):
-    def __init__(self):
+    def __init__(self, screen_width: int, screen_height: int):
         """Creates an OpenGL screen and a SDL surface buffer. The OpenGL screen is used for ImGui rendering.
         All 2d drawing options are done with the buffer. Later the buffer content is rendered to screen using OpenGL.
         """
         pygame.init()
 
-        self.screen = pygame.display.set_mode((RESOLUTION_X, RESOLUTION_Y), OpenGlWrapper.get_display_flags())
-        self.buffer = pygame.Surface((RESOLUTION_X, RESOLUTION_Y))
+        self.screen = pygame.display.set_mode((screen_width, screen_height), OpenGlWrapper.get_display_flags())
+        self.buffer = pygame.Surface((screen_width, screen_height))
         self.wrapper = OpenGlWrapper(self.screen)
         self.clock = pygame.time.Clock()
 

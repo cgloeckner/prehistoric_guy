@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from typing import Tuple, Optional, List
 from abc import abstractmethod
 
-import resources
+import platformer.resources as resources
 
 GRAVITY: float = 9.81
 
@@ -643,7 +643,7 @@ class Physics(object):
         """Performs debug drawing of shapes.
         """
         import pygame.gfxdraw
-        from constants import WORLD_SCALE, OBJECT_SCALE
+        from platformer.constants import WORLD_SCALE, OBJECT_SCALE
 
         for p in self.platforms:
             # draw platform's top, left and right edges

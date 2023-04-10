@@ -4,8 +4,8 @@ from dataclasses import dataclass
 from abc import abstractmethod
 from typing import Optional
 
-from constants import ANIMATION_NUM_FRAMES
-import resources
+from platformer.constants import ANIMATION_NUM_FRAMES
+import platformer.resources as resources
 
 
 ANIMATION_FRAME_DURATION: int = 120

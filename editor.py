@@ -3,11 +3,7 @@ import pygame
 import math
 from typing import List
 
-from constants import *
-import platforms
-import tiles
-import factory
-import resources
+import platformer
 
 
 def get_dict_key_index(dictionary, value) -> int:
@@ -18,7 +14,7 @@ def get_dict_key_index(dictionary, value) -> int:
         index += 1
 
 
-def platform_ui(platform: platforms.Platform) -> bool:
+def platform_ui(platform: platformer.Platform) -> bool:
     """Shows an ImGui-based UI for editing the given platform. Values are updated automatically.
     Returns True if the close button was clicked.
     """
@@ -38,7 +34,7 @@ def platform_ui(platform: platforms.Platform) -> bool:
 
     _, enabled = imgui.checkbox('does hover?', platform.hover is not None)
     if enabled and platform.hover is None:
-        platform.hover = platforms.Hovering()
+        platform.hover = platformer.Hovering()
     if not enabled and platform.hover is not None:
         platform.hover = None
 
@@ -58,7 +54,7 @@ def platform_ui(platform: platforms.Platform) -> bool:
     return not opened
 
 
-def sprite_ui(sprite: tiles.Sprite) -> bool:
+def sprite_ui(sprite: platformer.Sprite) -> bool:
     """Shows an ImGui-based UI for editing a given actor. Values are updated automatically.
     Returns True if the close button was clicked.
     """
@@ -80,15 +76,15 @@ def sprite_ui(sprite: tiles.Sprite) -> bool:
     return not opened
 
 
-def object_ui(obj: platforms.Object) -> bool:
+def object_ui(obj: platformer.Object) -> bool:
     """Shows an ImGui-based UI for editing a given object. Values are updated automatically.
     Returns True if the close button was clicked.
     """
     opts_dict = {
-        'FOOD_OBJ': FOOD_OBJ,
-        'DANGER_OBJ': DANGER_OBJ,
-        'BONUS_OBJ': BONUS_OBJ,
-        'WEAPON_OBJ': WEAPON_OBJ
+        'FOOD_OBJ': platformer.FOOD_OBJ,
+        'DANGER_OBJ': platformer.DANGER_OBJ,
+        'BONUS_OBJ': platformer.BONUS_OBJ,
+        'WEAPON_OBJ': platformer.WEAPON_OBJ
     }
     opts_keys = list(opts_dict.keys())
 
@@ -106,7 +102,7 @@ def object_ui(obj: platforms.Object) -> bool:
     return not opened
 
 
-def ladder_ui(ladder: platforms.Ladder) -> bool:
+def ladder_ui(ladder: platformer.Ladder) -> bool:
     """Shows an ImGui-based UI for editing a given ladder. Values are updated automatically.
     Returns True if the close button was clicked.
     """
@@ -122,7 +118,7 @@ def ladder_ui(ladder: platforms.Ladder) -> bool:
 
 
 class SceneEditor(object):
-    def __init__(self, screen: pygame.Surface, obj_manager: factory.ObjectManager):
+    def __init__(self, screen: pygame.Surface, obj_manager: platformer.ObjectManager):
         self.screen = screen
         self.obj_manager = obj_manager
 
@@ -139,7 +135,7 @@ class SceneEditor(object):
         # collect all hoverable objects
         hovered = list()
         for platform in self.obj_manager.physics.platforms:
-            h = platform.height if platform.height > 0.0 else platforms.OBJECT_RADIUS
+            h = platform.height if platform.height > 0.0 else platformer.OBJECT_RADIUS
             if platform.x <= pos.x <= platform.x + platform.width and platform.y - h <= pos.y <= platform.y:
                 hovered.append(platform)
 
@@ -150,13 +146,13 @@ class SceneEditor(object):
                 hovered.append(actor)
 
         for obj in self.obj_manager.physics.objects:
-            obj_pos = pygame.math.Vector2(obj.x, obj.y + platforms.OBJECT_RADIUS)
+            obj_pos = pygame.math.Vector2(obj.x, obj.y + platformer.OBJECT_RADIUS)
             distance = pos.distance_squared_to(obj_pos)
-            if distance <= platforms.OBJECT_RADIUS ** 2:
+            if distance <= platformer.OBJECT_RADIUS ** 2:
                 hovered.append(obj)
 
         for ladder in self.obj_manager.physics.ladders:
-            if platforms.ladder_in_reach(pos.x, pos.y, ladder):
+            if platformer.ladder_in_reach(pos.x, pos.y, ladder):
                 hovered.append(ladder)
 
         return hovered
@@ -171,7 +167,7 @@ class SceneEditor(object):
             elem.hsl = None
         self.hovered_elements = self.get_hovered()
         for elem in self.hovered_elements:
-            elem.hsl = resources.HslTransform(hue=0.14, saturation=1.0)
+            elem.hsl = platformer.HslTransform(hue=0.14, saturation=1.0)
 
         # select first hovered element on click
         left_click = pygame.mouse.get_pressed()[0]
@@ -182,16 +178,16 @@ class SceneEditor(object):
         self.update_hover()
 
     def draw(self) -> None:
-        if isinstance(self.selected, platforms.Platform) and platform_ui(self.selected):
+        if isinstance(self.selected, platformer.Platform) and platform_ui(self.selected):
             self.selected = None
 
-        if isinstance(self.selected, platforms.Actor):
+        if isinstance(self.selected, platformer.Actor):
             sprite = [sprite for sprite in self.obj_manager.renderer.sprites if sprite.actor == self.selected][0]
             if sprite_ui(sprite):
                 self.selected = None
 
-        if isinstance(self.selected, platforms.Object) and object_ui(self.selected):
+        if isinstance(self.selected, platformer.Object) and object_ui(self.selected):
             self.selected = None
 
-        if isinstance(self.selected, platforms.Ladder) and ladder_ui(self.selected):
+        if isinstance(self.selected, platformer.Ladder) and ladder_ui(self.selected):
             self.selected = None

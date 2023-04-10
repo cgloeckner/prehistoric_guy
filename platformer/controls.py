@@ -1,10 +1,9 @@
 import pygame
 from dataclasses import dataclass
 
-import platforms
-import tiles
-import animations
-
+import platformer.animations as animations
+import platformer.physics as physics
+import platformer.render as render
 
 NO_ACTION: int = 0
 ATTACK_ACTION: int = 1
@@ -17,7 +16,7 @@ THROW_THRESHOLD: int = int(animations.ANIMATION_NUM_FRAMES * animations.ANIMATIO
 
 @dataclass
 class Character:
-    sprite: tiles.Sprite
+    sprite: render.Sprite
     hit_points: int = 5
     max_hit_points: int = hit_points
     num_axes: int = 5
@@ -160,7 +159,7 @@ class Player(object):
         sprite.actor.force_y = 0.0
 
         # idle at top or bottom of the ladder?
-        if platforms.within_ladder(sprite.actor):
+        if physics.within_ladder(sprite.actor):
             animations.start(sprite.animation, animations.HOLD_ACTION)
             return
 
