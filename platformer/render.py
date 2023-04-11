@@ -129,6 +129,7 @@ class Renderer(object):
 
         # top left position
         pos = self.world_to_screen_coord(ladder.x, ladder.y)
+        pos.x -= WORLD_SCALE * 0.5
         pos.y -= WORLD_SCALE
 
         # draw repeated ladder parts
@@ -153,7 +154,7 @@ class Renderer(object):
         if platform.hsl is not None:
             tiles = self.cache.get_hsl_transformed(tiles, platform.hsl)
 
-        pos = self.world_to_screen_coord(platform.x, platform.y)
+        pos = self.world_to_screen_coord(platform.x, platform.y + platform.height)
 
         for i in range(int(platform.width)):
             # draw texture below
@@ -162,7 +163,6 @@ class Renderer(object):
                                  (pos.x + i * WORLD_SCALE, pos.y + j * WORLD_SCALE),
                                  ((3 * self.tileset_col+1) * WORLD_SCALE, TEXTURE_ROW * WORLD_SCALE, WORLD_SCALE,
                                   WORLD_SCALE))
-
             # draw platform on top
             self.target.blit(tiles,
                              (pos.x + i * WORLD_SCALE, pos.y - WORLD_SCALE),
@@ -181,7 +181,7 @@ class Renderer(object):
                                  ((3 * self.tileset_col + 2) * WORLD_SCALE, TEXTURE_ROW * WORLD_SCALE, WORLD_SCALE,
                                   WORLD_SCALE))
 
-        # draw platform edges
+        # draw platform end points
         self.target.blit(tiles,
                          (pos.x - WORLD_SCALE, pos.y - WORLD_SCALE),
                          (3 * self.tileset_col * WORLD_SCALE, PLATFORM_ROW * WORLD_SCALE, WORLD_SCALE, WORLD_SCALE * 2))

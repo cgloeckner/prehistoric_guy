@@ -1,21 +1,18 @@
 import pygame
 from typing import Tuple, Optional
 
-VECTOR_TUPLE = Tuple[float, float]
-
 
 class Line:
-    def __init__(self, pos1: VECTOR_TUPLE, pos2: VECTOR_TUPLE):
-        self.a = pygame.math.Vector2(pos1)
-        self.b = pygame.math.Vector2(pos2)
+    def __init__(self, x1: float, y1: float, x2: float, y2: float):
+        self.a = pygame.math.Vector2(x1, y1)
+        self.b = pygame.math.Vector2(x2, y2)
 
-    def collidepoint(self, pos: Tuple[float, float], tolerance: float = 0.01) -> bool:
+    def collidepoint(self, x: float, y: float, tolerance: float = 0.01) -> bool:
         """The corresponding linear equations system's solution is calculated. If both line arguments r and s are
         close enough (see tolerance), the point is inside the line.
         Returns True if the pos lies inside the line except for the end points.
         """
-        pos = pygame.math.Vector2(pos)
-        print('test', self.a, self.b)
+        pos = pygame.math.Vector2(x, y)
 
         if self.a.x == self.b.x:
             # vertical line
@@ -61,22 +58,28 @@ class Line:
 
 
 class Circ:
-    def __init__(self, center: VECTOR_TUPLE, radius: float):
-        self.center = pygame.math.Vector2(center)
+    def __init__(self, x: float, y: float, radius: float):
+        """
+        :param x: center x
+        :param y: center y
+        :param radius: just the radius
+        """
+        self.center = pygame.math.Vector2(x, y)
         self.radius = radius
 
-    def collidepoint(self, pos: VECTOR_TUPLE) -> bool:
+    def collidepoint(self, x: float, y: float) -> bool:
         """Points on the arc of the circle are excepted.
         Returns True if the position lies within the radius.
         """
-        distance = self.center.distance_squared_to(pygame.math.Vector2(pos))
+        pos = pygame.math.Vector2(x, y)
+        distance = self.center.distance_squared_to(pos)
         return distance < self.radius ** 2
 
     def collideline(self, line: Line) -> bool:
         """Tests for line intersection between the given line and the circle's radius (using both normals vectors).
         Returns True if this line intersects the given line except for an intersection on the circle's edge
         """
-        if self.collidepoint(tuple(line.a)) or self.collidepoint(tuple(line.b)):
+        if self.collidepoint(*line.a) or self.collidepoint(*line.b):
             return True
 
         for sign in [1, -1]:
@@ -85,28 +88,16 @@ class Circ:
             normal = normal.normalize() * self.radius
             endpoint = self.center + sign * normal
 
-            test_point = line.collideline(Line(tuple(self.center), tuple(endpoint)))
+            test_point = line.collideline(Line(*self.center, *endpoint))
             if test_point is not None:
                 # makes sure that the lines' intersection is inside the circle (not on the edge)
-                return self.collidepoint(tuple(test_point))
+                return self.collidepoint(*test_point)
 
         return False
 
     def collidecirc(self, other: 'Circ') -> bool:
-        """Calculates the distance between the centers. Two circles touch do not mean collision.
+        """Calculates the distance between the centers. Two circles touching may mean collision (based on floating
+        point accuracy)
         Returns True if that distance is within the added radii."""
         distance = self.center.distance_squared_to(other.center)
         return distance < (self.radius + other.radius) ** 2
-
-    def colliderect(self, rect: pygame.Rect) -> bool:
-        """If the circle's center is not within the rect, all edges are tested for line-circle-intersection.
-        """
-        if rect.collidepoint(self.center):
-            return True
-
-        for edge in ((rect.topleft, rect.topright), (rect.topright, rect.bottomright),
-                     (rect.bottomright, rect.bottomleft), (rect.bottomleft, rect.topleft)):
-            if self.collideline(Line(*edge)):
-                return True
-
-        return False

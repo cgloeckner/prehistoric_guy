@@ -5,6 +5,7 @@ from typing import Tuple, Optional, List
 from abc import abstractmethod
 
 from core import resources
+from core import shapes
 
 
 GRAVITY: float = 9.81
@@ -37,7 +38,7 @@ class Hovering:
 
 @dataclass
 class Platform:
-    # top left position
+    # bottom left position
     x: float
     y: float
     # size
@@ -49,15 +50,23 @@ class Platform:
     hsl: Optional[resources.HslTransform] = None
 
 
+def get_platform_line(platform: Platform) -> shapes.Line:
+    return shapes.Line(platform.x, platform.y, platform.x + platform.width, platform.y)
+
+
 @dataclass
 class Ladder:
     # bottom left position
     x: float
     y: float
-    # size (uniform width)
+    # size
     height: int
     # optional coloring
     hsl: Optional[resources.HslTransform] = None
+
+
+def get_ladder_line(ladder: Ladder) -> shapes.Line:
+    return shapes.Line(ladder.x, ladder.y, ladder.x, ladder.y + ladder.height)
 
 
 @dataclass
@@ -84,6 +93,10 @@ class Actor:
     hsl: Optional[resources.HslTransform] = None
 
 
+def get_actor_circ(actor: Actor) -> shapes.Circ:
+    return shapes.Circ(actor.x, actor.y, actor.radius)
+
+
 @dataclass
 class Object:
     # position
@@ -93,6 +106,10 @@ class Object:
     object_type: int
     # optional coloring
     hsl: Optional[resources.HslTransform] = None
+
+
+def get_object_circ(obj: Object) -> shapes.Circ:
+    return shapes.Circ(obj.x, obj.y, OBJECT_RADIUS)
 
 
 @dataclass
@@ -112,6 +129,58 @@ class Projectile:
     fly_ms: int = JUMP_DURATION // 4
     # origin actor
     origin: Optional[Actor] = None
+
+
+def get_projectile_circ(proj: Projectile) -> shapes.Circ:
+    return shapes.Circ(proj.x, proj.y, proj.radius)
+
+
+def is_inside_platform(x: float, y: float, platform: Platform) -> bool:
+    """Test whether the position is inside the platform. Inside includes all edges except for the top edge.
+    Returns True if the point is inside unless the at top edge.
+    """
+    if platform.y + platform.height == y:
+        # exclude top edge
+        return False
+
+    return platform.x <= x <= platform.x + platform.width and platform.y <= y < platform.y + platform.height
+
+
+def did_traverse_above(x: float, y: float, last_pos: pygame.math.Vector2, platform: Platform) -> bool:
+    """Test whether the move from last_pos to pos went through the top of the platform.
+    """
+    # NOTE: cannot use regular line intersection, because jumping up through a platform is no collision
+    line = get_platform_line(platform)
+    y_top = platform.y + platform.height
+    return y < y_top <= last_pos.y and (line.a.x < x < line.b.x or line.a.x < last_pos.x < line.b.x)
+
+
+def does_stand_on(actor: Actor, platform: Platform) -> bool:
+    """Tests if the actor stands on the given platform or not.
+    """
+    line = get_platform_line(platform)
+    return line.collidepoint(actor.x, actor.y)
+
+
+def ladder_in_reach(x: float, y: float, ladder: Ladder) -> bool:
+    """Test whether the position is in reach of the ladder.
+    The ladder is in reach +/- OBJECT_RADIUS in x-wise.
+    The ladder's top and bottom are in reach y-wise.
+    """
+    return ladder.x - OBJECT_RADIUS <= x <= ladder.x + OBJECT_RADIUS and \
+        ladder.y <= y <= ladder.y + ladder.height + OBJECT_RADIUS
+
+
+def within_ladder(actor: Actor) -> bool:
+    """Test whether the actor is at the middle part of his ladder.
+    Top and bottom do not count as "within".
+    """
+    if actor.ladder is None:
+        return False
+
+    ladder = actor.ladder
+    return ladder.x - OBJECT_RADIUS <= actor.x <= ladder.x + OBJECT_RADIUS and \
+        ladder.y < actor.y < ladder.y + ladder.height
 
 
 def get_hover_delta(hover: Hovering, elapsed_ms: int) -> Tuple[float, float]:
@@ -134,62 +203,6 @@ def get_hover_delta(hover: Hovering, elapsed_ms: int) -> Tuple[float, float]:
     return x, y
 
 
-def test_line_intersection(x1: float, y1: float, x2: float, y2: float, x3: float, y3: float,
-                           x4: float, y4: float) -> Optional[Tuple[float, float]]:
-    """Tests whether the line from (x1, y1) to (x2, y2) intersects the line from (x3, y3) to (x4, y4).
-    The corresponding linear equations system's solution is calculated.
-    Returns (x, y) for the intersection position or None.
-    """
-    denominator = x1 * (y3 - y4) - x2 * (y3 - y4) - (x3 - x4) * (y1 - y2)
-    if denominator == 0:
-        return
-
-    numerator1 = x1 * (y3 - y4) - x3 * (y1 - y4) + x4 * (y1 - y3)
-    numerator2 = -(x1 * (y2 - y3) - x2 * (y1 - y3) + x3 * (y1 - y2))
-    mu1 = numerator1 / denominator
-    mu2 = numerator2 / denominator
-
-    if not 0 <= mu1 <= 1 or not 0 <= mu2 <= 1:
-        return
-
-    x = x1 + mu1 * (x2 - x1)
-    y = y1 + mu1 * (y2 - y1)
-
-    return x, y
-
-
-def is_inside_platform(x: float, y: float, platform: Platform) -> bool:
-    """Test whether the position is inside the platform.
-    NOTE: y is the top, so y - height leads to the bottom.
-    """
-    return platform.x <= x < platform.x + platform.width and\
-        platform.y - platform.height < y < platform.y
-
-
-def did_traverse_above(x: float, y: float, last_pos: pygame.math.Vector2, platform: Platform) -> bool:
-    """Test whether the move from last_pos to pos went through the top of the platform.
-    """
-    return (platform.x < x < platform.x + platform.width or platform.x < last_pos.x < platform.x + platform.width)\
-        and y <= platform.y < last_pos.y
-
-
-def ladder_in_reach(x: float, y: float, ladder: Ladder) -> bool:
-    """Test whether the position is in reach of the ladder.
-    NOTE: y is the bottom, so y + height leads to the bottom.
-    """
-    return ladder.x + 0.5 - OBJECT_RADIUS <= x < ladder.x + 0.5 + OBJECT_RADIUS and\
-        ladder.y <= y < ladder.y + ladder.height + OBJECT_RADIUS
-
-
-def within_ladder(actor: Actor) -> bool:
-    """Test whether the actor is at the middle part of his ladder.
-    """
-    if actor.ladder is None or not ladder_in_reach(actor.x, actor.y, actor.ladder):
-        return False
-
-    return actor.ladder.y < actor.y < actor.ladder.y + actor.ladder.height
-
-
 def get_jump_height_difference(elapsed_ms: int, delta_ms: int) -> float:
     """Calculates falling distances using
     f(x) = -a * (t - 0.5s) ^ 2 + a * 0.25
@@ -207,16 +220,15 @@ def get_jump_height_difference(elapsed_ms: int, delta_ms: int) -> float:
     return new_h - old_h
 
 
-def does_stand_on(actor: Actor, platform: Platform) -> bool:
-    """Tests if the actor stands on the given platform or not.
-    """
-    if platform.y != actor.y:
-        return False
-
-    return platform.x <= actor.x <= platform.x + platform.width
-
-
 class PhysicsListener(object):
+
+    # --- gravity-related ----------------------------------------------------------------------------------------------
+
+    @abstractmethod
+    def on_jumping(self, actor: Actor) -> None:
+        """Triggered when the actor starts jumping.
+        """
+        pass
 
     @abstractmethod
     def on_falling(self, actor: Actor) -> None:
@@ -225,10 +237,12 @@ class PhysicsListener(object):
         pass
 
     @abstractmethod
-    def on_land_on_platform(self, actor: Actor, platform: Platform) -> None:
+    def on_landing(self, actor: Actor) -> None:
         """Triggered when the actor landed on a platform.
         """
         pass
+
+    # --- others -------------------------------------------------------------------------------------------------------
 
     @abstractmethod
     def on_collide_platform(self, actor: Actor, platform: Platform) -> None:
@@ -298,27 +312,173 @@ class Physics(object):
         """
         return [a for a in self.actors if a.object_id == object_id][0]
 
-    def get_supporting_platforms(self, actor: Actor) -> List[Platform]:
-        """Returns a list of all platforms that will support the actor's position.
+    # --- gravity-related ----------------------------------------------------------------------------------------------
+
+    def start_jumping(self, actor: Actor) -> None:
+        actor.ladder = None
+        actor.anchor = None
+        actor.fall_from_y = None
+        actor.jump_ms = 0
+        self.event_listener.on_jumping(actor)
+
+    def start_falling(self, actor: Actor) -> None:
+        actor.force_y = -1.0
+        actor.jump_ms = JUMP_DURATION  # as if at the highest point of a jump
+        actor.fall_from_y = actor.y
+        self.event_listener.on_falling(actor)
+
+    def stop_falling(self, actor: Actor) -> None:
+        actor.force_y = 0.0
+        actor.jump_ms = 0
+        if actor.fall_from_y != actor.y:
+            self.event_listener.on_landing(actor)
+        actor.fall_from_y = None
+
+    def check_falling_collision(self, actor: Actor, last_pos: pygame.math.Vector2) -> Optional[Platform]:
+        """Searches for the closest platform that is traversed while falling. If such a platform is found, the actor
+        is automatically reset to the last_pos.
+        Returns a platform or None.
         """
-        return [platform for platform in self.platforms if does_stand_on(actor, platform)]
+        stop_pos = None
+        stop_dist = None
+        stop_platform = None
+
+        # check for platform traversal via line intersections
+        for platform in self.platforms:
+            if not did_traverse_above(actor.x, actor.y, last_pos, platform):
+                continue
+
+            # create relevant line from platform's vertices
+            y_top = platform.y + platform.height
+            top_line = shapes.Line(platform.x, y_top, platform.x + platform.width, y_top)
+            move_line = shapes.Line(actor.x, actor.y, *last_pos)
+
+            pos = top_line.collideline(move_line)
+            if pos is None:
+                continue
+
+            dist = pygame.math.Vector2(pos).distance_squared_to(last_pos)
+            if stop_dist is None or dist < stop_dist:
+                # found closer platform
+                stop_pos = pos
+                stop_dist = dist
+                stop_platform = platform
+
+        # reset position
+        if stop_pos is not None:
+            actor.x, actor.y = stop_pos
+
+        return stop_platform
+
+    def simulate_gravity(self, actor: Actor, elapsed_ms: int) -> None:
+        """This simulates the effect of gravity to an actor. This means adjusting the y-position by jumping and falling.
+        Collision detection and handling is performed here. Further collision handling can be done using the
+        on_land_on_platform callback of the event_listener.
+        """
+        if actor.ladder is not None:
+            # actor is supported by a ladder, so no gravity is applied
+            return
+
+        if actor.force_y > 0.0 and actor.jump_ms == 0:
+            self.start_jumping(actor)
+
+        if actor.anchor is not None:
+            # actor is supported by a platform, so no gravity is applied
+            return
+
+        if actor.force_y == 0.0:
+            self.start_falling(actor)
+
+        # apply gravity
+        last_pos = pygame.math.Vector2(actor.x, actor.y)
+        delta_height = get_jump_height_difference(actor.jump_ms, elapsed_ms) * JUMP_SPEED_FACTOR
+
+        if actor.fall_from_y is None and delta_height < 0:
+            self.start_falling(actor)
+
+        actor.jump_ms += elapsed_ms
+        actor.y += delta_height
+
+        # check for landing on a platform
+        platform = self.check_falling_collision(actor, last_pos)
+        if platform is None:
+            return
+
+        # reset jump duration and vertical force when landing
+        actor.anchor = platform
+        self.stop_falling(actor)
+
+    # --- movement-related ---------------------------------------------------------------------------------------------
+
+    def get_supporting_platforms(self, actor: Actor) -> Optional[Platform]:
+        """Returns the next best supporting platform or None.
+        """
+        for platform in self.platforms:
+            if does_stand_on(actor, platform):
+                return platform
+
+        return None
 
     def anchor_actor(self, actor: Actor) -> None:
         """Tries to (re-)anchor the actor on a supporting platform.
         """
-        relevant = self.get_supporting_platforms(actor)
-        if len(relevant) == 0:
+        platform = self.get_supporting_platforms(actor)
+        if platform is None:
+            # release from previous anchor
             actor.anchor = None
             return
 
-        # pick any platform
-        if actor.anchor == relevant[0]:
+        if actor.anchor == platform:
+            # keep previous anchor
             return
 
-        self.event_listener.on_switch_platform(actor, relevant[0])
-        actor.anchor = relevant[0]
+        # switch platforms
+        self.event_listener.on_switch_platform(actor, platform)
+        actor.anchor = platform
 
-    def find_closest_ladder(self, actor: Actor) -> Optional[Ladder]:
+    def check_movement_collision(self, actor: Actor, last_pos: pygame.math.Vector2) -> Platform:
+        """The actor has moved from last_pos horizontally. Meanwhile, he may have collided with a tile.
+        Returns a platform or None.
+        """
+        for platform in self.platforms:
+            if not is_inside_platform(actor.x, actor.y, platform):
+                continue
+
+            return platform
+
+    def handle_movement(self, actor: Actor, elapsed_ms: int) -> None:
+        """This handles the actor's horizontal movement. Collision is detected and handled. More collision handling
+        can be achieved via on_collide_platform. Multiple calls are delayed with COLLISION_REPEAT_DELAY.
+        """
+        # look into current x-direction
+        if actor.force_x != 0.0:
+            actor.face_x = actor.force_x
+
+        # apply movement and pick anchoring platform
+        delta_x = actor.force_x * elapsed_ms * MOVE_SPEED_FACTOR / 1000
+        if delta_x == 0.0:
+            return
+
+        last_pos = pygame.math.Vector2(actor.x, actor.y)
+        actor.x += delta_x
+        self.anchor_actor(actor)
+
+        # check for collision with platform
+        platform = self.check_movement_collision(actor, last_pos)
+        if platform is None:
+            return
+
+        # reset position and stop movement on collision
+        actor.x, actor.y = last_pos
+        actor.force_x = 0.0
+        actor.touch_repeat_cooldown -= elapsed_ms
+        if actor.touch_repeat_cooldown <= 0:
+            actor.touch_repeat_cooldown = COLLISION_REPEAT_DELAY
+            self.event_listener.on_collide_platform(actor, platform)
+
+    # --- ladder-related -----------------------------------------------------------------------------------------------
+
+    def find_ladder(self, actor: Actor) -> Optional[Ladder]:
         """Searches the closest ladder.
         Returns that ladder or None.
         """
@@ -339,7 +499,7 @@ class Physics(object):
         """Tries to (re-)grab the closest ladder.
         Once a ladder is reached, on_reach_ladder is triggered.
         """
-        closest_ladder = self.find_closest_ladder(actor)
+        closest_ladder = self.find_ladder(actor)
 
         # notify reaching the new or leaving the old ladder
         old_ladder = actor.ladder
@@ -352,152 +512,8 @@ class Physics(object):
             else:
                 self.event_listener.on_reach_ladder(actor, closest_ladder)
 
-    def is_falling(self, actor: Actor) -> bool:
-        """The actor is falling if he does not stand on any platform.
-        If the actor is jumping (force_y > 0) or already falling (force_y < 0), he is not falling.
-        Returns True if he is falling.
-        """
-        if actor.ladder is not None:
-            return False
-
-        if actor.force_y != 0.0:
-            return False
-
-        return len(self.get_supporting_platforms(actor)) == 0
-
-    def check_falling_collision(self, actor: Actor, last_pos: pygame.math.Vector2) -> Optional[Platform]:
-        """The actor has fallen from his last_pos and may have collided with the top of a platform. If such a platform
-        is found, the actor is automatically adjusted to his landing point on top of that platform.
-        Returns a platform or None.
-        """
-        stop_pos = None
-        stop_dist = None
-        stop_platform = None
-
-        # check for platform traversal via line intersections
-        for platform in (p for p in self.platforms if did_traverse_above(actor.x, actor.y, last_pos, p)):
-            # create relevant lines from platform's vertices
-            top_left = (platform.x, platform.y)
-            top_right = (platform.x + platform.width, platform.y)
-
-            pos = test_line_intersection(last_pos.x, last_pos.y, actor.x, actor.y, *top_left, *top_right)
-            if pos is None:
-                continue
-
-            dist = pygame.math.Vector2(pos).distance_squared_to(last_pos)
-            if stop_dist is None or dist < stop_dist:
-                stop_pos = pos
-                stop_dist = dist
-                stop_platform = platform
-
-        # reset position
-        if stop_pos is not None:
-            actor.x, actor.y = stop_pos
-
-        return stop_platform
-
-    def check_movement_collision(self, actor: Actor, last_pos: pygame.math.Vector2) -> Platform:
-        """The actor has moved from last_pos horizontally. Meanwhile, he may have collided with a platform. If such a
-        platform is found, the actor's position is automatically reset to the last_pos.
-        Returns a platform or None.
-        """
-        for platform in self.platforms:
-            if not is_inside_platform(actor.x, actor.y, platform):
-                continue
-
-            # reset position
-            actor.x, actor.y = last_pos
-
-            return platform
-
-    def simulate_gravity(self, actor: Actor, elapsed_ms: int) -> None:
-        """This simulates the effect of gravity to an actor. This means adjusting the y-position by jumping and falling.
-        Collision detection and handling is performed here. Further collision handling can be done using the
-        on_land_on_platform callback of the event_listener.
-        """
-        if actor.ladder is not None:
-            return
-
-        if self.is_falling(actor):
-            # as if at the highest point of a jump
-            actor.force_y = -1.0
-            actor.jump_ms = JUMP_DURATION
-            actor.fall_from_y = actor.y
-            self.event_listener.on_falling(actor)
-
-        if actor.force_y == 0:
-            return
-
-        actor.anchor = None
-
-        # calculate new height
-        last_pos = pygame.math.Vector2(actor.x, actor.y)
-        delta_height = get_jump_height_difference(actor.jump_ms, elapsed_ms) * JUMP_SPEED_FACTOR
-
-        if delta_height < 0 and actor.fall_from_y is None:
-            actor.fall_from_y = actor.y
-
-        actor.jump_ms += elapsed_ms
-        actor.y += delta_height
-
-        # check for collision
-        platform = self.check_falling_collision(actor, last_pos)
-        if platform is None:
-            # no collision detected
-            return
-
-        # reset position and jump
-        actor.jump_ms = 0
-
-        # trigger event
-        actor.anchor = platform
-        self.event_listener.on_land_on_platform(actor, platform)
-        actor.fall_from_y = None
-
-        # reset vertical force
-        actor.force_y = 0
-
-    def handle_movement(self, actor: Actor, elapsed_ms: int) -> None:
-        """This handles the actor's horizontal movement. Collision is detected and handled. More collision handling
-        can be achieved via on_collide_platform. Multiple calls are delayed with COLLISION_REPEAT_DELAY.
-        """
-        if actor.anchor is not None and actor.anchor.hover is not None:
-            if actor.anchor.hover.x is not None:
-                self.anchor_actor(actor)
-
-        # look into current x-direction
-        if actor.force_x != 0.0:
-            actor.face_x = actor.force_x
-
-        delta_x = actor.force_x * elapsed_ms * MOVE_SPEED_FACTOR / 1000
-        if delta_x == 0.0:
-            return
-
-        # apply horizontal force
-        last_pos = pygame.math.Vector2(actor.x, actor.y)
-        actor.x += delta_x
-
-        # check for collision against all platforms and pick the closest collision point
-        platform = self.check_movement_collision(actor, last_pos)
-        if platform is None:
-            return
-
-        # reset position
-        actor.x, actor.y = last_pos
-        self.anchor_actor(actor)
-
-        # trigger event
-        actor.touch_repeat_cooldown -= elapsed_ms
-        if actor.touch_repeat_cooldown <= 0:
-            actor.touch_repeat_cooldown = COLLISION_REPEAT_DELAY
-            self.event_listener.on_collide_platform(actor, platform)
-
-        # reset movement force
-        actor.force_x = 0
-
-    def handle_climb(self, actor: Actor, elapsed_ms: int) -> None:
-        """Handles climbing on a ladder.
-        If the ladder is left, on_leave_ladder is triggered.
+    def handle_ladder(self, actor: Actor, elapsed_ms: int) -> None:
+        """Handles climbing on a ladder. Leaving a ladder triggers on_leave_ladder.
         """
         self.grab_ladder(actor)
 
@@ -508,6 +524,7 @@ class Physics(object):
         actor.jump_ms = 0
         actor.fall_from_y = None
 
+        # handle climbing
         delta_y = actor.force_y * elapsed_ms * CLIMB_SPEED_FACTOR / 1000
         if delta_y == 0.0:
             return
@@ -523,9 +540,9 @@ class Physics(object):
             return
 
         # search for platform to stand at
-        relevant = self.get_supporting_platforms(actor)
-        if len(relevant) > 0:
-            actor.anchor = relevant[0]
+        platform = self.get_supporting_platforms(actor)
+        if platform is not None:
+            actor.anchor = platform
             self.event_listener.on_leave_ladder(actor, actor.ladder)
             actor.ladder = None
             actor.force_y = 0.0
@@ -534,6 +551,8 @@ class Physics(object):
         # reset actor to avoid leaving the ladder's end
         actor.force_y = 0.0
         actor.x, actor.y = last_pos
+
+    # --- collision-related --------------------------------------------------------------------------------------------
 
     def check_actor_collision(self, actor: Actor, elapsed_ms: int) -> None:
         """This checks for collisions between the actor and other actors in mutual distance. For each such collision,
@@ -643,7 +662,7 @@ class Physics(object):
         for actor in self.actors:
             self.simulate_gravity(actor, elapsed_ms)
             self.handle_movement(actor, elapsed_ms)
-            self.handle_climb(actor, elapsed_ms)
+            self.handle_ladder(actor, elapsed_ms)
             self.check_actor_collision(actor, elapsed_ms)
             self.check_object_collision(actor)
 
@@ -660,18 +679,14 @@ class Physics(object):
         from core.constants import WORLD_SCALE, OBJECT_SCALE
 
         for p in self.platforms:
-            # draw platform's top, left and right edges
-            x = p.x * WORLD_SCALE
-            y = target.get_height() - p.y * WORLD_SCALE
-
-            # draw hit box
-            x2 = (p.x + p.width) * WORLD_SCALE
-            y2 = target.get_height() - (p.y - p.height) * WORLD_SCALE
-            pygame.draw.lines(target, 'red', False, ((x, y2), (x, y), (x2, y), (x2, y2)))
+            # draw platform line
+            rect = pygame.Rect(p.x * WORLD_SCALE, target.get_height() - p.y * WORLD_SCALE, p.width * WORLD_SCALE,
+                               -p.height * WORLD_SCALE)
+            pygame.gfxdraw.rectangle(target, rect, pygame.Color('red'))
 
         for ladder in self.ladders:
-            # top left position
-            x = ladder.x * WORLD_SCALE
+            # ladder xy is bottom center
+            x = (ladder.x - 0.5) * WORLD_SCALE
             y = target.get_height() - ladder.y * WORLD_SCALE
 
             w = WORLD_SCALE

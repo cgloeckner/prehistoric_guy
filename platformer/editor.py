@@ -143,7 +143,7 @@ class SceneEditor(object):
         # collect all hoverable objects
         hovered = list()
         for platform in self.obj_manager.physics.platforms:
-            h = platform.height if platform.height > 0.0 else physics.OBJECT_RADIUS
+            h = physics.OBJECT_RADIUS
             if platform.x <= pos.x <= platform.x + platform.width and platform.y - h <= pos.y <= platform.y:
                 hovered.append(platform)
 

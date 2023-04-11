@@ -117,7 +117,7 @@ class ObjectManager(physics.PhysicsListener, animations.AnimationListener, chara
         """
         char_actor = self.chars.try_get_by_id(phys_actor.object_id)
         if char_actor is not None:
-            self.chars.apply_projectile_hit(phys_actor, proj)
+            self.chars.apply_projectile_hit(char_actor, proj)
 
         # drop projectile as object
         self.create_object(x=proj.x, y=proj.y - physics.OBJECT_RADIUS, object_type=proj.object_type)
@@ -290,6 +290,7 @@ class ObjectManager(physics.PhysicsListener, animations.AnimationListener, chara
         self.players.update(elapsed_ms)
 
     def draw(self) -> None:
-        # self.physics.draw()
         self.renderer.draw()
         self.players.draw()
+
+        self.physics.draw(self.renderer.target)
