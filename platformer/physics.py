@@ -168,7 +168,7 @@ def ladder_in_reach(x: float, y: float, ladder: Ladder) -> bool:
     The ladder's top and bottom are in reach y-wise.
     """
     return ladder.x - OBJECT_RADIUS <= x <= ladder.x + OBJECT_RADIUS and \
-        ladder.y <= y <= ladder.y + ladder.height + OBJECT_RADIUS
+        ladder.y < y <= ladder.y + ladder.height
 
 
 def within_ladder(actor: Actor) -> bool:
@@ -535,22 +535,20 @@ class Physics(object):
         # apply horizontal force
         last_pos = pygame.math.Vector2(actor.x, actor.y)
         actor.y += delta_y
+        self.anchor_actor(actor)
 
         if ladder_in_reach(actor.x, actor.y, actor.ladder):
             return
 
-        # search for platform to stand at
-        platform = self.get_supporting_platforms(actor)
-        if platform is not None:
-            actor.anchor = platform
-            self.event_listener.on_leave_ladder(actor, actor.ladder)
-            actor.ladder = None
-            actor.force_y = 0.0
+        if actor.y >= actor.ladder.y + actor.ladder.height:
+            # upper end is safe
+            actor.y = actor.ladder.y + actor.ladder.height
+            self.anchor_actor(actor)
             return
 
-        # reset actor to avoid leaving the ladder's end
-        actor.force_y = 0.0
-        actor.x, actor.y = last_pos
+        # lower end: avoid jumping off
+        actor.y = actor.ladder.y
+        self.anchor_actor(actor)
 
     # --- collision-related --------------------------------------------------------------------------------------------
 
@@ -591,6 +589,39 @@ class Physics(object):
             # trigger event
             self.event_listener.on_reach_object(actor, other)
 
+    def update_projectile(self, proj: Projectile, elapsed_ms: int) -> None:
+        """Update a projectile's ballistic trajectory.
+        """
+        if proj.face_x == 0.0:
+            return
+
+        last_pos = pygame.math.Vector2(proj.x, proj.y)
+
+        proj.x += proj.face_x * PROJECTILE_SPEED * elapsed_ms / 1000.0
+        proj.y += get_jump_height_difference(proj.fly_ms, elapsed_ms) * PROJECTILE_GRAVITY
+
+        proj.fly_ms += elapsed_ms
+
+        pos = pygame.math.Vector2(proj.x, proj.y)
+        for actor in self.actors:
+            if actor == proj.origin or not actor.can_collide:
+                # ignore projectile's origin
+                continue
+            distance = pos.distance_squared_to(pygame.math.Vector2(actor.x, actor.y))
+            threshold = actor.radius + proj.radius
+            if distance <= threshold ** 2:
+                # collision with actor
+                self.event_listener.on_impact_actor(proj, actor)
+
+        for platform in self.platforms:
+            if is_inside_platform(proj.x, proj.y, platform) or did_traverse_above(proj.x, proj.y, last_pos, platform):
+                # collision with platform
+                self.event_listener.on_impact_platform(proj, platform)
+                proj.x, proj.y = last_pos.xy
+                proj.face_x = 0.0
+
+    # --- floating platforms -------------------------------------------------------------------------------------------
+
     def simulate_floating(self, platform: Platform, elapsed_ms: int) -> None:
         if platform.hover is None or platform.hover.amplitude == 0.0:
             return
@@ -624,37 +655,6 @@ class Physics(object):
             if actor.touch_repeat_cooldown <= 0:
                 actor.touch_repeat_cooldown = COLLISION_REPEAT_DELAY
                 self.event_listener.on_collide_platform(actor, platform)
-
-    def update_projectile(self, proj: Projectile, elapsed_ms: int) -> None:
-        """Update a projectile's ballistic trajectory.
-        """
-        if proj.face_x == 0.0:
-            return
-
-        last_pos = pygame.math.Vector2(proj.x, proj.y)
-
-        proj.x += proj.face_x * PROJECTILE_SPEED * elapsed_ms / 1000.0
-        proj.y += get_jump_height_difference(proj.fly_ms, elapsed_ms) * PROJECTILE_GRAVITY
-
-        proj.fly_ms += elapsed_ms
-
-        pos = pygame.math.Vector2(proj.x, proj.y)
-        for actor in self.actors:
-            if actor == proj.origin or not actor.can_collide:
-                # ignore projectile's origin
-                continue
-            distance = pos.distance_squared_to(pygame.math.Vector2(actor.x, actor.y))
-            threshold = actor.radius + proj.radius
-            if distance <= threshold ** 2:
-                # collision with actor
-                self.event_listener.on_impact_actor(proj, actor)
-
-        for platform in self.platforms:
-            if is_inside_platform(proj.x, proj.y, platform) or did_traverse_above(proj.x, proj.y, last_pos, platform):
-                # collision with platform
-                self.event_listener.on_impact_platform(proj, platform)
-                proj.x, proj.y = last_pos.xy
-                proj.face_x = 0.0
 
     def update(self, elapsed_ms: int) -> None:
         """Update all actors' physics (jumping and falling) within the past view elapsed_ms.

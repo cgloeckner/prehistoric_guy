@@ -112,9 +112,10 @@ class PhysicsFunctionsTest(unittest.TestCase):
     def test__ladder_in_reach__1(self):
         ladder = physics.Ladder(2.5, 3, 4)
 
-        # top/mid/bottom end are in reach
-        self.assertTrue(physics.ladder_in_reach(2.5, 3 + physics.OBJECT_RADIUS, ladder))
-        self.assertTrue(physics.ladder_in_reach(2.5, 4, ladder))
+        # bottom end is not in reach
+        self.assertFalse(physics.ladder_in_reach(2.5, 3, ladder))
+        # mid/top end are in reach
+        self.assertTrue(physics.ladder_in_reach(2.5, 3.01, ladder))
         self.assertTrue(physics.ladder_in_reach(2.5, 7, ladder))
 
     # Case 2: points within ladder +/- radius
@@ -412,6 +413,7 @@ class PhysicsSystemTest(unittest.TestCase):
 
         # nothing happens
         self.sys.simulate_gravity(self.actor, 10)
+
         self.assertEquals(self.actor.ladder, self.sys.ladders[0])
 
         # jump off
@@ -596,7 +598,7 @@ class PhysicsSystemTest(unittest.TestCase):
     # Case 2: find ladder's bottom
     def test__find_ladder__2(self):
         self.actor.x = 2
-        self.actor.y = 3
+        self.actor.y = 3.001  # NOTE: entering the ladder requires minimal jumping
         self.sys.platforms.append(physics.Platform(x=1, y=3, width=3))
 
         # finding no ladder
@@ -702,3 +704,5 @@ class PhysicsSystemTest(unittest.TestCase):
 
         self.assertEqual(self.actor.anchor, self.sys.platforms[1])
 
+    # FIXME: test actor/object/projectile collision
+    # FIXME: test floating platforms
