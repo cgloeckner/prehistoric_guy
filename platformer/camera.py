@@ -21,16 +21,13 @@ class Camera(object):
 
         self.follow: List[physics.Actor] = list()
 
-        # zoom related
-        self.zoomed = False
-        self.buffer = pygame.Surface((RESOLUTION_X * 2, RESOLUTION_Y * 2))
+        # FIXME: implement zoom, but keep coord transformation in mind!
+        self.buffer = pygame.Surface(target.get_size())
         self.buffer_rect = self.buffer.get_rect()
-        self.buffer_size_vec = pygame.math.Vector2(self.buffer.get_size())
-        print(f'Buffer: {self.buffer}')
 
-    def move_ip(self, deltax: int, deltay: int) -> None:
-        self.buffer_rect.centerx += deltax
-        self.buffer_rect.centery += deltay
+    def move_ip(self, delta_x: int, delta_y: int) -> None:
+        self.buffer_rect.centerx += delta_x
+        self.buffer_rect.centery += delta_y
 
     def update(self, elapsed_ms: int) -> None:
         if len(self.follow) == 0:
@@ -155,9 +152,6 @@ class Camera(object):
         return pos_rect, clip_rect
 
     def draw(self) -> None:
-        tmp_surf = self.buffer
-        if self.zoomed:
-            tmp_surf = pygame.transform.scale2x(tmp_surf)
-        tmp_rect = tmp_surf.get_rect(center=(RESOLUTION_X // 2, RESOLUTION_Y // 2))
-        self.target.blit(tmp_surf, tmp_rect)
+        # FIXME: implement zoom, but keep coord transformation in mind!
+        self.target.blit(self.buffer, (0, 0))
         self.buffer.fill('#030303')
