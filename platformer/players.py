@@ -53,11 +53,20 @@ def get_throwing_process(player: Actor) -> float:
 
 class Players(object):
     def __init__(self, phys_system: physics.Physics, ani_system: animations.Animating, render_system: render.Renderer,
-                 char_system: characters.Characters, cache: resources.Cache):
+                 char_system: characters.Characters, cache: resources.Cache, hud_target: pygame.Surface):
+        """
+        :param phys_system: Physics System
+        :param ani_system:  Animation System
+        :param render_system: Renderer System
+        :param char_system: Character System
+        :param cache: Resource Cache
+        :param hud_target: Target for drawing HUD related things
+        """
         self.phys_system = phys_system
         self.ani_system = ani_system
         self.render_system = render_system
         self.char_system = char_system
+        self.hud_target = hud_target
 
         self.players: List[Actor] = list()
 
@@ -204,12 +213,12 @@ class Players(object):
 
     def draw_icons(self, char_actor: characters.Actor) -> None:
         for i in range(char_actor.hit_points):
-            self.render_system.target.blit(self.tileset, (i * OBJECT_SCALE, 0),
-                                           (0 * OBJECT_SCALE, HEART_HUD * OBJECT_SCALE, OBJECT_SCALE, OBJECT_SCALE))
+            self.hud_target.blit(self.tileset, (i * OBJECT_SCALE, 0),
+                                 (0 * OBJECT_SCALE, HEART_HUD * OBJECT_SCALE, OBJECT_SCALE, OBJECT_SCALE))
 
         for i in range(char_actor.num_axes):
-            self.render_system.target.blit(self.tileset, (i * OBJECT_SCALE, OBJECT_SCALE),
-                                           (0 * OBJECT_SCALE, WEAPON_HUD * OBJECT_SCALE, OBJECT_SCALE, OBJECT_SCALE))
+            self.hud_target.blit(self.tileset, (i * OBJECT_SCALE, OBJECT_SCALE),
+                                 (0 * OBJECT_SCALE, WEAPON_HUD * OBJECT_SCALE, OBJECT_SCALE, OBJECT_SCALE))
 
     def draw_throw_progress(self, char_actor: characters.Actor, value: float) -> None:
         phys_actor = self.phys_system.get_by_id(char_actor.object_id)
@@ -217,7 +226,7 @@ class Players(object):
         pos = self.render_system.camera.world_to_screen_coord(phys_actor.x, phys_actor.y)
         pos.y -= WORLD_SCALE
 
-        ui.progress_bar(self.render_system.target, pos.x, pos.y, 15, 3, value)
+        ui.progress_bar(self.hud_target, pos.x, pos.y, 15, 3, value)
 
     def draw(self) -> None:
         for player in self.players:

@@ -43,15 +43,15 @@ class GameState(state_machine.State):
         self.manager.create_platform(x=2, y=2, width=2)
         self.manager.create_platform(x=0, y=4, width=3)
         self.manager.create_platform(x=6, y=1, width=3)
-        #self.manager.create_platform(x=4, y=-6, width=1, height=11)
+        self.manager.create_platform(x=4, y=-6, width=1, height=11)
         self.manager.create_platform(x=5, y=6, width=4)
 
         self.manager.create_platform(x=3, y=6, width=1, hover=physics.Hovering(x=math.cos, amplitude=-2))
         
         self.manager.create_ladder(x=8.5, y=1, height=5)
         
-        #self.manager.create_random_object()
-        self.manager.create_object(x=1, y=1, object_type=FOOD_OBJ)
+        self.manager.create_random_object()
+        #self.manager.create_object(x=1, y=1, object_type=FOOD_OBJ)
 
         # ladders
         self.manager.create_ladder(x=1.5, y=2, height=4)

@@ -22,9 +22,9 @@ class ObjectManager(physics.PhysicsListener, animations.AnimationListener, chara
         self.physics = physics.Physics(self)
         self.animation = animations.Animating(self)
         self.camera = camera.Camera(target)
-        self.renderer = render.Renderer(self.physics, self.animation, cache, target, self.camera)
+        self.renderer = render.Renderer(self.physics, self.animation, cache, self.camera)
         self.chars = characters.Characters(self)
-        self.players = players.Players(self.physics, self.animation, self.renderer, self.chars, cache)
+        self.players = players.Players(self.physics, self.animation, self.renderer, self.chars, cache, target)
 
     def create_random_object(self) -> None:
         # pick random position on random platform
@@ -301,7 +301,11 @@ class ObjectManager(physics.PhysicsListener, animations.AnimationListener, chara
         self.players.update(elapsed_ms)
 
     def draw(self) -> None:
+        # Scene
         self.renderer.draw()
+        self.physics.draw(self.camera.buffer)
+        self.camera.draw()
+
+        # HUD
         self.players.draw()
 
-        self.physics.draw(self.renderer.target)

@@ -19,6 +19,9 @@ class Camera(pygame.Rect):
     def __init__(self, target: pygame.Surface):
         super().__init__(0, 0, RESOLUTION_X, RESOLUTION_Y)
         self.target = target
+        # FIXME: use buffer later to zoom
+        self.buffer = pygame.Surface(target.get_size())
+        self.buffer.fill('black')
 
     def world_to_screen_coord(self, x: float, y: float) -> pygame.math.Vector2:
         """Translates world coordinates into screen coordinates.
@@ -119,3 +122,8 @@ class Camera(pygame.Rect):
         clip_rect.topleft = (variation_col * OBJECT_SCALE, proj.object_type * OBJECT_SCALE)
 
         return pos_rect, clip_rect
+
+    def draw(self) -> None:
+        # FIXME: use buffer to zoom
+        self.target.blit(self.buffer, (0, 0))
+        self.buffer.fill('black')

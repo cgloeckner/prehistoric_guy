@@ -22,18 +22,17 @@ class Renderer(object):
     """Handles drawing the tiled environment.
     """
     def __init__(self, phys_system: physics.Physics, ani_system: animations.Animating, cache: resources.Cache,
-                 target: pygame.Surface, cam: camera.Camera):
+                 cam: camera.Camera):
         """
         :param phys_system: Physics System to fetch data from
         :param ani_system: Animations System to fetch data from
         :param cache: Resource Cache to acquire images from
-        :param target: Rendering target
+        :param cam: Camera used to draw
         """
         self.phys_system = phys_system
         self.ani_system = ani_system
-        self.camera = cam
         self.cache = cache
-        self.target = target
+        self.camera = cam
 
         self.tileset_col = 0
         self.sprites: List[Actor] = list()
@@ -58,7 +57,7 @@ class Renderer(object):
 
         pos, clip = self.camera.get_object_rects(obj)
 
-        self.target.blit(objects, pos, clip)
+        self.camera.buffer.blit(objects, pos, clip)
 
     def draw_sprite(self, sprite: Actor) -> None:
         """Draw an actor's sprite.
@@ -79,7 +78,7 @@ class Renderer(object):
         pos, clip = self.camera.get_actor_rects(phys_data, ani_data)
         pos.y += ani_data.delta_y
 
-        self.target.blit(sprite_sheet, (pos.x, pos.y), clip)
+        self.camera.buffer.blit(sprite_sheet, (pos.x, pos.y), clip)
 
     def draw_ladder(self, ladder: physics.Ladder) -> None:
         """Draw a ladder.
@@ -91,15 +90,15 @@ class Renderer(object):
         pos, top_clip, mid_clip, bottom_clip = self.camera.get_ladder_rects(ladder, self.tileset_col)
 
         # draw upper part of the ladder
-        self.target.blit(tiles, pos, top_clip)
+        self.camera.buffer.blit(tiles, pos, top_clip)
 
         # draw ladder elements
         for i in range(ladder.height):
-            self.target.blit(tiles, pos, mid_clip)
+            self.camera.buffer.blit(tiles, pos, mid_clip)
             pos.y += WORLD_SCALE
 
         # draw lower part of the ladder:
-        self.target.blit(tiles, pos, bottom_clip)
+        self.camera.buffer.blit(tiles, pos, bottom_clip)
 
     def draw_platform(self, platform: physics.Platform) -> None:
         """Draw a platform.
@@ -116,22 +115,22 @@ class Renderer(object):
         for y in range(platform.height):
             pos.x = pos_copy.x
             for x in range(platform.width):
-                self.target.blit(tiles, pos, tex)
+                self.camera.buffer.blit(tiles, pos, tex)
                 pos.x += WORLD_SCALE
             pos.y -= WORLD_SCALE
 
         # draw platform
         pos = pos_copy.copy()
         for x in range(platform.width):
-            self.target.blit(tiles, pos, plat)
+            self.camera.buffer.blit(tiles, pos, plat)
             pos.x += WORLD_SCALE
 
         # draw edges
         pos = pos_copy.copy()
         pos.x -= WORLD_SCALE
-        self.target.blit(tiles, pos, left)
+        self.camera.buffer.blit(tiles, pos, left)
         pos.x += 2 * WORLD_SCALE
-        self.target.blit(tiles, pos, right)
+        self.camera.buffer.blit(tiles, pos, right)
 
     def draw_projectile(self, proj: physics.Projectile) -> None:
         """Draw a projectile.
@@ -142,7 +141,7 @@ class Renderer(object):
         angle *= proj.spin_speed
         objects = self.cache.get_rotated_surface_clip(self.objects, clip, angle, flip=proj.face_x < 0.0)
 
-        self.target.blit(objects, pos)
+        self.camera.buffer.blit(objects, pos)
 
     def update(self, elapsed_ms: int) -> None:
         pass
