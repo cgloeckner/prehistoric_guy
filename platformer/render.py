@@ -6,14 +6,9 @@ from typing import List
 from core.constants import *
 from core import resources
 
+from platformer import camera
 from platformer import animations
 from platformer import physics
-
-
-# tiles row offsets
-PLATFORM_ROW: int = 0
-TEXTURE_ROW: int = 2
-LADDER_ROW: int = 3
 
 
 @dataclass
@@ -27,7 +22,7 @@ class Renderer(object):
     """Handles drawing the tiled environment.
     """
     def __init__(self, phys_system: physics.Physics, ani_system: animations.Animating, cache: resources.Cache,
-                 target: pygame.Surface):
+                 target: pygame.Surface, cam: camera.Camera):
         """
         :param phys_system: Physics System to fetch data from
         :param ani_system: Animations System to fetch data from
@@ -36,7 +31,7 @@ class Renderer(object):
         """
         self.phys_system = phys_system
         self.ani_system = ani_system
-        self.camera = pygame.Rect(0, 0, RESOLUTION_X, RESOLUTION_Y)
+        self.camera = cam
         self.cache = cache
         self.target = target
 
@@ -54,30 +49,6 @@ class Renderer(object):
         """
         return [a for a in self.sprites if a.object_id == object_id][0]
 
-    def move_camera(self, delta_x: int, delta_y: int) -> None:
-        """Moves the camera rect by some pixels.
-        """
-        self.camera.x += delta_x
-        self.camera.y += delta_y
-
-    def world_to_screen_coord(self, x: float, y: float) -> pygame.math.Vector2:
-        """Translates world coordinates into screen coordinates.
-        In world coordinates, y leads from bottom to top (0,0 as bottom left).
-        In screen coordinates, y leads from top to bottom (0,0 as top left).
-        Returns a vector of integer coordinates.
-        """
-        x = int(x * WORLD_SCALE) - self.camera.x
-        y = self.target.get_height() - (int(y * WORLD_SCALE) - self.camera.y)
-        return pygame.math.Vector2(x, y)
-
-    def screen_to_world_coord(self, x: int, y: int) -> pygame.math.Vector2:
-        """Translates screen coordinates into world coordinates.
-        Returns a vector of float coordinates.
-        """
-        x = self.camera.x + x / WORLD_SCALE
-        y = self.camera.y + (self.target.get_height() - y) / WORLD_SCALE
-        return pygame.math.Vector2(x, y)
-
     def draw_object(self, obj: physics.Object) -> None:
         """Draw an object.
         """
@@ -85,14 +56,9 @@ class Renderer(object):
         if obj.hsl is not None:
             objects = self.cache.get_hsl_transformed(objects, obj.hsl)
 
-        # pos is bottom center, needs to be top left
-        pos = self.world_to_screen_coord(obj.x, obj.y)
-        pos.x -= OBJECT_SCALE // 2
-        pos.y -= OBJECT_SCALE
+        pos, clip = self.camera.get_object_rects(obj)
 
-        variation_col = 0
-        clip = (variation_col * OBJECT_SCALE, obj.object_type * OBJECT_SCALE, OBJECT_SCALE, OBJECT_SCALE)
-        self.target.blit(objects, (pos.x, pos.y), clip)
+        self.target.blit(objects, pos, clip)
 
     def draw_sprite(self, sprite: Actor) -> None:
         """Draw an actor's sprite.
@@ -110,14 +76,9 @@ class Renderer(object):
         if hsl is not None:
             sprite_sheet = self.cache.get_hsl_transformed(sprite_sheet, hsl)
 
-        # pos is bottom center, needs to be top left
-        pos = self.world_to_screen_coord(phys_data.x, phys_data.y)
-        pos.x -= SPRITE_SCALE // 2
-        pos.y -= SPRITE_SCALE + ani_data.delta_y
+        pos, clip = self.camera.get_actor_rects(phys_data, ani_data)
+        pos.y += ani_data.delta_y
 
-        x_offset = (0 if phys_data.face_x >= 0.0 else 1) * ANIMATION_NUM_FRAMES * SPRITE_SCALE
-        clip = pygame.Rect(ani_data.frame_id * SPRITE_SCALE + x_offset,
-                           ani_data.action_id * SPRITE_SCALE, SPRITE_SCALE, SPRITE_SCALE)
         self.target.blit(sprite_sheet, (pos.x, pos.y), clip)
 
     def draw_ladder(self, ladder: physics.Ladder) -> None:
@@ -127,25 +88,18 @@ class Renderer(object):
         if ladder.hsl is not None:
             tiles = self.cache.get_hsl_transformed(tiles, ladder.hsl)
 
-        # top left position
-        pos = self.world_to_screen_coord(ladder.x, ladder.y)
-        pos.x -= WORLD_SCALE * 0.5
-        pos.y -= WORLD_SCALE
+        pos, top_clip, mid_clip, bottom_clip = self.camera.get_ladder_rects(ladder, self.tileset_col)
 
-        # draw repeated ladder parts
+        # draw upper part of the ladder
+        self.target.blit(tiles, pos, top_clip)
+
+        # draw ladder elements
         for i in range(ladder.height):
-            self.target.blit(tiles, (pos.x, pos.y - i * WORLD_SCALE),
-                             ((3 * self.tileset_col + 1) * WORLD_SCALE, LADDER_ROW * WORLD_SCALE,
-                              WORLD_SCALE, WORLD_SCALE * 2))
+            self.target.blit(tiles, pos, mid_clip)
+            pos.y += WORLD_SCALE
 
-        # draw upper ladder part
-        self.target.blit(tiles, (pos.x, pos.y - ladder.height * WORLD_SCALE),
-                         ((3 * self.tileset_col) * WORLD_SCALE, LADDER_ROW * WORLD_SCALE, WORLD_SCALE, WORLD_SCALE * 2))
-
-        # draw lower ladder part
-        self.target.blit(tiles, (pos.x, pos.y + WORLD_SCALE),
-                         ((3 * self.tileset_col + 2) * WORLD_SCALE, LADDER_ROW * WORLD_SCALE, WORLD_SCALE,
-                          WORLD_SCALE * 2))
+        # draw lower part of the ladder:
+        self.target.blit(tiles, pos, bottom_clip)
 
     def draw_platform(self, platform: physics.Platform) -> None:
         """Draw a platform.
@@ -154,58 +108,41 @@ class Renderer(object):
         if platform.hsl is not None:
             tiles = self.cache.get_hsl_transformed(tiles, platform.hsl)
 
-        pos = self.world_to_screen_coord(platform.x, platform.y + platform.height)
+        pos, left, plat, right, tex = self.camera.get_platform_rects(platform, self.tileset_col)
+        pos.y -= WORLD_SCALE  # pos is returned top left
+        pos_copy = pos.copy()
 
-        for i in range(int(platform.width)):
-            # draw texture below
-            for j in range(int(platform.height)):
-                self.target.blit(tiles,
-                                 (pos.x + i * WORLD_SCALE, pos.y + j * WORLD_SCALE),
-                                 ((3 * self.tileset_col+1) * WORLD_SCALE, TEXTURE_ROW * WORLD_SCALE, WORLD_SCALE,
-                                  WORLD_SCALE))
-            # draw platform on top
-            self.target.blit(tiles,
-                             (pos.x + i * WORLD_SCALE, pos.y - WORLD_SCALE),
-                             ((3 * self.tileset_col+1) * WORLD_SCALE, PLATFORM_ROW * WORLD_SCALE, WORLD_SCALE,
-                              WORLD_SCALE * 2))
+        # draw textures
+        for y in range(platform.height):
+            pos.x = pos_copy.x
+            for x in range(platform.width):
+                self.target.blit(tiles, pos, tex)
+                pos.x += WORLD_SCALE
+            pos.y -= WORLD_SCALE
 
-        if platform.height > 0.0:
-            # draw texture edges
-            for j in range(int(platform.height)):
-                self.target.blit(tiles,
-                                 (pos.x - WORLD_SCALE, pos.y + j * WORLD_SCALE),
-                                 (3 * self.tileset_col * WORLD_SCALE, TEXTURE_ROW * WORLD_SCALE, WORLD_SCALE,
-                                  WORLD_SCALE))
-                self.target.blit(tiles,
-                                 (pos.x + int(platform.width) * WORLD_SCALE, pos.y + j * WORLD_SCALE),
-                                 ((3 * self.tileset_col + 2) * WORLD_SCALE, TEXTURE_ROW * WORLD_SCALE, WORLD_SCALE,
-                                  WORLD_SCALE))
+        # draw platform
+        pos = pos_copy.copy()
+        for x in range(platform.width):
+            self.target.blit(tiles, pos, plat)
+            pos.x += WORLD_SCALE
 
-        # draw platform end points
-        self.target.blit(tiles,
-                         (pos.x - WORLD_SCALE, pos.y - WORLD_SCALE),
-                         (3 * self.tileset_col * WORLD_SCALE, PLATFORM_ROW * WORLD_SCALE, WORLD_SCALE, WORLD_SCALE * 2))
-        self.target.blit(tiles,
-                         (pos.x + int(platform.width) * WORLD_SCALE, pos.y - WORLD_SCALE),
-                         ((3 * self.tileset_col + 2) * WORLD_SCALE, PLATFORM_ROW * WORLD_SCALE, WORLD_SCALE,
-                          WORLD_SCALE * 2))
+        # draw edges
+        pos = pos_copy.copy()
+        pos.x -= WORLD_SCALE
+        self.target.blit(tiles, pos, left)
+        pos.x += 2 * WORLD_SCALE
+        self.target.blit(tiles, pos, right)
 
     def draw_projectile(self, proj: physics.Projectile) -> None:
         """Draw a projectile.
         """
-        # pos is centered, but needs to be top left
-        pos = self.world_to_screen_coord(proj.x, proj.y)
-        pos.x -= OBJECT_SCALE // 2
-        pos.y -= OBJECT_SCALE // 2
-
-        variation_col = 0
-        clip = pygame.Rect(variation_col * OBJECT_SCALE, proj.object_type * OBJECT_SCALE, OBJECT_SCALE, OBJECT_SCALE)
+        pos, clip = self.camera.get_projectile_rects(proj)
 
         angle = 2 * math.pi * proj.fly_ms / 360
         angle *= proj.spin_speed
         objects = self.cache.get_rotated_surface_clip(self.objects, clip, angle, flip=proj.face_x < 0.0)
 
-        self.target.blit(objects, (pos.x, pos.y))
+        self.target.blit(objects, pos)
 
     def update(self, elapsed_ms: int) -> None:
         pass

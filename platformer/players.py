@@ -214,7 +214,7 @@ class Players(object):
     def draw_throw_progress(self, char_actor: characters.Actor, value: float) -> None:
         phys_actor = self.phys_system.get_by_id(char_actor.object_id)
 
-        pos = self.render_system.world_to_screen_coord(phys_actor.x, phys_actor.y)
+        pos = self.render_system.camera.world_to_screen_coord(phys_actor.x, phys_actor.y)
         pos.y -= WORLD_SCALE
 
         ui.progress_bar(self.render_system.target, pos.x, pos.y, 15, 3, value)

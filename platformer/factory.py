@@ -1,11 +1,11 @@
 import pygame
 import random
-import math
 from typing import Optional
 
 from core.constants import *
 from core import resources
 
+from platformer import camera
 from platformer import physics
 from platformer import animations
 from platformer import render
@@ -21,7 +21,8 @@ class ObjectManager(physics.PhysicsListener, animations.AnimationListener, chara
         self.next_obj_id = 0
         self.physics = physics.Physics(self)
         self.animation = animations.Animating(self)
-        self.renderer = render.Renderer(self.physics, self.animation, cache, target)
+        self.camera = camera.Camera(target)
+        self.renderer = render.Renderer(self.physics, self.animation, cache, target, self.camera)
         self.chars = characters.Characters(self)
         self.players = players.Players(self.physics, self.animation, self.renderer, self.chars, cache)
 
@@ -34,7 +35,17 @@ class ObjectManager(physics.PhysicsListener, animations.AnimationListener, chara
 
     # --- Physics Events ----------------------------------------------------------------------------------------------
 
-    def on_land_on_platform(self, phys_actor: physics.Actor, platform: physics.Platform) -> None:
+    def on_jumping(self, actor: physics.Actor) -> None:
+        """Triggered when the actor starts jumping.
+        """
+        pass
+
+    def on_falling(self, actor: physics.Actor) -> None:
+        """Triggered when the actor starts falling.
+        """
+        pass
+
+    def on_landing(self, phys_actor: physics.Actor) -> None:
         """Triggered when the actor landed on a platform.
         """
         ani_actor = self.animation.get_by_id(phys_actor.object_id)
@@ -57,11 +68,6 @@ class ObjectManager(physics.PhysicsListener, animations.AnimationListener, chara
         damage = characters.get_falling_damage(delta_h)
         if damage > 0:
             self.chars.apply_falling_damage(char_actor, damage)
-
-    def on_falling(self, actor: physics.Actor) -> None:
-        """Triggered when the actor starts falling.
-        """
-        pass
 
     def on_collide_platform(self, actor: physics.Actor, platform: physics.Platform) -> None:
         """Triggered when the actor runs into a platform.
@@ -152,6 +158,11 @@ class ObjectManager(physics.PhysicsListener, animations.AnimationListener, chara
         char_actor.num_axes -= 1
         self.create_projectile(origin=phys_actor, x=phys_actor.x, y=phys_actor.y + phys_actor.radius,
                                radius=physics.OBJECT_RADIUS, face_x=phys_actor.face_x, object_type=WEAPON_OBJ)
+
+    def on_died(self, ani_actor: animations.Actor) -> None:
+        """Triggered when a dying animation finished.
+        """
+        pass
 
     # --- Character events
 
