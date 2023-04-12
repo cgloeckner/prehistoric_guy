@@ -295,11 +295,11 @@ class ObjectManager(physics.PhysicsListener, animations.AnimationListener, chara
         """Update all related systems.
         """
         self.physics.update(elapsed_ms)
-
         self.animation.update(elapsed_ms)
         self.renderer.update(elapsed_ms)
         self.chars.update(elapsed_ms)
         self.players.update(elapsed_ms)
+        self.camera.update(elapsed_ms)
 
     def draw(self) -> None:
         # Scene

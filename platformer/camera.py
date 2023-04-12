@@ -1,5 +1,5 @@
 import pygame
-from typing import Tuple
+from typing import Tuple, List
 
 from core.constants import *
 
@@ -22,6 +22,20 @@ class Camera(pygame.Rect):
         # FIXME: use buffer later to zoom
         self.buffer = pygame.Surface(target.get_size())
         self.buffer.fill('black')
+
+        self.follow: List[physics.Actor] = list()
+
+    def update(self, elapsed_ms: int) -> None:
+        if len(self.follow) == 0:
+            return
+
+        # calculate center of all given actors
+        pos = pygame.math.Vector2()
+        for actor in self.follow:
+            pos.x += actor.x
+            pos.y += actor.y
+        pos /= len(self.follow)
+        self.center = pos * WORLD_SCALE
 
     def world_to_screen_coord(self, x: float, y: float) -> pygame.math.Vector2:
         """Translates world coordinates into screen coordinates.

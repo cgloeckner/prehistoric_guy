@@ -32,6 +32,9 @@ class GameState(state_machine.State):
         self.manager.create_player(player_char_actor, left_key=pygame.K_a, right_key=pygame.K_d, up_key=pygame.K_w,
                                    down_key=pygame.K_s, attack_key=pygame.K_SPACE)
 
+        phys_actor = self.manager.physics.get_by_id(player_char_actor.object_id)
+        self.manager.camera.follow.append(phys_actor)
+
         # --- create demo scene ---------------------------------------------------------------------------------------
         self.manager.create_character(sprite_sheet=grey_guy, x=6.5, y=6.5)
         self.manager.create_character(sprite_sheet=grey_guy, x=6.5, y=4.5)
@@ -74,6 +77,7 @@ class GameState(state_machine.State):
         self.editor_ui.update()
 
         # --- Demo Camera movement -------------------------------------------------------------------------------------
+        """
         keys = pygame.key.get_pressed()
         if keys[pygame.K_LEFT]:
             self.manager.camera.move_ip(-1, 0)
@@ -83,6 +87,7 @@ class GameState(state_machine.State):
             self.manager.camera.move_ip(0, 1)
         if keys[pygame.K_DOWN]:
             self.manager.camera.move_ip(0, -1)
+        """
 
         self.manager.update(elapsed_ms)
 
