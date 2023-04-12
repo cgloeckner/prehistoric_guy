@@ -1,4 +1,5 @@
 import pygame
+import pygame.gfxdraw
 import math
 from dataclasses import dataclass
 from typing import List
@@ -168,3 +169,31 @@ class Renderer(object):
 
         for proj in self.phys_system.projectiles:
             self.draw_projectile(proj)
+
+    def draw_hitboxes(self) -> None:
+        """Performs debug drawing of shapes.
+        """
+        for platform in self.phys_system.platforms:
+            pos = self.camera.get_platform_rects(platform)[0]
+            pos.h *= -1
+            pygame.gfxdraw.rectangle(self.camera.buffer, pos, pygame.Color('red'))
+
+        for ladder in self.phys_system.ladders:
+            pos = self.camera.get_ladder_rects(ladder)[0]
+            pygame.gfxdraw.rectangle(self.camera.buffer, pos, pygame.Color('blue'))
+
+        for obj in self.phys_system.objects:
+            pos = self.camera.get_object_rects(obj)[0]
+            pygame.gfxdraw.circle(self.camera.buffer, *pos.center, int(physics.OBJECT_RADIUS * WORLD_SCALE),
+                                  pygame.Color('gold'))
+
+        for actor in self.phys_system.actors:
+            x, y = self.camera.get_actor_pos(actor).center
+            y = int(y + actor.radius * WORLD_SCALE)
+            pygame.gfxdraw.circle(self.camera.buffer, x, y, int(actor.radius * WORLD_SCALE),
+                                  pygame.Color('green'))
+
+        for proj in self.phys_system.projectiles:
+            pos = self.camera.get_projectile_rects(proj)[0]
+            pygame.gfxdraw.circle(self.camera.buffer, *pos.center, int(proj.radius * WORLD_SCALE),
+                                  pygame.Color('orange'))

@@ -295,6 +295,7 @@ class ObjectManager(physics.PhysicsListener, animations.AnimationListener, chara
         """Update all related systems.
         """
         self.physics.update(elapsed_ms)
+
         self.animation.update(elapsed_ms)
         self.renderer.update(elapsed_ms)
         self.chars.update(elapsed_ms)
@@ -303,7 +304,7 @@ class ObjectManager(physics.PhysicsListener, animations.AnimationListener, chara
     def draw(self) -> None:
         # Scene
         self.renderer.draw()
-        self.physics.draw(self.camera.buffer)
+        self.renderer.draw_hitboxes()
         self.camera.draw()
 
         # HUD

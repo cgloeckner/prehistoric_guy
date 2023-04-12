@@ -43,7 +43,8 @@ class GameState(state_machine.State):
         self.manager.create_platform(x=2, y=2, width=2)
         self.manager.create_platform(x=0, y=4, width=3)
         self.manager.create_platform(x=6, y=1, width=3)
-        self.manager.create_platform(x=4, y=-6, width=1, height=11)
+        for i in range(5):
+            self.manager.create_platform(x=10 + i, y=0, width=1, height=1 + i)
         self.manager.create_platform(x=5, y=6, width=4)
 
         self.manager.create_platform(x=3, y=6, width=1, hover=physics.Hovering(x=math.cos, amplitude=-2))
@@ -75,13 +76,13 @@ class GameState(state_machine.State):
         # --- Demo Camera movement -------------------------------------------------------------------------------------
         keys = pygame.key.get_pressed()
         if keys[pygame.K_LEFT]:
-            self.manager.renderer.move_camera(-1, 0)
+            self.manager.camera.move_ip(-1, 0)
         if keys[pygame.K_RIGHT]:
-            self.manager.renderer.move_camera(1, 0)
+            self.manager.camera.move_ip(1, 0)
         if keys[pygame.K_UP]:
-            self.manager.renderer.move_camera(0, 1)
+            self.manager.camera.move_ip(0, 1)
         if keys[pygame.K_DOWN]:
-            self.manager.renderer.move_camera(0, -1)
+            self.manager.camera.move_ip(0, -1)
 
         self.manager.update(elapsed_ms)
 

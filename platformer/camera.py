@@ -55,11 +55,19 @@ class Camera(pygame.Rect):
 
         return pos_rect, clip_rect
 
-    def get_actor_rects(self, actor: physics.Actor, ani: animations.Actor) -> Tuple[pygame.Rect, pygame.Rect]:
-        """Returns the positioning and clipping rectangles.
+    def get_actor_pos(self, actor: physics.Actor) -> pygame.Rect:
+        """Returns the positioning rectangles. This is separated, because the clipping rectangle also requires the
+        actor's animation data.
         """
         pos_rect = pygame.Rect(0, 0, SPRITE_SCALE, SPRITE_SCALE)
         pos_rect.midbottom = self.world_to_screen_coord(actor.x, actor.y)
+
+        return pos_rect
+
+    def get_actor_rects(self, actor: physics.Actor, ani: animations.Actor) -> Tuple[pygame.Rect, pygame.Rect]:
+        """Returns the positioning and clipping rectangles.
+        """
+        pos_rect = self.get_actor_pos(actor)
 
         clip_rect = pygame.Rect(0, 0, SPRITE_SCALE, SPRITE_SCALE)
         x_offset = 0 if actor.face_x >= 0.0 else 1
