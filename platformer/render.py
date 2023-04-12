@@ -109,29 +109,29 @@ class Renderer(object):
             tiles = self.cache.get_hsl_transformed(tiles, platform.hsl)
 
         pos, left, plat, right, tex = self.camera.get_platform_rects(platform, self.tileset_col)
-        pos.y -= WORLD_SCALE  # pos is returned top left
-        pos_copy = pos.copy()
 
         # draw textures
+        pos_tmp = pos.copy()
+        pos_tmp.y -= WORLD_SCALE
         for y in range(platform.height):
-            pos.x = pos_copy.x
+            pos_tmp.x = pos.x
             for x in range(platform.width):
-                self.camera.buffer.blit(tiles, pos, tex)
-                pos.x += WORLD_SCALE
-            pos.y -= WORLD_SCALE
+                self.camera.buffer.blit(tiles, pos_tmp, tex)
+                pos_tmp.x += WORLD_SCALE
+            pos_tmp.y -= WORLD_SCALE
 
         # draw platform
-        pos = pos_copy.copy()
+        pos_tmp = pos.copy()
+        pos_tmp.y -= WORLD_SCALE + platform.height * WORLD_SCALE
         for x in range(platform.width):
-            self.camera.buffer.blit(tiles, pos, plat)
-            pos.x += WORLD_SCALE
+            self.camera.buffer.blit(tiles, pos_tmp, plat)
+            pos_tmp.x += WORLD_SCALE
 
         # draw edges
-        pos = pos_copy.copy()
-        pos.x -= WORLD_SCALE
-        self.camera.buffer.blit(tiles, pos, left)
-        pos.x += 2 * WORLD_SCALE
-        self.camera.buffer.blit(tiles, pos, right)
+        pos_tmp.x -= WORLD_SCALE
+        self.camera.buffer.blit(tiles, pos_tmp, left)
+        pos_tmp.x = pos_tmp.x
+        self.camera.buffer.blit(tiles, pos_tmp, right)
 
     def draw_projectile(self, proj: physics.Projectile) -> None:
         """Draw a projectile.

@@ -50,15 +50,16 @@ class GameState(state_machine.State):
             self.manager.create_platform(x=10 + i, y=0, width=1, height=1 + i)
         self.manager.create_platform(x=5, y=6, width=4)
 
-        self.manager.create_platform(x=3, y=6, width=1, hover=physics.Hovering(x=math.cos, amplitude=-2))
-        
-        self.manager.create_ladder(x=8.5, y=1, height=5)
-        
+        self.manager.create_platform(x=3, y=7, width=1, hover=physics.Hovering(x=math.cos, amplitude=-2))
+
+        self.manager.create_platform(x=-5, y=10, width=20, height=1)
+
         self.manager.create_random_object()
         #self.manager.create_object(x=1, y=1, object_type=FOOD_OBJ)
 
         # ladders
         self.manager.create_ladder(x=1.5, y=2, height=4)
+        self.manager.create_ladder(x=8.5, y=1, height=5)
 
         self.editor_ui = editor.SceneEditor(engine.buffer, self.manager)
 
