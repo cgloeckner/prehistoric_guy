@@ -220,7 +220,7 @@ def get_jump_height_difference(elapsed_ms: int, delta_ms: int) -> float:
     return new_h - old_h
 
 
-class PhysicsListener(object):
+class EventListener(object):
 
     # --- gravity-related ----------------------------------------------------------------------------------------------
 
@@ -297,7 +297,7 @@ class Physics(object):
     """Manages physics simulation for the platforming scene.
     It holds actors and platforms, which have to be registered by appending them to the corresponding lists.
     """
-    def __init__(self, event_listener: PhysicsListener):
+    def __init__(self, event_listener: EventListener):
         self.actors: List[Actor] = list()
         self.platforms: List[Platform] = list()
         self.ladders: List[Ladder] = list()

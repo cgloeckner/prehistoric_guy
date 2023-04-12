@@ -225,7 +225,7 @@ class PhysicsFunctionsTest(unittest.TestCase):
 class PhysicsSystemTest(unittest.TestCase):
 
     def setUp(self):
-        class DemoListener(physics.PhysicsListener):
+        class DemoListener(physics.EventListener):
             def __init__(self):
                 self.last = None
 

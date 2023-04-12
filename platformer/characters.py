@@ -1,3 +1,4 @@
+import pygame
 from dataclasses import dataclass
 from typing import Optional
 from abc import abstractmethod
@@ -29,29 +30,27 @@ def get_falling_damage(height: float) -> int:
     return int(height / 4.0)
 
 
-def apply_damage(actor: Actor, damage: int) -> None:
-    actor.hit_points -= abs(damage)
-    if actor.hit_points < 0:
-        actor.hit_points = 0
+def modify_hitpoints(actor: Actor, delta: int) -> None:
+    actor.hit_points = pygame.math.clamp(actor.hit_points + delta, 0, actor.max_hit_points)
 
 
-class CharacterListener(object):
+class EventListener(object):
 
     @abstractmethod
-    def on_char_damaged(self, actor: Actor, damage: int) -> None:
+    def on_char_damaged(self, actor: Actor, damage: int, cause: Optional[Actor]) -> None:
         """Triggered when an actor got damaged.
         """
         pass
 
     @abstractmethod
-    def on_char_died(self, actor: Actor, cause: Optional[Actor]) -> None:
+    def on_char_died(self, actor: Actor, damage: int, cause: Optional[Actor]) -> None:
         """Triggered when an actor died. An optional cause can be provided.
         """
         pass
 
 
 class Characters(object):
-    def __init__(self, event_listener: CharacterListener):
+    def __init__(self, event_listener: EventListener):
         self.event_listener = event_listener
         self.characters = list()
 
@@ -69,20 +68,25 @@ class Characters(object):
         except IndexError:
             return None
 
+    def apply_damage(self, victim: Actor, damage: int, cause: Optional[Actor] = None) -> None:
+        if victim.hit_points == 0:
+            return
+
+        # modify hitpoints by negative delta
+        modify_hitpoints(victim, -damage)
+
+        if victim.hit_points > 0:
+            self.event_listener.on_char_damaged(victim, damage, cause)
+        else:
+            self.event_listener.on_char_died(victim, damage, cause)
+
     def apply_projectile_hit(self, victim: Actor, proj: physics.Projectile) -> None:
         # try to find projectile's causing character
         cause = None
         if proj.origin is not None:
             cause = self.try_get_by_id(proj.origin.object_id)
 
-        self.apply_falling_damage(victim, 1, cause)
-
-    def apply_falling_damage(self, victim: Actor, damage: int, cause: Optional[Actor] = None) -> None:
-        apply_damage(victim, damage)
-        if victim.hit_points > 0:
-            self.event_listener.on_char_damaged(victim, damage)
-        else:
-            self.event_listener.on_char_died(victim, cause)
+        self.apply_damage(victim, 1, cause)
 
     def update(self, elapsed_ms: int) -> None:
         # FIXME: damage over time (e.g. poison)?

@@ -73,7 +73,7 @@ def flash(ani: Actor, hsl: resources.HslTransform, duration_ms: int = ANIMATION_
     ani.hsl_duration_ms = duration_ms
 
 
-class AnimationListener(object):
+class EventListener(object):
 
     @abstractmethod
     def on_step(self, ani: Actor) -> None:
@@ -109,7 +109,7 @@ class AnimationListener(object):
 class Animating(object):
     """Handles all frame set animations.
     """
-    def __init__(self, animation_listener: AnimationListener):
+    def __init__(self, animation_listener: EventListener):
         self.animations: List[Actor] = list()
         self.event_listener = animation_listener
 
@@ -206,7 +206,7 @@ def main():
     from core.constants import SPRITE_SCALE
     from core import resources
 
-    class DemoListener(AnimationListener):
+    class DemoListener(EventListener):
         def on_step(self, a: Actor) -> None:
             pass
 

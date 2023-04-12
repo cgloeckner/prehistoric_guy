@@ -13,7 +13,7 @@ from platformer import characters
 from platformer import players
 
 
-class ObjectManager(physics.PhysicsListener, animations.AnimationListener, characters.CharacterListener):
+class ObjectManager(physics.EventListener, animations.EventListener, characters.EventListener):
     """Factory for creating game objects.
     Creation and deletion of objects considers all relevant systems.
     """
@@ -67,7 +67,7 @@ class ObjectManager(physics.PhysicsListener, animations.AnimationListener, chara
 
         damage = characters.get_falling_damage(delta_h)
         if damage > 0:
-            self.chars.apply_falling_damage(char_actor, damage)
+            self.chars.apply_damage(char_actor, damage)
 
     def on_collide_platform(self, actor: physics.Actor, platform: physics.Platform) -> None:
         """Triggered when the actor runs into a platform.
@@ -166,13 +166,13 @@ class ObjectManager(physics.PhysicsListener, animations.AnimationListener, chara
 
     # --- Character events
 
-    def on_char_damaged(self, actor: characters.Actor, damage: int) -> None:
+    def on_char_damaged(self, actor: characters.Actor, damage: int, cause: Optional[characters.Actor]) -> None:
         """Triggered when an actor got damaged.
         """
         ani_actor = self.animation.get_by_id(actor.object_id)
         animations.flash(ani_actor, resources.HslTransform(lightness=100), 200)
 
-    def on_char_died(self, char_actor: characters.Actor, cause: Optional[characters.Actor]) -> None:
+    def on_char_died(self, char_actor: characters.Actor, damage: int, cause: Optional[characters.Actor]) -> None:
         """Triggered when an actor died. An optional cause can be provided.
         """
         ani_actor = self.animation.get_by_id(char_actor.object_id)

@@ -81,7 +81,7 @@ class AnimationFunctionsTest(unittest.TestCase):
 class AnimatingSystemTest(unittest.TestCase):
 
     def setUp(self):
-        class DemoListener(animations.AnimationListener):
+        class DemoListener(animations.EventListener):
             def __init__(self):
                 self.last = None
 
