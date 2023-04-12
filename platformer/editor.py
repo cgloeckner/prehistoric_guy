@@ -5,11 +5,15 @@ from typing import List
 
 from core.constants import *
 from core import resources
+from core import shapes
 
 from platformer import physics
 from platformer import animations
 from platformer import render
 from platformer import factory
+
+
+MOUSE_SELECT_RADIUS: float = 0.2
 
 
 def get_dict_key_index(dictionary, value) -> int:
@@ -35,8 +39,8 @@ def platform_ui(platform: physics.Platform) -> bool:
 
     _, platform.x = imgui.input_float('x', platform.x, 0.1)
     _, platform.y = imgui.input_float('y', platform.y, 0.1)
-    _, platform.width = imgui.input_float('width', platform.width, 0.1)
-    _, platform.height = imgui.input_float('height', platform.height, 0.1)
+    _, platform.width = imgui.input_int('width', platform.width, 0.1)
+    _, platform.height = imgui.input_int('height', platform.height, 0.1)
 
     _, enabled = imgui.checkbox('does hover?', platform.hover is not None)
     if enabled and platform.hover is None:
@@ -64,7 +68,7 @@ def actor_ui(phys_actor: physics.Actor, ani_actor: animations.Actor, render_acto
     """Shows an ImGui-based UI for editing a given actor. Values are updated automatically.
     Returns True if the close button was clicked.
     """
-    _, opened = imgui.begin('Sprite', True)
+    _, opened = imgui.begin('Actor', True)
 
     _, phys_actor.x = imgui.input_float('x', phys_actor.x, 0.1)
     _, phys_actor.y = imgui.input_float('y', phys_actor.y, 0.1)
@@ -139,24 +143,23 @@ class SceneEditor(object):
 
     def get_hovered(self) -> List:
         pos = self.get_mouse_world_pos()
+        circ1 = shapes.Circ(*pos, MOUSE_SELECT_RADIUS)
 
         # collect all hoverable objects
         hovered = list()
         for platform in self.obj_manager.physics.platforms:
-            h = physics.OBJECT_RADIUS
-            if platform.x <= pos.x <= platform.x + platform.width and platform.y - h <= pos.y <= platform.y:
+            line = physics.get_platform_line(platform)
+            if physics.is_inside_platform(*pos, platform) or circ1.collideline(line):
                 hovered.append(platform)
 
         for actor in self.obj_manager.physics.actors:
-            actor_pos = pygame.math.Vector2(actor.x, actor.y + actor.radius)
-            distance = pos.distance_squared_to(actor_pos)
-            if distance <= actor.radius ** 2:
+            circ2 = physics.get_actor_circ(actor)
+            if circ1.collidecirc(circ2):
                 hovered.append(actor)
 
         for obj in self.obj_manager.physics.objects:
-            obj_pos = pygame.math.Vector2(obj.x, obj.y + physics.OBJECT_RADIUS)
-            distance = pos.distance_squared_to(obj_pos)
-            if distance <= physics.OBJECT_RADIUS ** 2:
+            circ2 = physics.get_object_circ(obj)
+            if circ1.collidecirc(circ2):
                 hovered.append(obj)
 
         for ladder in self.obj_manager.physics.ladders:

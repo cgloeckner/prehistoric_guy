@@ -41,8 +41,8 @@ class CameraTest(unittest.TestCase):
     def test__screen_to_world_coord__2(self):
         self.cam.move_ip(5, 3)
         pos = self.cam.screen_to_world_coord(154, 97)
-        self.assertAlmostEqual(pos.x, 154.0 / 32 + 5)
-        self.assertAlmostEqual(pos.y, (RESOLUTION_Y - 97.0) / 32 + 3)
+        self.assertAlmostEqual(pos.x, (154 + 5) / 32)
+        self.assertAlmostEqual(pos.y, (RESOLUTION_Y - 97.0 + 3) / 32)
 
     # ------------------------------------------------------------------------------------------------------------------
 

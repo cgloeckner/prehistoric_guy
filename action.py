@@ -90,7 +90,7 @@ class GameState(state_machine.State):
 
         self.manager.update(elapsed_ms)
 
-        # # --- Demo Enemy Ai ------------------------------------------------------------------------------------------
+        # --- Demo Enemy Ai --------------------------------------------------------------------------------------------
         for enemy in self.manager.chars.characters:
             if self.manager.players.try_get_by_id(enemy.object_id) is not None:
                 # ignore players

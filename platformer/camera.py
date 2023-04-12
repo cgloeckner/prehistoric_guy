@@ -51,8 +51,8 @@ class Camera(pygame.Rect):
         """Translates screen coordinates into world coordinates.
         Returns a vector of float coordinates.
         """
-        x = self.x + x / WORLD_SCALE
-        y = self.y + (self.target.get_height() - y) / WORLD_SCALE
+        x = (x + self.x) / WORLD_SCALE
+        y = (self.target.get_height() - y + self.y) / WORLD_SCALE
         return pygame.math.Vector2(x, y)
 
     def get_object_rects(self, obj: physics.Object) -> Tuple[pygame.Rect, pygame.Rect]:

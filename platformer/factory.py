@@ -318,7 +318,7 @@ class ObjectManager(physics.EventListener, animations.EventListener, characters.
     def draw(self) -> None:
         # Scene
         self.renderer.draw()
-        #self.renderer.draw_hitboxes()
+        self.renderer.draw_hitboxes()
         self.camera.draw()
 
         # HUD
