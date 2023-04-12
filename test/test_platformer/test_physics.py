@@ -811,6 +811,52 @@ class PhysicsSystemTest(unittest.TestCase):
 
     # ------------------------------------------------------------------------------------------------------------------
 
+    def test__get_faced_actors(self):
+        self.actor.x = 2
+        self.actor.y = 1
+        self.actor.face_x = 1.0
+
+        # ignores himself
+        result = self.sys.get_faced_actors(self.actor, 3.5)
+        self.assertEqual(len(result), 0)
+
+        actor2 = physics.Actor(object_id=2, x=3.5, y=0.5)
+        actor3 = physics.Actor(object_id=3, x=3, y=1.5)
+        actor4 = physics.Actor(object_id=4, x=0.5, y=0.5)
+        actor5 = physics.Actor(object_id=5, x=1, y=1.5)
+        self.sys.actors.extend([actor2, actor3, actor4, actor5])
+
+        # closest actor to the right
+        result = self.sys.get_faced_actors(self.actor, 3.5)
+        self.assertEqual(len(result), 2)
+        self.assertEqual(result[0], actor3)
+        self.assertEqual(result[1], actor2)
+
+        # closest actor to the left
+        self.actor.face_x = -1.0
+        result = self.sys.get_faced_actors(self.actor, 2.5)
+        self.assertEqual(len(result), 2)
+        self.assertEqual(result[0], actor5)
+        self.assertEqual(result[1], actor4)
+
+        # ignore actors to the left
+        self.sys.get_by_id(4).x = -10
+        self.sys.get_by_id(5).x = -10
+        result = self.sys.get_faced_actors(self.actor, 2.5)
+        self.assertEqual(len(result), 0)
+
+        # ignore actors to the left
+        self.sys.get_by_id(2).x = 15
+        self.sys.get_by_id(3).x = 15
+        self.sys.get_by_id(4).x = 0.5
+        self.sys.get_by_id(5).x = 1
+        self.actor.face_x = 1.0
+        result = self.sys.get_faced_actors(self.actor, 2.5)
+        self.assertEqual(len(result), 0)
+
+
+    # ------------------------------------------------------------------------------------------------------------------
+
     # Case 1: hovering into x-direction
     def test__simulate_floating__1(self):
         self.actor.x = 2

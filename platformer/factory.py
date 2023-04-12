@@ -123,7 +123,7 @@ class ObjectManager(physics.EventListener, animations.EventListener, characters.
         """
         char_actor = self.chars.try_get_by_id(phys_actor.object_id)
         if char_actor is not None:
-            self.chars.apply_projectile_hit(char_actor, proj)
+            self.chars.apply_projectile_hit(char_actor, 2, proj)
 
         # drop projectile as object
         self.create_object(x=proj.x, y=proj.y - physics.OBJECT_RADIUS, object_type=proj.object_type)
@@ -145,7 +145,21 @@ class ObjectManager(physics.EventListener, animations.EventListener, characters.
     def on_attack(self, ani: animations.Actor) -> None:
         """Triggered when an attack animation finished.
         """
-        pass
+        char_actor = self.chars.try_get_by_id(ani.object_id)
+        if char_actor is None:
+            return
+
+        # query target actors
+        phys_actor = self.physics.get_by_id(ani.object_id)
+        targets = self.physics.get_faced_actors(phys_actor, characters.MELEE_ATTACK_RADIUS)
+
+        # damage their characters if possible
+        for other in targets:
+            other_char = self.chars.try_get_by_id(other.object_id)
+            if other_char is None:
+                continue
+
+            self.chars.apply_damage(other_char, 1, char_actor)
 
     def on_throw(self, ani_actor: animations.Actor) -> None:
         """Triggered when an attack animation finished.

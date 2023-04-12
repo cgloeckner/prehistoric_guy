@@ -220,6 +220,12 @@ def get_jump_height_difference(elapsed_ms: int, delta_ms: int) -> float:
     return new_h - old_h
 
 
+def get_squared_actors_distance(a: Actor, b: Actor) -> float:
+    p1 = pygame.math.Vector2(a.x, a.y)
+    p2 = pygame.math.Vector2(b.x, b.y)
+    return p1.distance_squared_to(p2)
+
+
 class EventListener(object):
 
     # --- gravity-related ----------------------------------------------------------------------------------------------
@@ -620,6 +626,27 @@ class Physics(object):
                 self.event_listener.on_impact_platform(proj, platform)
                 proj.x, proj.y = last_pos.xy
                 proj.face_x = 0.0
+
+    def get_faced_actors(self, actor: Actor, max_distance: float) -> List[Actor]:
+        """Searches all actors for those who are within facing direction and range.
+        Returns a list of all faced actors sorted by distance (closest first).
+        """
+        faced: List[Actor] = list()
+        for other in self.actors:
+            if other == actor:
+                continue
+            if actor.face_x > 0.0 and other.x < actor.x:
+                continue
+            if actor.face_x < 0.0 and other.x > actor.x:
+                continue
+
+            # calculate distance
+            dist = get_squared_actors_distance(actor, other)
+            if dist <= max_distance ** 2:
+                faced.append(other)
+
+        faced.sort(key=lambda o: get_squared_actors_distance(actor, o))
+        return faced
 
     # --- floating platforms -------------------------------------------------------------------------------------------
 

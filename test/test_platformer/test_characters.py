@@ -114,12 +114,11 @@ class CharacterSystemTest(unittest.TestCase):
         proj = physics.Projectile(x=0, y=0, radius=0.5, object_type=12, face_x=1)
 
         # anonymous projectile can hit actor
-        self.sys.apply_projectile_hit(self.actor, proj)
-        self.assertEqual(self.actor.hit_points, 4)
+        self.sys.apply_projectile_hit(self.actor, 2, proj)
         self.assertIsInstance(self.listener.last, tuple)
         self.assertEqual(self.listener.last[0], 'damaged')
         self.assertEqual(self.listener.last[1], self.actor)
-        self.assertEqual(self.listener.last[2], 1)
+        self.assertEqual(self.listener.last[2], 2)
         self.assertIsNone(self.listener.last[3])
 
         # another char's projectile can hit actor
@@ -127,8 +126,8 @@ class CharacterSystemTest(unittest.TestCase):
         actor2 = characters.Actor(13)
         self.sys.characters.append(actor2)
         proj.origin = actor2
-        self.sys.apply_projectile_hit(self.actor, proj)
-        self.assertEqual(self.actor.hit_points, 3)
+        self.sys.apply_projectile_hit(self.actor, 1, proj)
+        self.assertEqual(self.actor.hit_points, 2)
         self.assertIsInstance(self.listener.last, tuple)
         self.assertEqual(self.listener.last[0], 'damaged')
         self.assertEqual(self.listener.last[1], self.actor)
@@ -138,7 +137,7 @@ class CharacterSystemTest(unittest.TestCase):
         # another char's projectile can kill actor
         self.listener.last = None
         self.actor.hit_points = 1
-        self.sys.apply_projectile_hit(self.actor, proj)
+        self.sys.apply_projectile_hit(self.actor, 1, proj)
         self.assertEqual(self.actor.hit_points, 0)
         self.assertIsInstance(self.listener.last, tuple)
         self.assertEqual(self.listener.last[0], 'died')
@@ -150,7 +149,7 @@ class CharacterSystemTest(unittest.TestCase):
         proj.origin = None
         self.listener.last = None
         self.actor.hit_points = 1
-        self.sys.apply_projectile_hit(self.actor, proj)
+        self.sys.apply_projectile_hit(self.actor, 1, proj)
         self.assertEqual(self.actor.hit_points, 0)
         self.assertIsInstance(self.listener.last, tuple)
         self.assertEqual(self.listener.last[0], 'died')

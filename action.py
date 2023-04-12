@@ -52,8 +52,6 @@ class GameState(state_machine.State):
 
         self.manager.create_platform(x=3, y=7, width=1, hover=physics.Hovering(x=math.cos, amplitude=-2))
 
-        self.manager.create_platform(x=-5, y=10, width=20, height=1)
-
         self.manager.create_random_object()
         #self.manager.create_object(x=1, y=1, object_type=FOOD_OBJ)
 

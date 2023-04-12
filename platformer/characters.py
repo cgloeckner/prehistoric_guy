@@ -12,6 +12,8 @@ THROW_ACTION: int = 2
 
 DANGEROUS_HEIGHT: float = 1.5
 
+MELEE_ATTACK_RADIUS: float = 1.0
+
 
 @dataclass
 class Actor:
@@ -80,13 +82,13 @@ class Characters(object):
         else:
             self.event_listener.on_char_died(victim, damage, cause)
 
-    def apply_projectile_hit(self, victim: Actor, proj: physics.Projectile) -> None:
+    def apply_projectile_hit(self, victim: Actor, damage: int, proj: physics.Projectile) -> None:
         # try to find projectile's causing character
         cause = None
         if proj.origin is not None:
             cause = self.try_get_by_id(proj.origin.object_id)
 
-        self.apply_damage(victim, 1, cause)
+        self.apply_damage(victim, damage, cause)
 
     def update(self, elapsed_ms: int) -> None:
         # FIXME: damage over time (e.g. poison)?
