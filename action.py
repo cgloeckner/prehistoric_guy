@@ -76,8 +76,8 @@ class GameState(state_machine.State):
         self.editor_ui.update()
 
         # --- Demo Camera movement -------------------------------------------------------------------------------------
-        """
         keys = pygame.key.get_pressed()
+        """
         if keys[pygame.K_LEFT]:
             self.manager.camera.move_ip(-1, 0)
         if keys[pygame.K_RIGHT]:
@@ -87,6 +87,10 @@ class GameState(state_machine.State):
         if keys[pygame.K_DOWN]:
             self.manager.camera.move_ip(0, -1)
         """
+        if keys[pygame.K_q]:
+            self.manager.camera.zoomed = True
+        if keys[pygame.K_e]:
+            self.manager.camera.zoomed = False
 
         self.manager.update(elapsed_ms)
 

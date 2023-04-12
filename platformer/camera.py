@@ -15,15 +15,22 @@ TEXTURE_ROW: int = 2
 LADDER_ROW: int = 3
 
 
-class Camera(pygame.Rect):
+class Camera(object):
     def __init__(self, target: pygame.Surface):
-        super().__init__(0, 0, RESOLUTION_X, RESOLUTION_Y)
         self.target = target
-        # FIXME: use buffer later to zoom
-        self.buffer = pygame.Surface(target.get_size())
-        self.buffer.fill('black')
 
         self.follow: List[physics.Actor] = list()
+
+        # zoom related
+        self.zoomed = False
+        self.buffer = pygame.Surface((RESOLUTION_X * 2, RESOLUTION_Y * 2))
+        self.buffer_rect = self.buffer.get_rect()
+        self.buffer_size_vec = pygame.math.Vector2(self.buffer.get_size())
+        print(f'Buffer: {self.buffer}')
+
+    def move_ip(self, deltax: int, deltay: int) -> None:
+        self.buffer_rect.centerx += deltax
+        self.buffer_rect.centery += deltay
 
     def update(self, elapsed_ms: int) -> None:
         if len(self.follow) == 0:
@@ -34,8 +41,10 @@ class Camera(pygame.Rect):
         for actor in self.follow:
             pos.x += actor.x
             pos.y += actor.y
-        pos /= len(self.follow)
-        self.center = pos * WORLD_SCALE
+        pos *= WORLD_SCALE / len(self.follow)
+
+        self.buffer_rect.centerx = int(pos.x)
+        self.buffer_rect.centery = int(pos.y)
 
     def world_to_screen_coord(self, x: float, y: float) -> pygame.math.Vector2:
         """Translates world coordinates into screen coordinates.
@@ -43,16 +52,16 @@ class Camera(pygame.Rect):
         In screen coordinates, y leads from top to bottom (0,0 as top left).
         Returns a vector of integer coordinates.
         """
-        x = int(x * WORLD_SCALE) - self.x
-        y = self.target.get_height() - (int(y * WORLD_SCALE) - self.y)
+        x = int(x * WORLD_SCALE) - self.buffer_rect.x
+        y = self.buffer.get_height() - (int(y * WORLD_SCALE) - self.buffer_rect.y)
         return pygame.math.Vector2(x, y)
 
     def screen_to_world_coord(self, x: int, y: int) -> pygame.math.Vector2:
         """Translates screen coordinates into world coordinates.
         Returns a vector of float coordinates.
         """
-        x = (x + self.x) / WORLD_SCALE
-        y = (self.target.get_height() - y + self.y) / WORLD_SCALE
+        x = (x + self.buffer_rect.x) / WORLD_SCALE
+        y = (self.buffer.get_height() - y + self.buffer_rect.y) / WORLD_SCALE
         return pygame.math.Vector2(x, y)
 
     def get_object_rects(self, obj: physics.Object) -> Tuple[pygame.Rect, pygame.Rect]:
@@ -146,6 +155,9 @@ class Camera(pygame.Rect):
         return pos_rect, clip_rect
 
     def draw(self) -> None:
-        # FIXME: use buffer to zoom
-        self.target.blit(self.buffer, (0, 0))
-        self.buffer.fill('black')
+        tmp_surf = self.buffer
+        if self.zoomed:
+            tmp_surf = pygame.transform.scale2x(tmp_surf)
+        tmp_rect = tmp_surf.get_rect(center=(RESOLUTION_X // 2, RESOLUTION_Y // 2))
+        self.target.blit(tmp_surf, tmp_rect)
+        self.buffer.fill('#030303')

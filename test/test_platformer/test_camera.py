@@ -20,14 +20,14 @@ class CameraTest(unittest.TestCase):
     def test__world_to_screen_coord__1(self):
         pos = self.cam.world_to_screen_coord(2.5, 3.5)
         self.assertEqual(pos.x, 2.5 * 32)
-        self.assertEqual(pos.y, RESOLUTION_Y - 3.5 * 32)
+        self.assertEqual(pos.y, self.cam.buffer_size_vec[1] - 3.5 * 32)
 
     # Case 2: using camera
     def test__world_to_screen_coord__2(self):
         self.cam.move_ip(5, 3)
         pos = self.cam.world_to_screen_coord(2.5, 3.5)
         self.assertEqual(pos.x, 2.5 * 32 - 5)
-        self.assertEqual(pos.y, RESOLUTION_Y - (3.5 * 32 - 3))
+        self.assertEqual(pos.y, self.cam.buffer_size_vec[1] - (3.5 * 32 - 3))
 
     # ------------------------------------------------------------------------------------------------------------------
 
@@ -35,14 +35,14 @@ class CameraTest(unittest.TestCase):
     def test__screen_to_world_coord__1(self):
         pos = self.cam.screen_to_world_coord(154, 97)
         self.assertAlmostEqual(pos.x, 154.0 / 32)
-        self.assertAlmostEqual(pos.y, (RESOLUTION_Y - 97.0) / 32)
+        self.assertAlmostEqual(pos.y, (self.cam.buffer_size_vec[1] - 97.0) / 32)
 
     # Case 2:
     def test__screen_to_world_coord__2(self):
         self.cam.move_ip(5, 3)
         pos = self.cam.screen_to_world_coord(154, 97)
         self.assertAlmostEqual(pos.x, (154 + 5) / 32)
-        self.assertAlmostEqual(pos.y, (RESOLUTION_Y - 97.0 + 3) / 32)
+        self.assertAlmostEqual(pos.y, (self.cam.buffer_size_vec[1] - 97.0 + 3) / 32)
 
     # ------------------------------------------------------------------------------------------------------------------
 
