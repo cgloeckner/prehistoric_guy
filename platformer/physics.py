@@ -436,15 +436,13 @@ class Physics(object):
         self.event_listener.on_switch_platform(actor, platform)
         actor.anchor = platform
 
-    def check_movement_collision(self, actor: Actor, last_pos: pygame.math.Vector2) -> Platform:
+    def check_movement_collision(self, actor: Actor) -> Optional[Platform]:
         """The actor has moved from last_pos horizontally. Meanwhile, he may have collided with a tile.
         Returns a platform or None.
         """
         for platform in self.platforms:
-            if not is_inside_platform(actor.x, actor.y, platform):
-                continue
-
-            return platform
+            if is_inside_platform(actor.x, actor.y, platform):
+                return platform
 
     def handle_movement(self, actor: Actor, elapsed_ms: int) -> None:
         """This handles the actor's horizontal movement. Collision is detected and handled. More collision handling
@@ -464,7 +462,7 @@ class Physics(object):
         self.anchor_actor(actor)
 
         # check for collision with platform
-        platform = self.check_movement_collision(actor, last_pos)
+        platform = self.check_movement_collision(actor)
         if platform is None:
             return
 
@@ -533,7 +531,6 @@ class Physics(object):
         actor.force_y = 0.0
 
         # apply horizontal force
-        last_pos = pygame.math.Vector2(actor.x, actor.y)
         actor.y += delta_y
         self.anchor_actor(actor)
 
@@ -556,14 +553,14 @@ class Physics(object):
         """This checks for collisions between the actor and other actors in mutual distance. For each such collision,
         the callback on_touch_actor is triggered. Multiple calls are delayed with COLLISION_REPEAT_DELAY.
         """
-        pos = pygame.math.Vector2(actor.x, actor.y)
+        circ1 = get_actor_circ(actor)
 
         for other in self.actors:
             if actor == other:
                 continue
 
-            distance = pygame.math.Vector2(other.x, other.y).distance_squared_to(pos)
-            if distance > (actor.radius + other.radius) ** 2:
+            circ2 = get_actor_circ(other)
+            if not circ1.collidecirc(circ2):
                 continue
 
             # trigger event
@@ -572,22 +569,26 @@ class Physics(object):
                 actor.touch_repeat_cooldown = COLLISION_REPEAT_DELAY
                 self.event_listener.on_touch_actor(actor, other)
 
-    def check_object_collision(self, actor: Actor) -> None:
+    def check_object_collision(self, actor: Actor, elapsed_ms) -> None:
         """This checks for collisions between the actor and other actors in mutual distance. For each such collision,
         the callback on_reach_object is triggered.
         """
-        pos = pygame.math.Vector2(actor.x, actor.y + actor.radius)
+        circ1 = get_actor_circ(actor)
 
         for other in self.objects:
             if actor == other:
                 continue
 
-            distance = pygame.math.Vector2(other.x, other.y).distance_squared_to(pos)
-            if distance > (actor.radius * 2) ** 2:
+            circ2 = get_object_circ(other)
+            if not circ1.collidecirc(circ2):
                 continue
 
             # trigger event
-            self.event_listener.on_reach_object(actor, other)
+
+            actor.touch_repeat_cooldown -= elapsed_ms
+            if actor.touch_repeat_cooldown <= 0:
+                actor.touch_repeat_cooldown = COLLISION_REPEAT_DELAY
+                self.event_listener.on_reach_object(actor, other)
 
     def update_projectile(self, proj: Projectile, elapsed_ms: int) -> None:
         """Update a projectile's ballistic trajectory.
@@ -599,21 +600,21 @@ class Physics(object):
 
         proj.x += proj.face_x * PROJECTILE_SPEED * elapsed_ms / 1000.0
         proj.y += get_jump_height_difference(proj.fly_ms, elapsed_ms) * PROJECTILE_GRAVITY
-
         proj.fly_ms += elapsed_ms
 
-        pos = pygame.math.Vector2(proj.x, proj.y)
+        circ1 = get_projectile_circ(proj)
         for actor in self.actors:
             if actor == proj.origin or not actor.can_collide:
                 # ignore projectile's origin
                 continue
-            distance = pos.distance_squared_to(pygame.math.Vector2(actor.x, actor.y))
-            threshold = actor.radius + proj.radius
-            if distance <= threshold ** 2:
+
+            circ2 = get_actor_circ(actor)
+            if circ1.collidecirc(circ2):
                 # collision with actor
                 self.event_listener.on_impact_actor(proj, actor)
 
         for platform in self.platforms:
+            # FIXME: replace face_x with force_x, force_y to allow diagonal proj., so did_traverse_above makes sense
             if is_inside_platform(proj.x, proj.y, platform) or did_traverse_above(proj.x, proj.y, last_pos, platform):
                 # collision with platform
                 self.event_listener.on_impact_platform(proj, platform)
@@ -642,9 +643,9 @@ class Physics(object):
             actor.x += delta_x
             actor.y += delta_y
 
-            # check for collision against all platforms and pick the closest collision point
-            platform = self.check_movement_collision(actor, last_pos)
-            if platform is None:
+            # search for closest collision platform
+            other = self.check_movement_collision(actor)
+            if other is None:
                 continue
 
             # reset position
@@ -654,7 +655,9 @@ class Physics(object):
             actor.touch_repeat_cooldown -= elapsed_ms
             if actor.touch_repeat_cooldown <= 0:
                 actor.touch_repeat_cooldown = COLLISION_REPEAT_DELAY
-                self.event_listener.on_collide_platform(actor, platform)
+                self.event_listener.on_collide_platform(actor, other)
+
+    # ------------------------------------------------------------------------------------------------------------------
 
     def update(self, elapsed_ms: int) -> None:
         """Update all actors' physics (jumping and falling) within the past view elapsed_ms.
@@ -664,7 +667,7 @@ class Physics(object):
             self.handle_movement(actor, elapsed_ms)
             self.handle_ladder(actor, elapsed_ms)
             self.check_actor_collision(actor, elapsed_ms)
-            self.check_object_collision(actor)
+            self.check_object_collision(actor, elapsed_ms)
 
         for proj in self.projectiles:
             self.update_projectile(proj, elapsed_ms)
