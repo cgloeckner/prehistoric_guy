@@ -46,6 +46,15 @@ class CameraTest(unittest.TestCase):
 
     # ------------------------------------------------------------------------------------------------------------------
 
+    def test__screen_to_world_inverts_world_to_screen(self):
+        original = pygame.math.Vector2(154, 97)
+        pos = self.cam.screen_to_world_coord(*original)
+        got = self.cam.world_to_screen_coord(*pos)
+        self.assertEqual(original.x, got.x)
+        self.assertEqual(original.y, got.y)
+
+    # ------------------------------------------------------------------------------------------------------------------
+
     def test__get_obj_rects(self):
         obj = physics.Object(x=2, y=3, object_type=4)
         pos, clip = self.cam.get_object_rects(obj)
