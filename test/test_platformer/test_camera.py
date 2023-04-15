@@ -73,7 +73,7 @@ class CameraTest(unittest.TestCase):
 
     def test__get_actor_rects(self):
         actor = physics.Actor(object_id=1, x=2, y=3, radius=5)
-        ani = animations.Actor(object_id=1, frame_id=7, action_id=11)
+        ani = animations.Actor(object_id=1, frame_id=7, action=11)
 
         screen_pos = self.cam.world_to_screen_coord(actor.x, actor.y)
 

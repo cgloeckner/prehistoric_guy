@@ -1,14 +1,17 @@
 import pygame
 from dataclasses import dataclass
 from typing import Optional
-from abc import abstractmethod
+from abc import ABC, abstractmethod
+from enum import IntEnum
 
 from platformer import physics
 
 
-NO_ACTION: int = 0
-ATTACK_ACTION: int = 1
-THROW_ACTION: int = 2
+class Action(IntEnum):
+    NONE = 0
+    ATTACK = 1
+    THROW = 2
+
 
 DANGEROUS_HEIGHT: float = 1.5
 
@@ -36,7 +39,7 @@ def modify_hitpoints(actor: Actor, delta: int) -> None:
     actor.hit_points = pygame.math.clamp(actor.hit_points + delta, 0, actor.max_hit_points)
 
 
-class EventListener(object):
+class EventListener(ABC):
 
     @abstractmethod
     def on_char_damaged(self, actor: Actor, damage: int, cause: Optional[Actor]) -> None:

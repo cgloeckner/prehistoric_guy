@@ -92,7 +92,7 @@ class Camera(object):
         clip_rect = pygame.Rect(0, 0, SPRITE_SCALE, SPRITE_SCALE)
         x_offset = 0 if actor.face_x >= 0.0 else 1
         x_offset *= ANIMATION_NUM_FRAMES * SPRITE_SCALE
-        clip_rect.topleft = (ani.frame_id * SPRITE_SCALE + x_offset, ani.action_id * SPRITE_SCALE)
+        clip_rect.topleft = (ani.frame_id * SPRITE_SCALE + x_offset, ani.action * SPRITE_SCALE)
 
         return pos_rect, clip_rect
 

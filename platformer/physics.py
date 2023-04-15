@@ -2,7 +2,7 @@ import pygame
 import math
 from dataclasses import dataclass
 from typing import Tuple, Optional, List
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 
 from core import resources
 from core import shapes
@@ -226,7 +226,7 @@ def get_squared_actors_distance(a: Actor, b: Actor) -> float:
     return p1.distance_squared_to(p2)
 
 
-class EventListener(object):
+class EventListener(ABC):
 
     # --- gravity-related ----------------------------------------------------------------------------------------------
 

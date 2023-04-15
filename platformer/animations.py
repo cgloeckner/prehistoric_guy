@@ -1,8 +1,8 @@
-import pygame
 import math
 from dataclasses import dataclass
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from typing import Optional, List
+from enum import IntEnum
 
 from core.constants import *
 from core import resources
@@ -13,27 +13,30 @@ ANIMATION_FRAME_DURATION: int = 120
 MOVEMENT_SWING: float = 1.0
 CLIMB_SWING: float = 7.0
 
-IDLE_ACTION: int = 0
-MOVE_ACTION: int = 1
-HOLD_ACTION: int = 2
-CLIMB_ACTION: int = 3
-ATTACK_ACTION: int = 4
-THROW_ACTION: int = 5
-JUMP_ACTION: int = 6
-LANDING_ACTION: int = 7
-DIE_ACTION: int = 8
+
+class Action(IntEnum):
+    IDLE = 0
+    MOVE = 1
+    HOLD = 2
+    CLIMB = 3
+    ATTACK = 4
+    THROW = 5
+    JUMP = 6
+    LANDING = 7
+    DIE = 8
+
 
 # animations that cannot be interrupted by user input
-BLOCKING_ANIMATIONS = [DIE_ACTION, ATTACK_ACTION, THROW_ACTION, LANDING_ACTION]
+BLOCKING_ANIMATIONS = [Action.DIE, Action.ATTACK, Action.THROW, Action.LANDING]
 
 # those loop until interrupted by user input
-LOOPED_ANIMATIONS = [IDLE_ACTION, MOVE_ACTION, HOLD_ACTION]
+LOOPED_ANIMATIONS = [Action.IDLE, Action.MOVE, Action.HOLD]
 
 # those animations lead to IDLE when finished
-RESET_TO_IDLE_ANIMATIONS = [ATTACK_ACTION, THROW_ACTION, LANDING_ACTION]
+RESET_TO_IDLE_ANIMATIONS = [Action.ATTACK, Action.THROW, Action.LANDING]
 
 # those animations freeze in the last frame
-FREEZE_AT_END_ANIMATIONS = [JUMP_ACTION, DIE_ACTION]
+FREEZE_AT_END_ANIMATIONS = [Action.JUMP, Action.DIE]
 
 
 @dataclass
@@ -41,7 +44,7 @@ class Actor:
     object_id: int
 
     # frame animation: row and column index, animation delay until frame is switched
-    action_id: int = 0
+    action: Action = Action.IDLE
     frame_id: int = 0
     frame_duration_ms: int = ANIMATION_FRAME_DURATION
     frame_max_duration_ms: int = ANIMATION_FRAME_DURATION
@@ -53,13 +56,13 @@ class Actor:
     hsl_duration_ms: int = ANIMATION_FRAME_DURATION
 
 
-def start(ani: Actor, action_id: int, duration_ms: int = ANIMATION_FRAME_DURATION) -> None:
+def start(ani: Actor, action: Action, duration_ms: int = ANIMATION_FRAME_DURATION) -> None:
     """Resets the frame animation with the given action.
     """
-    if ani.action_id == action_id:
+    if ani.action == action:
         return
 
-    ani.action_id = action_id
+    ani.action = action
     ani.frame_id = 0
     ani.frame_duration_ms = duration_ms
     ani.frame_max_duration_ms = duration_ms
@@ -73,7 +76,7 @@ def flash(ani: Actor, hsl: resources.HslTransform, duration_ms: int = ANIMATION_
     ani.hsl_duration_ms = duration_ms
 
 
-class EventListener(object):
+class EventListener(ABC):
 
     @abstractmethod
     def on_step(self, ani: Actor) -> None:
@@ -122,13 +125,13 @@ class Animating(object):
     def notify_animation(self, ani: Actor) -> None:
         """Notify about a finished animation.
         """
-        if ani.action_id == MOVE_ACTION:
+        if ani.action == Action.MOVE:
             self.event_listener.on_step(ani)
-        elif ani.action_id == ATTACK_ACTION:
+        elif ani.action == Action.ATTACK:
             self.event_listener.on_attack(ani)
-        elif ani.action_id == THROW_ACTION:
+        elif ani.action == Action.THROW:
             self.event_listener.on_throw(ani)
-        elif ani.action_id == DIE_ACTION:
+        elif ani.action == Action.DIE:
             self.event_listener.on_died(ani)
 
     def update_frame(self, ani: Actor, elapsed_ms: int) -> None:
@@ -149,17 +152,17 @@ class Animating(object):
         # handle animation type (loop, reset, freeze)
         self.notify_animation(ani)
 
-        if ani.action_id in LOOPED_ANIMATIONS:
+        if ani.action in LOOPED_ANIMATIONS:
             # loop
             ani.frame_id = 0
-        elif ani.action_id in RESET_TO_IDLE_ANIMATIONS:
+        elif ani.action in RESET_TO_IDLE_ANIMATIONS:
             # reset to idle
             ani.frame_id = 0
-            ani.action_id = IDLE_ACTION
-        elif ani.action_id == CLIMB_ACTION:
+            ani.action = Action.IDLE
+        elif ani.action == Action.CLIMB:
             # reset to hold
             ani.frame_id = 0
-            ani.action_id = HOLD_ACTION
+            ani.action = Action.HOLD
         else:
             # freeze at last frame
             ani.frame_id -= 1
@@ -178,12 +181,12 @@ class Animating(object):
     def update_movement(self, ani: Actor, elapsed_ms: int) -> None:
         """Updates the movement animation, where a small height difference is applied while moving and climbing.
         """
-        if ani.action_id not in [MOVE_ACTION, CLIMB_ACTION]:
+        if ani.action not in [Action.MOVE, Action.CLIMB]:
             ani.total_frame_time_ms = 0
             return
 
         ani.total_frame_time_ms += elapsed_ms
-        if ani.action_id == MOVE_ACTION:
+        if ani.action == Action.MOVE:
             # |sin(x)|
             angle = 2 * math.pi * ani.total_frame_time_ms / 360
             ani.delta_y = MOVEMENT_SWING * math.sin(angle / MOVEMENT_SWING)
@@ -200,100 +203,3 @@ class Animating(object):
             self.update_frame(ani, elapsed_ms)
             self.update_hsl(ani, elapsed_ms)
             self.update_movement(ani, elapsed_ms)
-
-
-def main():
-    from core.constants import SPRITE_SCALE
-    from core import resources
-
-    class DemoListener(EventListener):
-        def on_step(self, a: Actor) -> None:
-            pass
-
-        def on_climb(self, a: Actor) -> None:
-            pass
-
-        def on_attack(self, a: Actor) -> None:
-            pass
-
-        def on_throw(self, a: Actor) -> None:
-            pass
-
-        def on_died(self, a: Actor) -> None:
-            pass
-
-    pygame.init()
-
-    # get native resolution and factor for scaling
-    native_width, native_height = pygame.display.get_desktop_sizes()[0]
-    native_width //= SPRITE_SCALE
-    native_height //= SPRITE_SCALE
-    ui_scale_factor = max(1, min(native_width, native_height))
-    ui_scale_factor //= 4
-
-    # calculate window resolution and initialize screen
-    window_width = SPRITE_SCALE * ui_scale_factor
-    window_height = SPRITE_SCALE * ui_scale_factor
-    print(f'Resolution: {window_width}x{window_height}; Resize: {ui_scale_factor}')
-    screen = pygame.display.set_mode((window_width, window_height))
-    buffer = pygame.Surface((SPRITE_SCALE, SPRITE_SCALE))
-    clock = pygame.time.Clock()
-
-    cache = resources.Cache('../data')
-    guy = cache.get_sprite_sheet('guy')
-    guy = cache.get_hsl_transformed(guy, resources.HslTransform(hue=72), SPRITE_CLOTHES_COLORS)
-    look_right = True
-
-    listener = DemoListener()
-    ani = Animating(listener)
-    ani.animations.append(Actor(1))
-
-    running = True
-    elapsed = 0
-    while running:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
-                running = False
-
-        keys = pygame.key.get_pressed()
-
-        if keys[pygame.K_a]:
-            look_right = False
-        if keys[pygame.K_d]:
-            look_right = True
-        if keys[pygame.K_1]:
-            start(ani.animations[0], IDLE_ACTION, ANIMATION_FRAME_DURATION)
-        if keys[pygame.K_2]:
-            start(ani.animations[0], MOVE_ACTION, ANIMATION_FRAME_DURATION)
-        if keys[pygame.K_3]:
-            start(ani.animations[0], HOLD_ACTION, ANIMATION_FRAME_DURATION)
-        if keys[pygame.K_4]:
-            start(ani.animations[0], CLIMB_ACTION, ANIMATION_FRAME_DURATION)
-        if keys[pygame.K_5]:
-            start(ani.animations[0], ATTACK_ACTION, ANIMATION_FRAME_DURATION)
-        if keys[pygame.K_6]:
-            start(ani.animations[0], THROW_ACTION, ANIMATION_FRAME_DURATION)
-        if keys[pygame.K_7]:
-            start(ani.animations[0], JUMP_ACTION, ANIMATION_FRAME_DURATION)
-        if keys[pygame.K_8]:
-            start(ani.animations[0], LANDING_ACTION, ANIMATION_FRAME_DURATION)
-        if keys[pygame.K_9]:
-            start(ani.animations[0], DIE_ACTION, ANIMATION_FRAME_DURATION)
-
-        ani.update(elapsed)
-
-        buffer.fill('lightblue')
-        x_offset = (0 if look_right else 1) * ANIMATION_NUM_FRAMES * SPRITE_SCALE
-        rect = pygame.Rect(ani.animations[0].frame_id * SPRITE_SCALE + x_offset,
-                           ani.animations[0].action_id * SPRITE_SCALE, SPRITE_SCALE, SPRITE_SCALE)
-        buffer.blit(guy, (0, -ani.animations[0].delta_y), rect)
-        screen.blit(pygame.transform.scale_by(buffer, ui_scale_factor), (0, 0))
-        pygame.display.flip()
-
-        elapsed = clock.tick(60)
-
-    pygame.quit()
-
-
-if __name__ == '__main__':
-    main()

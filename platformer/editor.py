@@ -79,8 +79,8 @@ def actor_ui(phys_actor: physics.Actor, ani_actor: animations.Actor, render_acto
     imgui.text(f'anchor={phys_actor.anchor}')
     imgui.text(f'ladder={phys_actor.ladder}')
     _, phys_actor.radius = imgui.input_float('y', phys_actor.radius, 0.1)
-    imgui.text(f'action_id={ani_actor.action_id}')
-    imgui.text(f'action_id={ani_actor.action_id}')
+    imgui.text(f'action_id={ani_actor.action}')
+    imgui.text(f'action_id={ani_actor.action}')
     imgui.text(f'sprite_sheet={render_actor.sprite_sheet}')
 
     imgui.end()

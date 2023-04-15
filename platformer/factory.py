@@ -49,7 +49,7 @@ class ObjectManager(physics.EventListener, animations.EventListener, characters.
         """Triggered when the actor landed on a platform.
         """
         ani_actor = self.animation.get_by_id(phys_actor.object_id)
-        action = animations.IDLE_ACTION
+        action = animations.Action.IDLE
 
         char_actor = self.chars.try_get_by_id(phys_actor.object_id)
         if char_actor is None:
@@ -61,7 +61,7 @@ class ObjectManager(physics.EventListener, animations.EventListener, characters.
         delta_h = phys_actor.fall_from_y - phys_actor.y
 
         if delta_h > characters.DANGEROUS_HEIGHT:
-            action = animations.LANDING_ACTION
+            action = animations.Action.LANDING
 
         animations.start(ani_actor, action)
 
@@ -190,7 +190,7 @@ class ObjectManager(physics.EventListener, animations.EventListener, characters.
         """Triggered when an actor died. An optional cause can be provided.
         """
         ani_actor = self.animation.get_by_id(char_actor.object_id)
-        animations.start(ani_actor, animations.DIE_ACTION)
+        animations.start(ani_actor, animations.Action.DIE)
         self.destroy_character(char_actor, keep_components=True)
 
     # --- Factory methods

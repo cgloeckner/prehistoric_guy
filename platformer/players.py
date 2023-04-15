@@ -39,7 +39,7 @@ class Actor:
     delta_x: float = 0.0
     delta_y: float = 0.0
 
-    char_action: int = characters.NO_ACTION
+    char_action: int = characters.Action.NONE
 
 
 def get_throwing_process(player: Actor) -> float:
@@ -95,9 +95,9 @@ class Players(object):
 
             elif event.type == pygame.KEYUP and event.key == player.attack_key:
                 if player.attack_held_ms > THROW_THRESHOLD:
-                    player.char_action = characters.THROW_ACTION
+                    player.char_action = characters.Action.THROW
                 else:
-                    player.char_action = characters.ATTACK_ACTION
+                    player.char_action = characters.Action.ATTACK
                 player.attack_held_ms = -1
 
     def get_inputs(self, player: Actor, elapsed_ms: int) -> None:
@@ -119,7 +119,7 @@ class Players(object):
         if player.attack_held_ms >= 0:
             player.attack_held_ms += elapsed_ms
             if player.attack_held_ms > THROW_THRESHOLD:
-                player.char_action = characters.THROW_ACTION
+                player.char_action = characters.Action.THROW
                 player.attack_held_ms = 0.0
 
     def handle_inputs(self, player: Actor) -> None:
@@ -128,47 +128,47 @@ class Players(object):
         ani_actor = self.ani_system.get_by_id(player.object_id)
         phys_actor = self.phys_system.get_by_id(player.object_id)
 
-        if ani_actor.action_id in animations.BLOCKING_ANIMATIONS:
+        if ani_actor.action in animations.BLOCKING_ANIMATIONS:
             # nothing allowed
             phys_actor.force_x = 0.0
             phys_actor.force_y = 0.0
             return
 
-        if player.char_action == characters.THROW_ACTION:
-            if ani_actor.action_id in [animations.HOLD_ACTION, animations.CLIMB_ACTION]:
+        if player.char_action == characters.Action.THROW:
+            if ani_actor.action in [animations.Action.HOLD, animations.Action.CLIMB]:
                 # not allowed
                 return
 
-            animations.start(ani_actor, animations.THROW_ACTION)
+            animations.start(ani_actor, animations.Action.THROW)
             return
 
-        if player.char_action == characters.ATTACK_ACTION:
-            if ani_actor.action_id in [animations.HOLD_ACTION, animations.CLIMB_ACTION]:
+        if player.char_action == characters.Action.ATTACK:
+            if ani_actor.action in [animations.Action.HOLD, animations.Action.CLIMB]:
                 # not allowed
                 return
 
             # attack!
-            animations.start(ani_actor, animations.ATTACK_ACTION)
+            animations.start(ani_actor, animations.Action.ATTACK)
             return
 
         if phys_actor.ladder is None:
             # jumping?
             if player.delta_y > 0.0:
                 # jump
-                animations.start(ani_actor, animations.JUMP_ACTION)
+                animations.start(ani_actor, animations.Action.JUMP)
                 phys_actor.force_x = player.delta_x
                 phys_actor.force_y = player.delta_y
                 return
             # moving?
             if player.delta_x != 0.0:
                 # move around
-                animations.start(ani_actor, animations.MOVE_ACTION)
+                animations.start(ani_actor, animations.Action.MOVE)
                 phys_actor.force_x = player.delta_x
                 return
 
             # idle?
             if phys_actor.force_y == 0.0:
-                animations.start(ani_actor, animations.IDLE_ACTION)
+                animations.start(ani_actor, animations.Action.IDLE)
                 phys_actor.force_x = 0.0
                 phys_actor.force_y = 0.0
 
@@ -177,7 +177,7 @@ class Players(object):
         # jumping off?
         if player.delta_x != 0.0:
             # jump off ladder
-            animations.start(ani_actor, animations.JUMP_ACTION)
+            animations.start(ani_actor, animations.Action.JUMP)
             phys_actor.force_x = player.delta_x
             phys_actor.force_y = player.delta_y
             return
@@ -185,7 +185,7 @@ class Players(object):
         # climbing?
         if player.delta_y != 0.0:
             # climb on ladder
-            animations.start(ani_actor, animations.CLIMB_ACTION)
+            animations.start(ani_actor, animations.Action.CLIMB)
             phys_actor.force_y = player.delta_y
             return
 
@@ -194,10 +194,10 @@ class Players(object):
 
         # idle at top or bottom of the ladder?
         if physics.within_ladder(phys_actor):
-            animations.start(ani_actor, animations.HOLD_ACTION)
+            animations.start(ani_actor, animations.Action.HOLD)
             return
 
-        animations.start(ani_actor, animations.IDLE_ACTION)
+        animations.start(ani_actor, animations.Action.IDLE)
 
     def update(self, elapsed_ms: int) -> None:
         """Triggers movement/attack and animations.
@@ -209,7 +209,7 @@ class Players(object):
             # reset all input parameters
             player.delta_x = 0
             player.delta_y = 0
-            player.char_action = characters.NO_ACTION
+            player.char_action = characters.Action.NONE
 
     def draw_icons(self, char_actor: characters.Actor) -> None:
         for i in range(char_actor.hit_points):
