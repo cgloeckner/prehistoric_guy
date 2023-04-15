@@ -1,3 +1,5 @@
+from enum import IntEnum
+
 WORLD_SCALE: int = 32
 OBJECT_SCALE: int = WORLD_SCALE // 2
 SPRITE_SCALE: int = WORLD_SCALE * 2
@@ -9,9 +11,10 @@ RESOLUTION_Y: int = int(RESOLUTION_X * 0.75)
 
 SPRITE_CLOTHES_COLORS = ['#ff0000', '#800000', '#bf0000']
 
-# objects row offsets
-FOOD_OBJ: int = 0
-DANGER_OBJ: int = 1
-BONUS_OBJ: int = 2
-WEAPON_OBJ: int = 3
-MAX_OBJECT_TYPE: int = WEAPON_OBJ
+
+class ObjectType(IntEnum):
+    FOOD = 0
+    DANGER = 1
+    BONUS = 2
+    WEAPON = 3
+

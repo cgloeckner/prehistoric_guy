@@ -22,15 +22,15 @@ class Actor:
 class Renderer(object):
     """Handles drawing the tiled environment.
     """
-    def __init__(self, phys_system: physics.Physics, ani_system: animations.Animating, cache: resources.Cache,
+    def __init__(self, context: physics.Context, ani_system: animations.Animating, cache: resources.Cache,
                  cam: camera.Camera):
         """
-        :param phys_system: Physics System to fetch data from
+        :param context: Physics context to fetch data from
         :param ani_system: Animations System to fetch data from
         :param cache: Resource Cache to acquire images from
         :param cam: Camera used to draw
         """
-        self.phys_system = phys_system
+        self.context = context
         self.ani_system = ani_system
         self.cache = cache
         self.camera = cam
@@ -53,8 +53,8 @@ class Renderer(object):
         """Draw an object.
         """
         objects = self.objects
-        if obj.hsl is not None:
-            objects = self.cache.get_hsl_transformed(objects, obj.hsl)
+        #if obj.hsl is not None:
+        #    objects = self.cache.get_hsl_transformed(objects, obj.hsl)
 
         pos, clip = self.camera.get_object_rects(obj)
 
@@ -66,15 +66,15 @@ class Renderer(object):
         """
         # color sprite with based on flashing animation (or else because of editor)
         sprite_sheet = sprite.sprite_sheet
-        phys_data = self.phys_system.get_by_id(sprite.object_id)
+        phys_data = self.context.get_by_id(sprite.object_id)
         ani_data = self.ani_system.get_by_id(sprite.object_id)
-        hsl = None
-        if ani_data.hsl is not None:
-            hsl = ani_data.hsl
-        elif phys_data.hsl is not None:
-            hsl = phys_data.hsl
-        if hsl is not None:
-            sprite_sheet = self.cache.get_hsl_transformed(sprite_sheet, hsl)
+        #hsl = None
+        #if ani_data.hsl is not None:
+        #    hsl = ani_data.hsl
+        #elif phys_data.hsl is not None:
+        #    hsl = phys_data.hsl
+        #if hsl is not None:
+        #    sprite_sheet = self.cache.get_hsl_transformed(sprite_sheet, hsl)
 
         pos, clip = self.camera.get_actor_rects(phys_data, ani_data)
         pos.y += ani_data.delta_y
@@ -85,8 +85,8 @@ class Renderer(object):
         """Draw a ladder.
         """
         tiles = self.tiles
-        if ladder.hsl is not None:
-            tiles = self.cache.get_hsl_transformed(tiles, ladder.hsl)
+        #if ladder.hsl is not None:
+        #    tiles = self.cache.get_hsl_transformed(tiles, ladder.hsl)
 
         pos, top_clip, mid_clip, bottom_clip = self.camera.get_ladder_rects(ladder, self.tileset_col)
 
@@ -105,8 +105,8 @@ class Renderer(object):
         """Draw a platform.
         """
         tiles = self.tiles
-        if platform.hsl is not None:
-            tiles = self.cache.get_hsl_transformed(tiles, platform.hsl)
+        #if platform.hsl is not None:
+        #    tiles = self.cache.get_hsl_transformed(tiles, platform.hsl)
 
         pos, left, plat, right, tex = self.camera.get_platform_rects(platform, self.tileset_col)
 
@@ -138,11 +138,11 @@ class Renderer(object):
         """
         pos, clip = self.camera.get_projectile_rects(proj)
 
-        angle = 2 * math.pi * proj.fly_ms / 360
-        angle *= proj.spin_speed
-        objects = self.cache.get_rotated_surface_clip(self.objects, clip, angle, flip=proj.face_x < 0.0)
+        #angle = 2 * math.pi * proj.fly_ms / 360
+        #angle *= proj.spin_speed
+        #objects = self.cache.get_rotated_surface_clip(self.objects, clip, angle, flip=proj.face_x < 0.0)
 
-        self.camera.buffer.blit(objects, pos)
+        self.camera.buffer.blit(self.objects, pos)
 
     def update(self, elapsed_ms: int) -> None:
         pass
@@ -153,47 +153,47 @@ class Renderer(object):
         # self.surface.blit(self.background, (0, 0), (bg_col * RESOLUTION_X, 0, RESOLUTION_X, RESOLUTION_Y))
 
         # foreground
-        self.phys_system.platforms.sort(key=lambda plat: plat.y)
+        self.context.platforms.sort(key=lambda plat: plat.pos.y)
 
-        for p in self.phys_system.platforms:
+        for p in self.context.platforms:
             self.draw_platform(p)
 
-        for ladder in self.phys_system.ladders:
+        for ladder in self.context.ladders:
             self.draw_ladder(ladder)
 
-        for o in self.phys_system.objects:
+        for o in self.context.objects:
             self.draw_object(o)
 
         for s in self.sprites:
             self.draw_sprite(s)
 
-        for proj in self.phys_system.projectiles:
+        for proj in self.context.projectiles:
             self.draw_projectile(proj)
 
     def draw_hitboxes(self) -> None:
         """Performs debug drawing of shapes.
         """
-        for platform in self.phys_system.platforms:
+        for platform in self.context.platforms:
             pos = self.camera.get_platform_rects(platform)[0]
             pos.h *= -1
             pygame.gfxdraw.rectangle(self.camera.buffer, pos, pygame.Color('red'))
 
-        for ladder in self.phys_system.ladders:
+        for ladder in self.context.ladders:
             pos = self.camera.get_ladder_rects(ladder)[0]
             pygame.gfxdraw.rectangle(self.camera.buffer, pos, pygame.Color('blue'))
 
-        for obj in self.phys_system.objects:
+        for obj in self.context.objects:
             pos = self.camera.get_object_rects(obj)[0]
             pygame.gfxdraw.circle(self.camera.buffer, *pos.center, int(physics.OBJECT_RADIUS * WORLD_SCALE),
                                   pygame.Color('gold'))
 
-        for actor in self.phys_system.actors:
+        for actor in self.context.actors:
             x, y = self.camera.get_actor_pos(actor).center
             y = int(y + actor.radius * WORLD_SCALE)
             pygame.gfxdraw.circle(self.camera.buffer, x, y, int(actor.radius * WORLD_SCALE),
                                   pygame.Color('green'))
 
-        for proj in self.phys_system.projectiles:
+        for proj in self.context.projectiles:
             pos = self.camera.get_projectile_rects(proj)[0]
             pygame.gfxdraw.circle(self.camera.buffer, *pos.center, int(proj.radius * WORLD_SCALE),
                                   pygame.Color('orange'))

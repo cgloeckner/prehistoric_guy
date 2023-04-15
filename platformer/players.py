@@ -52,17 +52,17 @@ def get_throwing_process(player: Actor) -> float:
 
 
 class Players(object):
-    def __init__(self, phys_system: physics.Physics, ani_system: animations.Animating, render_system: render.Renderer,
+    def __init__(self, context: physics.Context, ani_system: animations.Animating, render_system: render.Renderer,
                  char_system: characters.Characters, cache: resources.Cache, hud_target: pygame.Surface):
         """
-        :param phys_system: Physics System
+        :param context: Physics Context
         :param ani_system:  Animation System
         :param render_system: Renderer System
         :param char_system: Character System
         :param cache: Resource Cache
         :param hud_target: Target for drawing HUD related things
         """
-        self.phys_system = phys_system
+        self.context = context
         self.ani_system = ani_system
         self.render_system = render_system
         self.char_system = char_system
@@ -126,12 +126,12 @@ class Players(object):
         """Triggers movement, jumping, climbing, attacking etc.
         """
         ani_actor = self.ani_system.get_by_id(player.object_id)
-        phys_actor = self.phys_system.get_by_id(player.object_id)
+        phys_actor = self.context.get_by_id(player.object_id)
 
         if ani_actor.action in animations.BLOCKING_ANIMATIONS:
             # nothing allowed
-            phys_actor.force_x = 0.0
-            phys_actor.force_y = 0.0
+            phys_actor.movement.force.x = 0.0
+            phys_actor.movement.force.y = 0.0
             return
 
         if player.char_action == characters.Action.THROW:
@@ -151,49 +151,53 @@ class Players(object):
             animations.start(ani_actor, animations.Action.ATTACK)
             return
 
-        if phys_actor.ladder is None:
+        if phys_actor.at_ladder is None:
             # jumping?
             if player.delta_y > 0.0:
                 # jump
-                animations.start(ani_actor, animations.Action.JUMP)
-                phys_actor.force_x = player.delta_x
-                phys_actor.force_y = player.delta_y
+                if animations.start(ani_actor, animations.Action.JUMP):
+                    phys_actor.movement.force.y = player.delta_y
+                    phys_actor.at_ladder = None
+                    phys_actor.on_platform = None
+                phys_actor.movement.force.x = player.delta_x
                 return
             # moving?
             if player.delta_x != 0.0:
                 # move around
                 animations.start(ani_actor, animations.Action.MOVE)
-                phys_actor.force_x = player.delta_x
+                phys_actor.movement.force.x = player.delta_x
                 return
 
             # idle?
-            if phys_actor.force_y == 0.0:
+            if phys_actor.movement.force.y == 0.0:
                 animations.start(ani_actor, animations.Action.IDLE)
-                phys_actor.force_x = 0.0
-                phys_actor.force_y = 0.0
+                phys_actor.movement.force.x = 0.0
+                phys_actor.movement.force.y = 0.0
 
             return
 
         # jumping off?
         if player.delta_x != 0.0:
             # jump off ladder
-            animations.start(ani_actor, animations.Action.JUMP)
-            phys_actor.force_x = player.delta_x
-            phys_actor.force_y = player.delta_y
+            if animations.start(ani_actor, animations.Action.JUMP):
+                phys_actor.movement.force.y = player.delta_y
+                phys_actor.at_ladder = None
+                phys_actor.on_platform = None
+            phys_actor.movement.force.x = player.delta_x
             return
 
         # climbing?
         if player.delta_y != 0.0:
             # climb on ladder
             animations.start(ani_actor, animations.Action.CLIMB)
-            phys_actor.force_y = player.delta_y
+            phys_actor.movement.force.y = player.delta_y
             return
 
-        phys_actor.force_x = 0.0
-        phys_actor.force_y = 0.0
+        phys_actor.movement.force.x = 0.0
+        phys_actor.movement.force.y = 0.0
 
         # idle at top or bottom of the ladder?
-        if physics.within_ladder(phys_actor):
+        if phys_actor.at_ladder.contains_point(phys_actor.pos):
             animations.start(ani_actor, animations.Action.HOLD)
             return
 
@@ -221,9 +225,9 @@ class Players(object):
                                  (0 * OBJECT_SCALE, WEAPON_HUD * OBJECT_SCALE, OBJECT_SCALE, OBJECT_SCALE))
 
     def draw_throw_progress(self, char_actor: characters.Actor, value: float) -> None:
-        phys_actor = self.phys_system.get_by_id(char_actor.object_id)
+        phys_actor = self.context.get_by_id(char_actor.object_id)
 
-        pos = self.render_system.camera.world_to_screen_coord(phys_actor.x, phys_actor.y)
+        pos = self.render_system.camera.world_to_screen_coord(phys_actor.pos.x, phys_actor.pos.y)
         pos.y -= WORLD_SCALE
 
         ui.progress_bar(self.hud_target, pos.x, pos.y, 15, 3, value)

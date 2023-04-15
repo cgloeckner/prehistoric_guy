@@ -36,8 +36,8 @@ class Camera(object):
         # calculate center of all given actors
         pos = pygame.math.Vector2()
         for actor in self.follow:
-            pos.x += actor.x
-            pos.y += actor.y
+            pos.x += actor.pos.x
+            pos.y += actor.pos.y
         pos *= WORLD_SCALE / len(self.follow)
 
         self.buffer_rect.centerx = int(pos.x)
@@ -68,7 +68,7 @@ class Camera(object):
         variation_col = 0
 
         pos_rect = pygame.Rect(0, 0, OBJECT_SCALE, OBJECT_SCALE)
-        pos_rect.midbottom = self.world_to_screen_coord(obj.x, obj.y)
+        pos_rect.midbottom = self.world_to_screen_coord(obj.pos.x, obj.pos.y)
 
         clip_rect = pygame.Rect(0, 0, OBJECT_SCALE, OBJECT_SCALE)
         clip_rect.topleft = (variation_col * OBJECT_SCALE, obj.object_type * OBJECT_SCALE)
@@ -80,7 +80,7 @@ class Camera(object):
         actor's animation data.
         """
         pos_rect = pygame.Rect(0, 0, SPRITE_SCALE, SPRITE_SCALE)
-        pos_rect.midbottom = self.world_to_screen_coord(actor.x, actor.y)
+        pos_rect.midbottom = self.world_to_screen_coord(actor.pos.x, actor.pos.y)
 
         return pos_rect
 
@@ -90,7 +90,7 @@ class Camera(object):
         pos_rect = self.get_actor_pos(actor)
 
         clip_rect = pygame.Rect(0, 0, SPRITE_SCALE, SPRITE_SCALE)
-        x_offset = 0 if actor.face_x >= 0.0 else 1
+        x_offset = 0 if actor.movement.face_x == physics.FaceDirection.RIGHT else 1
         x_offset *= ANIMATION_NUM_FRAMES * SPRITE_SCALE
         clip_rect.topleft = (ani.frame_id * SPRITE_SCALE + x_offset, ani.action * SPRITE_SCALE)
 
@@ -102,7 +102,7 @@ class Camera(object):
         middle and 3rd for the bottom of the ladder.
         """
         pos_rect = pygame.Rect(0, 0, WORLD_SCALE, ladder.height * WORLD_SCALE)
-        pos_rect.midbottom = self.world_to_screen_coord(ladder.x, ladder.y)
+        pos_rect.midbottom = self.world_to_screen_coord(ladder.pos.x, ladder.pos.y)
 
         top_clip_rect = pygame.Rect(0, 0, WORLD_SCALE, WORLD_SCALE)
         top_clip_rect.topleft = (NUM_FRAMES_PER_TILE * tileset_col * WORLD_SCALE, LADDER_ROW * WORLD_SCALE)
@@ -121,7 +121,7 @@ class Camera(object):
         3rd for right edge and 4th for the texture below.
         """
         pos_rect = pygame.Rect(0, 0, platform.width * WORLD_SCALE, platform.height * WORLD_SCALE)
-        pos_rect.topleft = self.world_to_screen_coord(platform.x, platform.y)
+        pos_rect.topleft = self.world_to_screen_coord(platform.pos.x, platform.pos.y)
 
         left_clip_rect = pygame.Rect(0, 0, WORLD_SCALE, WORLD_SCALE)
         left_clip_rect.topleft = (NUM_FRAMES_PER_TILE * tileset_col * WORLD_SCALE, PLATFORM_ROW * WORLD_SCALE)
@@ -144,7 +144,7 @@ class Camera(object):
         variation_col = 0
 
         pos_rect = pygame.Rect(0, 0, OBJECT_SCALE, OBJECT_SCALE)
-        pos_rect.center = self.world_to_screen_coord(proj.x, proj.y)
+        pos_rect.center = self.world_to_screen_coord(proj.pos.x, proj.pos.y)
 
         clip_rect = pygame.Rect(0, 0, OBJECT_SCALE, OBJECT_SCALE)
         clip_rect.topleft = (variation_col * OBJECT_SCALE, proj.object_type * OBJECT_SCALE)

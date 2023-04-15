@@ -3,7 +3,6 @@ import pygame
 import math
 from typing import List
 
-from core.constants import *
 from core import resources
 from core import shapes
 
@@ -37,8 +36,8 @@ def platform_ui(platform: physics.Platform) -> bool:
 
     _, opened = imgui.begin('Platform', True)
 
-    _, platform.x = imgui.input_float('x', platform.x, 0.1)
-    _, platform.y = imgui.input_float('y', platform.y, 0.1)
+    _, platform.pos.x = imgui.input_float('x', platform.pos.x, 0.1)
+    _, platform.pos.y = imgui.input_float('y', platform.pos.y, 0.1)
     _, platform.width = imgui.input_int('width', platform.width, 0.1)
     _, platform.height = imgui.input_int('height', platform.height, 0.1)
 
@@ -70,14 +69,13 @@ def actor_ui(phys_actor: physics.Actor, ani_actor: animations.Actor, render_acto
     """
     _, opened = imgui.begin('Actor', True)
 
-    _, phys_actor.x = imgui.input_float('x', phys_actor.x, 0.1)
-    _, phys_actor.y = imgui.input_float('y', phys_actor.y, 0.1)
-    imgui.text(f'face_x={phys_actor.face_x}')
-    imgui.text(f'force_x={phys_actor.force_x}')
-    imgui.text(f'force_y={phys_actor.force_y}')
-    imgui.text(f'fall_from_y={phys_actor.fall_from_y}')
-    imgui.text(f'anchor={phys_actor.anchor}')
-    imgui.text(f'ladder={phys_actor.ladder}')
+    _, phys_actor.x = imgui.input_float('x', phys_actor.pos.x, 0.1)
+    _, phys_actor.y = imgui.input_float('y', phys_actor.pos.y, 0.1)
+    #imgui.text(f'face_x={phys_actor.face_x}')
+    imgui.text(f'force_x={phys_actor.movement.force.x}')
+    imgui.text(f'force_y={phys_actor.movement.force.y}')
+    imgui.text(f'anchor={phys_actor.on_platform}')
+    imgui.text(f'ladder={phys_actor.at_ladder}')
     _, phys_actor.radius = imgui.input_float('y', phys_actor.radius, 0.1)
     imgui.text(f'action_id={ani_actor.action}')
     imgui.text(f'action_id={ani_actor.action}')
@@ -92,22 +90,22 @@ def object_ui(obj: physics.Object) -> bool:
     """Shows an ImGui-based UI for editing a given object. Values are updated automatically.
     Returns True if the close button was clicked.
     """
-    opts_dict = {
-        'FOOD_OBJ': FOOD_OBJ,
-        'DANGER_OBJ': DANGER_OBJ,
-        'BONUS_OBJ': BONUS_OBJ,
-        'WEAPON_OBJ': WEAPON_OBJ
-    }
-    opts_keys = list(opts_dict.keys())
+    #opts_dict = {
+    #    'FOOD_OBJ': FOOD_OBJ,
+    #    'DANGER_OBJ': DANGER_OBJ,
+    #    'BONUS_OBJ': BONUS_OBJ,
+    #    'WEAPON_OBJ': WEAPON_OBJ
+    #}
+    #opts_keys = list(opts_dict.keys())
 
     _, opened = imgui.begin('Object', True)
 
     _, obj.x = imgui.input_float('x', obj.x, 0.1)
     _, obj.y = imgui.input_float('y', obj.y, 0.1)
 
-    clicked, current = imgui.combo('object_type', get_dict_key_index(opts_dict, obj.object_type), opts_keys)
-    if clicked:
-        obj.object_type = opts_dict[opts_keys[current]]
+    #clicked, current = imgui.combo('object_type', get_dict_key_index(opts_dict, obj.object_type), opts_keys)
+    #if clicked:
+    #    obj.object_type = opts_dict[opts_keys[current]]
 
     imgui.end()
 
@@ -120,8 +118,8 @@ def ladder_ui(ladder: physics.Ladder) -> bool:
     """
     _, opened = imgui.begin('Ladder', True)
 
-    _, ladder.x = imgui.input_float('x', ladder.x, 0.1)
-    _, ladder.y = imgui.input_float('y', ladder.y, 0.1)
+    _, ladder.pos.x = imgui.input_float('x', ladder.pos.x, 0.1)
+    _, ladder.pos.y = imgui.input_float('y', ladder.pos.y, 0.1)
     _, ladder.height = imgui.input_int('height', ladder.height, 1)
 
     imgui.end()
@@ -147,23 +145,23 @@ class SceneEditor(object):
 
         # collect all hoverable objects
         hovered = list()
-        for platform in self.obj_manager.physics.platforms:
-            line = physics.get_platform_line(platform)
-            if physics.is_inside_platform(*pos, platform) or circ1.collideline(line):
+        for platform in self.obj_manager.context.platforms:
+            line = platform.get_line()
+            if platform.contains_point(pos) or circ1.collideline(line):
                 hovered.append(platform)
 
-        for actor in self.obj_manager.physics.actors:
-            circ2 = physics.get_actor_circ(actor)
+        for actor in self.obj_manager.context.actors:
+            circ2 = actor.get_circ()
             if circ1.collidecirc(circ2):
                 hovered.append(actor)
 
-        for obj in self.obj_manager.physics.objects:
-            circ2 = physics.get_object_circ(obj)
+        for obj in self.obj_manager.context.objects:
+            circ2 = obj.get_circ()
             if circ1.collidecirc(circ2):
                 hovered.append(obj)
 
-        for ladder in self.obj_manager.physics.ladders:
-            if physics.ladder_in_reach(pos.x, pos.y, ladder):
+        for ladder in self.obj_manager.context.ladders:
+            if ladder.is_in_reach_of(pos):
                 hovered.append(ladder)
 
         return hovered

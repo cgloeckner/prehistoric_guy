@@ -2,7 +2,6 @@ import math
 from dataclasses import dataclass
 from abc import ABC, abstractmethod
 from typing import Optional, List
-from enum import IntEnum
 
 from core.constants import *
 from core import resources
@@ -56,17 +55,20 @@ class Actor:
     hsl_duration_ms: int = ANIMATION_FRAME_DURATION
 
 
-def start(ani: Actor, action: Action, duration_ms: int = ANIMATION_FRAME_DURATION) -> None:
+def start(ani: Actor, action: Action, duration_ms: int = ANIMATION_FRAME_DURATION) -> bool:
     """Resets the frame animation with the given action.
+    Returns True if the animation was actually started, False if the animation was started earlier.
     """
     if ani.action == action:
-        return
+        return False
 
     ani.action = action
     ani.frame_id = 0
     ani.frame_duration_ms = duration_ms
     ani.frame_max_duration_ms = duration_ms
     ani.total_frame_time_ms = 0
+
+    return True
 
 
 def flash(ani: Actor, hsl: resources.HslTransform, duration_ms: int = ANIMATION_FRAME_DURATION) -> None:
