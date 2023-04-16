@@ -93,6 +93,27 @@ class ActorSystem(object):
 
 # ----------------------------------------------------------------------------------------------------------------------
 
+class ProjectileSystem(object):
+    """Handles updating all projectiles.
+    """
+
+    def __init__(self, listener: EventListener, context: Context):
+        self.listener = listener
+        self.context = context
+
+    def update(self, elapsed_ms: int) -> None:
+        for projectile in self.context.projectiles:
+            projectile.movement.apply_gravity(elapsed_ms)
+            old_pos = projectile.movement.apply_movement(projectile.pos, elapsed_ms, False)
+
+            # platform collision
+            platform = platforms.get_landing_platform(old_pos, projectile.pos, self.context.platforms)
+            if platform is not None:
+                projectile.land_on_platform(platform, old_pos)
+            platform = platforms.get_platform_collision(projectile.pos, self.context.platforms)
+            if platform is not None:
+                projectile.collide_with_platform(old_pos)
+
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -100,8 +121,8 @@ class ActorSystem(object):
 class System:
     def __init__(self, listener: EventListener, context: Context):
         self.actor_system = ActorSystem(listener, context)
-        #self.projectile_system = ProjectileSystem(listener, context)
+        self.projectile_system = ProjectileSystem(listener, context)
 
     def update(self, elapsed_ms: int) -> None:
         self.actor_system.update(elapsed_ms)
-        #self.projectile_system.update(elapsed_ms)
+        self.projectile_system.update(elapsed_ms)
