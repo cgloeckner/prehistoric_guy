@@ -52,7 +52,7 @@ class MovementData:
 
         return self.force.y < 0 < old_force_y
 
-    def apply_movement(self, pos: pygame.math.Vector2, elapsed_ms: int) -> pygame.math.Vector2:
+    def apply_movement(self, pos: pygame.math.Vector2, elapsed_ms: int, is_on_ladder: bool) -> pygame.math.Vector2:
         """Applies the force to the given position vector in place. This updates the facing direction as well.
         FIXME: write about gravity- vs. ladder forcey
         Returns a copy of the old position before the in-place change happened.
@@ -65,7 +65,10 @@ class MovementData:
         old_pos = pos.copy()
         pos.x += self.force.x * self.speed * MOVE_SPEED_FACTOR * elapsed_ms / 1000.0
 
-        if self.force.y != 0.0:
+        if is_on_ladder:
+            pos.y += self.force.y * self.speed * MOVE_SPEED_FACTOR * elapsed_ms / 1000.0
+
+        elif self.force.y != 0.0:
             delta_y = self.get_jump_height_difference(elapsed_ms)
             pos.y += delta_y
 

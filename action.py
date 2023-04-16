@@ -59,6 +59,7 @@ class GameState(state_machine.State):
         # ladders
         self.manager.create_ladder(pos=pygame.math.Vector2(x=1.5, y=2), height=4)
         self.manager.create_ladder(pos=pygame.math.Vector2(x=8.5, y=1), height=5)
+        self.manager.create_ladder(pos=pygame.math.Vector2(x=2.5, y=6), height=5)
 
         self.editor_ui = editor.SceneEditor(engine.buffer, self.manager)
 

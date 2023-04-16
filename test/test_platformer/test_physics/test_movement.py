@@ -56,7 +56,7 @@ class MovementPhysicsTest(unittest.TestCase):
 
         # no force means no motion
         pos = pygame.math.Vector2(1, 3)
-        data.apply_movement(pos, 250)
+        data.apply_movement(pos, 250, False)
         self.assertEqual(data.face_x, movement.FaceDirection.RIGHT)
         self.assertAlmostEqual(pos.x, 1.0)
         self.assertAlmostEqual(pos.y, 3.0)
@@ -65,7 +65,7 @@ class MovementPhysicsTest(unittest.TestCase):
         data.force.x = 1.0
         data.force.y = -0.5
         data.face_x = movement.FaceDirection.LEFT
-        old_pos = data.apply_movement(pos, 10)
+        old_pos = data.apply_movement(pos, 10, False)
         self.assertEqual(data.face_x, movement.FaceDirection.RIGHT)
         self.assertGreater(pos.x, 1.0)
         self.assertLess(pos.y, 3.0)
@@ -74,8 +74,29 @@ class MovementPhysicsTest(unittest.TestCase):
         delta = pos - old_pos
         pos = pygame.math.Vector2(1, 3)
         data.force.x = -1.0
-        data.apply_movement(pos, 250)
+        data.apply_movement(pos, 250, False)
         new_delta = pos - old_pos
         self.assertEqual(data.face_x, movement.FaceDirection.LEFT)
         self.assertLess(new_delta.x, -delta.x)
         self.assertLess(new_delta.y, delta.y)
+
+        # climbing down a ladder
+        data.force.x = 0.0
+        data.force.y = -1.0
+        old_pos = data.apply_movement(pos, 10, True)
+        self.assertAlmostEqual(pos.x, old_pos.x)
+        self.assertLess(pos.y, old_pos.y)
+
+        # climbing up a ladder
+        data.force.x = 0.0
+        data.force.y = 1.0
+        old_pos = data.apply_movement(pos, 10, True)
+        self.assertAlmostEqual(pos.x, old_pos.x)
+        self.assertGreater(pos.y, old_pos.y)
+
+        # jumping off a ladder
+        data.force.x = 1.0
+        data.force.y = 1.0
+        old_pos = data.apply_movement(pos, 10, True)
+        self.assertGreater(pos.x, old_pos.x)
+        self.assertGreater(pos.y, old_pos.y)

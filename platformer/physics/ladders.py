@@ -22,14 +22,7 @@ class Ladder:
         The ladder's top and bottom are in reach y-wise.
         """
         return self.pos.x - OBJECT_RADIUS <= pos.x <= self.pos.x + OBJECT_RADIUS and \
-            self.pos.y < pos.y <= self.pos.y + self.height
-
-    def contains_point(self, pos: pygame.math.Vector2) -> bool:
-        """Test whether the position is at the middle part of his ladder.
-        Top and bottom do not count as "within".
-        """
-        return self.pos.x - OBJECT_RADIUS <= pos.x <= self.pos.x + OBJECT_RADIUS and \
-            self.pos.y < pos.y < self.pos.y + self.height
+            self.pos.y + OBJECT_RADIUS <= pos.y <= self.pos.y + self.height
 
 
 def get_closest_ladder_in_reach(pos: pygame.math.Vector2, ladder_seq: Sequence[Ladder]) -> Optional[Ladder]:

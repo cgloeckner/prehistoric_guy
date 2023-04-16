@@ -36,6 +36,16 @@ class ObjectManager(physics.EventListener, animations.EventListener, characters.
 
     # --- Physics Events ----------------------------------------------------------------------------------------------
 
+    def on_grab(self, actor: physics.Actor) -> None:
+        """Triggered when the actor grabs a ladder.
+        """
+        pass
+
+    def on_release(self, actor: physics.Actor) -> None:
+        """Triggered when the actor releases a ladder.
+        """
+        pass
+
     def on_falling(self, actor: physics.Actor) -> None:
         """Triggered when the actor starts falling.
         """

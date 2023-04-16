@@ -151,57 +151,28 @@ class Players(object):
             animations.start(ani_actor, animations.Action.ATTACK)
             return
 
-        if phys_actor.on_ladder is None:
-            # jumping?
-            if player.delta_y > 0.0:
-                # jump
-                if animations.start(ani_actor, animations.Action.JUMP):
-                    phys_actor.movement.force.y = player.delta_y
-                    phys_actor.on_ladder = None
-                    phys_actor.on_platform = None
-                phys_actor.movement.force.x = player.delta_x
-                return
-            # moving?
-            if player.delta_x != 0.0:
-                # move around
-                animations.start(ani_actor, animations.Action.MOVE)
-                phys_actor.movement.force.x = player.delta_x
-                return
-
-            # idle?
-            if phys_actor.movement.force.y == 0.0:
-                animations.start(ani_actor, animations.Action.IDLE)
-                phys_actor.movement.force.x = 0.0
-                phys_actor.movement.force.y = 0.0
-
-            return
-
-        # jumping off?
+        # determine animation action
+        player.char_action = animations.Action.IDLE if phys_actor.on_ladder is None else animations.Action.HOLD
         if player.delta_x != 0.0:
-            # jump off ladder
-            if animations.start(ani_actor, animations.Action.JUMP):
-                phys_actor.movement.force.y = player.delta_y
-                phys_actor.on_ladder = None
-                phys_actor.on_platform = None
-            phys_actor.movement.force.x = player.delta_x
-            return
-
-        # climbing?
+            player.char_action = animations.Action.MOVE if phys_actor.on_ladder is None else animations.Action.CLIMB
         if player.delta_y != 0.0:
-            # climb on ladder
-            animations.start(ani_actor, animations.Action.CLIMB)
+            player.char_action = animations.Action.JUMP if phys_actor.on_ladder is None else animations.Action.CLIMB
+
+        if player.char_action == animations.Action.MOVE and player.delta_y != 0.0:
+            player.char_action = animations.Action.JUMP
+
+        if ani_actor.action == animations.Action.JUMP and player.char_action in [animations.Action.IDLE,
+                                                                                 animations.Action.HOLD]:
+            return
+
+        was_started = animations.start(ani_actor, player.char_action)
+
+        if player.char_action != animations.Action.JUMP:
+            was_started = True
+
+        phys_actor.movement.force.x = player.delta_x
+        if was_started and player.delta_y != 0.0:
             phys_actor.movement.force.y = player.delta_y
-            return
-
-        phys_actor.movement.force.x = 0.0
-        phys_actor.movement.force.y = 0.0
-
-        # idle at top or bottom of the ladder?
-        if phys_actor.on_ladder.contains_point(phys_actor.pos):
-            animations.start(ani_actor, animations.Action.HOLD)
-            return
-
-        animations.start(ani_actor, animations.Action.IDLE)
 
     def update(self, elapsed_ms: int) -> None:
         """Triggers movement/attack and animations.
