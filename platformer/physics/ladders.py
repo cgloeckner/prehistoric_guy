@@ -9,7 +9,7 @@ from platformer.physics.constants import *
 
 @dataclass
 class Ladder:
-    pos: pygame.math.Vector2  # bottom left
+    pos: pygame.math.Vector2  # bottom center
     height: int
 
     def get_line(self) -> shapes.Line:
@@ -19,7 +19,7 @@ class Ladder:
     def is_in_reach_of(self, pos: pygame.math.Vector2) -> bool:
         """Test whether the position is in reach of the ladder.
         The ladder is in reach +/- OBJECT_RADIUS in x-wise.
-        The ladder's top and bottom are in reach y-wise.
+        The ladder's top is in reach y-wise, bottom is excluded with a padding by OBJECT_RADIUS.
         """
         return self.pos.x - OBJECT_RADIUS <= pos.x <= self.pos.x + OBJECT_RADIUS and \
             self.pos.y + OBJECT_RADIUS <= pos.y <= self.pos.y + self.height

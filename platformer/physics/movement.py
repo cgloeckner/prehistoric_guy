@@ -52,7 +52,7 @@ class MovementData:
 
         return self.force.y < 0 < old_force_y
 
-    def apply_movement(self, pos: pygame.math.Vector2, elapsed_ms: int, is_on_ladder: bool = False,
+    def apply_movement(self, pos: pygame.math.Vector2, elapsed_ms: int, has_ladder: bool = False,
                        gravity_weight: float = 1.0) -> pygame.math.Vector2:
         """Applies the force to the given position vector in place. This updates the facing direction as well.
         If on a ladder, the force vector is also used for climbing.
@@ -68,7 +68,7 @@ class MovementData:
         old_pos = pos.copy()
         pos.x += self.force.x * self.speed * MOVE_SPEED_FACTOR * elapsed_ms / 1000.0
 
-        if is_on_ladder:
+        if has_ladder:
             pos.y += self.force.y * self.speed * MOVE_SPEED_FACTOR * elapsed_ms / 1000.0
 
         elif self.force.y != 0.0:

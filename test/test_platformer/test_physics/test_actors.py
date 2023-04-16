@@ -101,10 +101,12 @@ class ActorsPhysicsTest(unittest.TestCase):
     def test__collide_with_platform(self):
         actor = create_actor(1, 0, 0.5)
         platform = platforms.Platform(pygame.math.Vector2(1, 1), 3, 3)
-        actor.collide_with_platform(platform, pygame.math.Vector2(-1, 2))
+        old_pos = pygame.math.Vector2(-1, 2)
+        actor.collide_with_platform(platform, old_pos)
 
         self.assertAlmostEqual(actor.pos.x, -1.0)
         self.assertAlmostEqual(actor.pos.y, 2.0)
         self.assertAlmostEqual(actor.movement.force.x, 0.0)
         self.assertAlmostEqual(actor.movement.force.y, 0.0)
         self.assertEqual(actor.on_platform, platform)
+        self.assertNotEqual(id(actor.pos), id(old_pos))

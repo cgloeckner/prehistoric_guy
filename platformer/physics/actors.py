@@ -61,12 +61,12 @@ class Actor:
         if landing_pos is None:
             return
 
-        self.pos = landing_pos
+        self.pos = landing_pos.copy()
         self.movement.force = pygame.math.Vector2()
         self.on_platform = platform
 
     def collide_with_platform(self, platform: Platform, old_pos: pygame.math.Vector2) -> None:
         """Handles colliding with a platform by resetting the position, the force vector and similar things."""
-        self.pos = old_pos
+        self.pos = old_pos.copy()
         self.movement.force = pygame.math.Vector2()
         self.on_platform = platform

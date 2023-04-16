@@ -31,36 +31,39 @@ class ActorSystem(object):
             if not actor.on_ladder.is_in_reach_of(actor.pos):
                 # reached end of ladder
                 actor.on_ladder = None
+                self.listener.on_release(actor)
 
     def handle_gravity(self, actor: actors.Actor, elapsed_ms: int) -> None:
         """Handles gravity simulation.
         """
-        if actor.can_fall():
-            starts_falling = actor.movement.apply_gravity(elapsed_ms)
-            if starts_falling:
-                self.listener.on_falling(actor)
+        if not actor.can_fall():
+            return
 
-    @staticmethod
-    def handle_movement(actor: actors.Actor, elapsed_ms: int) -> pygame.math.Vector2:
+        starts_falling = actor.movement.apply_gravity(elapsed_ms)
+        if starts_falling:
+            self.listener.on_falling(actor)
+
+    def handle_movement(self, actor: actors.Actor, elapsed_ms: int) -> pygame.math.Vector2:
         """Handles movement and jumping off a ladder.
         Returns the previous position.
         """
-        # movement
-        old_pos = actor.movement.apply_movement(actor.pos, elapsed_ms, is_on_ladder=actor.on_ladder is not None)
+        has_ladder = actor.on_ladder is not None
+        old_pos = actor.movement.apply_movement(actor.pos, elapsed_ms, has_ladder=has_ladder)
 
         # moving off the ladder?
-        if actor.on_ladder is not None:
+        if has_ladder:
             actor.movement.force.y = 0.0
             if actor.movement.force.x != 0.0:
                 actor.on_ladder = None
+                self.listener.on_release(actor)
 
         return old_pos
 
     def handle_landing(self, actor: actors.Actor, old_pos: pygame.math.Vector2) -> None:
         """Handles landing on a platform.
         """
-        # landing
         has_reloaded_support_platform = False
+
         platform = platforms.get_landing_platform(old_pos, actor.pos, self.context.platforms)
         if platform is not None:
             actor.land_on_platform(platform, old_pos)
@@ -123,6 +126,16 @@ class ProjectileSystem(object):
         self.listener = listener
         self.context = context
 
+    @staticmethod
+    def handle_movement(projectile: projectiles.Projectile, elapsed_ms: int) -> pygame.math.Vector2:
+        """Handles gravity and movement, updating the projectile's position in place.
+        Returns the previous position.
+        """
+        projectile.movement.apply_gravity(elapsed_ms)
+        old_pos = projectile.movement.apply_movement(projectile.pos, elapsed_ms,
+                                                     gravity_weight=projectiles.GRAVITY_WEIGHT)
+        return old_pos
+
     def handle_platform_collision(self, projectile: projectiles.Projectile, old_pos: pygame.math.Vector2) -> None:
         """Checks for platform collision, both from above and x-wise.
         """
@@ -150,10 +163,7 @@ class ProjectileSystem(object):
 
     def update(self, elapsed_ms: int) -> None:
         for projectile in self.context.projectiles:
-            projectile.movement.apply_gravity(elapsed_ms)
-            old_pos = projectile.movement.apply_movement(projectile.pos, elapsed_ms,
-                                                         gravity_weight=projectiles.GRAVITY_WEIGHT)
-
+            old_pos = self.handle_movement(projectile, elapsed_ms)
             self.handle_platform_collision(projectile, old_pos)
             self.handle_actor_collision(projectile)
 

@@ -1,8 +1,7 @@
 import pygame
 
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
-from typing import List
+from typing import List, Optional
 
 from platformer.physics import platforms
 from platformer.physics import ladders
@@ -11,8 +10,14 @@ from platformer.physics import actors
 from platformer.physics import projectiles
 
 
-@dataclass
 class Context:
+    def __init__(self):
+        self.platforms: List[platforms.Platform] = list()
+        self.ladders: List[ladders.Ladder] = list()
+        self.objects: List[objects.Object] = list()
+        self.actors: List[actors.Actor] = list()
+        self.projectiles: List[projectiles.Projectile] = list()
+
     def get_by_id(self, object_id: int) -> actors.Actor:
         for actor in self.actors:
             if actor.object_id == object_id:
@@ -21,12 +26,35 @@ class Context:
         # FIXME
         raise ValueError(f'No such Actor {object_id}')
 
-    platforms: List[platforms.Platform]
-    ladders: List[ladders.Ladder]
-    objects: List[objects.Object]
-    actors: List[actors.Actor]
-    projectiles: List[projectiles.Projectile]
+    def create_platform(self, x: float, y: float, width: int, height: int = 0,
+                        hover: Optional[platforms.Hovering] = None) -> platforms.Platform:
+        p = platforms.Platform(pos=pygame.math.Vector2(x, y), width=width, height=height, hover=hover)
+        self.platforms.append(p)
+        return p
 
+    def create_ladder(self, x: float, y: float, height: int) -> ladders.Ladder:
+        ladder = ladders.Ladder(pos=pygame.math.Vector2(x, y), height=height)
+        self.ladders.append(ladder)
+        return ladder
+
+    def create_object(self, x: float, y: float, object_type: objects.ObjectType) -> objects.Object:
+        o = objects.Object(pos=pygame.math.Vector2(x, y), object_type=object_type)
+        self.objects.append(o)
+        return o
+
+    def create_actor(self, object_id: int, x: float, y: float) -> actors.Actor:
+        a = actors.Actor(object_id=object_id, pos=pygame.math.Vector2(x, y))
+        self.actors.append(a)
+        return a
+
+    def create_projectile(self, x: float, y: float, from_actor: Optional[actors.Actor] = None) \
+            -> projectiles.Projectile:
+        p = projectiles.Projectile(pos=pygame.math.Vector2(x, y), from_actor=from_actor)
+        self.projectiles.append(p)
+        if from_actor is not None:
+            p.movement.face_x = from_actor.movement.face_x
+            p.movement.force.x = p.movement.face_x
+        return p
 
 # ----------------------------------------------------------------------------------------------------------------------
 

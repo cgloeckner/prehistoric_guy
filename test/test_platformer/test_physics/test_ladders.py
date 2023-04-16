@@ -1,6 +1,6 @@
 import unittest
 import pygame
-from typing import List, Tuple
+from typing import List
 
 from platformer.physics.constants import *
 from platformer.physics import ladders
@@ -41,22 +41,22 @@ class LadderPhysicsTest(unittest.TestCase):
     # ------------------------------------------------------------------------------------------------------------------
 
     def test__get_closest_ladder_in_reach(self):
-        ladds: List[ladders.Ladder] = list()
+        all_ladders: List[ladders.Ladder] = list()
         pos = pygame.math.Vector2(1.942, 1.13)
 
         # no closest if no ladders
-        p = ladders.get_closest_ladder_in_reach(pos, ladds)
+        p = ladders.get_closest_ladder_in_reach(pos, all_ladders)
         self.assertIsNone(p)
 
         # no closest if ladders are not relevant
-        ladds.append(ladders.Ladder(pygame.math.Vector2(3, 2), 3))
-        p = ladders.get_closest_ladder_in_reach(pos, ladds)
+        all_ladders.append(ladders.Ladder(pygame.math.Vector2(3, 2), 3))
+        p = ladders.get_closest_ladder_in_reach(pos, all_ladders)
         self.assertIsNone(p)
 
         # closest that fits
-        ladds.append(ladders.Ladder(pygame.math.Vector2(2, 0), 3))
-        ladds.append(ladders.Ladder(pygame.math.Vector2(2.05, 0), 3))
-        ladds.append(ladders.Ladder(pygame.math.Vector2(1.98, 0), 3))
-        ladds.append(ladders.Ladder(pygame.math.Vector2(2.13, 0), 3))
-        p = ladders.get_closest_ladder_in_reach(pos, ladds)
-        self.assertEqual(p, ladds[3])
+        all_ladders.append(ladders.Ladder(pygame.math.Vector2(2, 0), 3))
+        all_ladders.append(ladders.Ladder(pygame.math.Vector2(2.05, 0), 3))
+        all_ladders.append(ladders.Ladder(pygame.math.Vector2(1.98, 0), 3))
+        all_ladders.append(ladders.Ladder(pygame.math.Vector2(2.13, 0), 3))
+        p = ladders.get_closest_ladder_in_reach(pos, all_ladders)
+        self.assertEqual(p, all_ladders[3])

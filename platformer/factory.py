@@ -18,7 +18,7 @@ class ObjectManager(physics.EventListener, animations.EventListener, characters.
     """
     def __init__(self, cache: resources.Cache, target: pygame.Surface):
         self.next_obj_id = 0
-        self.context = physics.Context([], [], [], [], [])
+        self.context = physics.Context()
         self.physics = physics.System(self, self.context)
         self.animation = animations.Animating(self)
         self.camera = camera.Camera(target)
@@ -31,8 +31,7 @@ class ObjectManager(physics.EventListener, animations.EventListener, characters.
         p = random.choice(self.context.platforms)
         x = random.randrange(p.width)
 
-        self.create_object(pos=pygame.math.Vector2(x=p.pos.x + x, y=p.pos.y + 0.5),
-                           object_type=random.randrange(len(physics.ObjectType)))
+        self.create_object(x=p.pos.x + x, y=p.pos.y + 0.5, object_type=random.choice(list(physics.ObjectType)))
 
     # --- Physics Events ----------------------------------------------------------------------------------------------
 
@@ -103,8 +102,7 @@ class ObjectManager(physics.EventListener, animations.EventListener, characters.
     def on_impact_platform(self, proj: physics.Projectile, platform: physics.Platform) -> None:
         """Triggered when a projectile hits a platform.
         """
-        self.create_object(pos=pygame.math.Vector2(x=proj.pos.x, y=proj.pos.y - physics.OBJECT_RADIUS),
-                           object_type=proj.object_type)
+        self.create_object(x=proj.pos.x, y=proj.pos.y - physics.OBJECT_RADIUS, object_type=proj.object_type)
         self.destroy_projectile(proj)
 
     def on_impact_actor(self, proj: physics.Projectile, phys_actor: physics.Actor) -> None:
@@ -115,8 +113,7 @@ class ObjectManager(physics.EventListener, animations.EventListener, characters.
             self.chars.apply_projectile_hit(char_actor, 2, proj)
 
         # drop projectile as object
-        self.create_object(pos=pygame.math.Vector2(x=proj.pos.x, y=proj.pos.y - physics.OBJECT_RADIUS),
-                           object_type=proj.object_type)
+        self.create_object(x=proj.pos.x, y=proj.pos.y - physics.OBJECT_RADIUS, object_type=proj.object_type)
 
         self.destroy_projectile(proj)
 
@@ -161,10 +158,7 @@ class ObjectManager(physics.EventListener, animations.EventListener, characters.
             return
 
         char_actor.num_axes -= 1
-        proj = self.create_projectile(from_actor=phys_actor,
-                                      pos=pygame.math.Vector2(x=phys_actor.pos.x,
-                                                              y=phys_actor.pos.y + phys_actor.radius),
-                                      radius=physics.OBJECT_RADIUS, object_type=physics.ObjectType.WEAPON)
+        proj = self.create_projectile(x=phys_actor.pos.x, y=phys_actor.pos.y + phys_actor.radius, from_actor=phys_actor)
         proj.movement.face_x = phys_actor.movement.face_x
         proj.movement.force.x = phys_actor.movement.face_x
         proj.movement.force.y = 0.5
@@ -195,8 +189,7 @@ class ObjectManager(physics.EventListener, animations.EventListener, characters.
     def create_platform(self, **kwargs) -> physics.Platform:
         """Create a new platform.
         """
-        platform = physics.Platform(**kwargs)
-        self.context.platforms.append(platform)
+        platform = self.context.create_platform(**kwargs)
         # NOTE: The renderer grabs platforms from the physics system.
         return platform
 
@@ -208,8 +201,7 @@ class ObjectManager(physics.EventListener, animations.EventListener, characters.
     def create_ladder(self, **kwargs) -> physics.Ladder:
         """Create a new ladder.
         """
-        ladder = physics.Ladder(**kwargs)
-        self.context.ladders.append(ladder)
+        ladder = self.context.create_ladder(**kwargs)
         # NOTE: The renderer grabs ladders from the physics system.
         return ladder
 
@@ -221,8 +213,7 @@ class ObjectManager(physics.EventListener, animations.EventListener, characters.
     def create_object(self, **kwargs) -> physics.Object:
         """Create a static object such as fireplaces or powerups.
         """
-        obj = physics.Object(**kwargs)
-        self.context.objects.append(obj)
+        obj = self.context.create_object(**kwargs)
         # NOTE: The renderer grabs objects from the physics system.
         return obj
 
@@ -233,8 +224,7 @@ class ObjectManager(physics.EventListener, animations.EventListener, characters.
     def create_projectile(self, **kwargs) -> physics.Projectile:
         """Create a projectile e.g. a thrown weapon.
         """
-        proj = physics.Projectile(**kwargs)
-        self.context.projectiles.append(proj)
+        proj = self.context.create_projectile(**kwargs)
         # NOTE: The renderer grabs objects from the physics system.
         return proj
 
@@ -250,11 +240,10 @@ class ObjectManager(physics.EventListener, animations.EventListener, characters.
         self.next_obj_id += 1
 
         kwargs['object_id'] = object_id
-        phys_actor = physics.Actor(**kwargs)
+        phys_actor = self.context.create_actor(**kwargs)
         ani_actor = animations.Actor(object_id=object_id)
         render_actor = render.Actor(object_id=object_id, sprite_sheet=sprite_sheet)
 
-        self.context.actors.append(phys_actor)
         self.animation.animations.append(ani_actor)
         self.renderer.sprites.append(render_actor)
 

@@ -17,12 +17,9 @@ GRAVITY_WEIGHT: float = 0.1
 @dataclass
 class Projectile:
     pos: pygame.math.Vector2  # center
-    radius: float
-
-    movement: MovementData = field(default_factory=MovementData)
-
+    radius: float = OBJECT_RADIUS
     object_type: ObjectType = ObjectType.WEAPON
-    # FIXME: not implemented yet: spin_speed: float = PROJECTILE_SPIN
+    movement: MovementData = field(default_factory=MovementData)
     from_actor: Optional[Actor] = None
 
     def get_circ(self) -> shapes.Circ:
@@ -39,10 +36,10 @@ class Projectile:
         if landing_pos is None:
             return
 
-        self.pos = landing_pos
+        self.pos = landing_pos.copy()
         self.movement.force = pygame.math.Vector2()
 
     def collide_with_platform(self, old_pos: pygame.math.Vector2) -> None:
         """Handles colliding with a platform by resetting the position, the force vector and similar things."""
-        self.pos = old_pos
+        self.pos = old_pos.copy()
         self.movement.force = pygame.math.Vector2()
