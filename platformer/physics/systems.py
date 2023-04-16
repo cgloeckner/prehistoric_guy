@@ -46,8 +46,7 @@ class ActorSystem(object):
         Returns the previous position.
         """
         # movement
-        old_pos = actor.pos.copy()
-        actor.movement.apply_movement(actor.pos, elapsed_ms, is_on_ladder=actor.on_ladder is not None)
+        old_pos = actor.movement.apply_movement(actor.pos, elapsed_ms, is_on_ladder=actor.on_ladder is not None)
 
         # moving off the ladder?
         if actor.on_ladder is not None:
@@ -104,7 +103,7 @@ class ProjectileSystem(object):
     def update(self, elapsed_ms: int) -> None:
         for projectile in self.context.projectiles:
             projectile.movement.apply_gravity(elapsed_ms)
-            old_pos = projectile.movement.apply_movement(projectile.pos, elapsed_ms, False)
+            old_pos = projectile.movement.apply_movement(projectile.pos, elapsed_ms)
 
             # platform collision
             platform = platforms.get_landing_platform(old_pos, projectile.pos, self.context.platforms)

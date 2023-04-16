@@ -56,7 +56,7 @@ class MovementPhysicsTest(unittest.TestCase):
 
         # no force means no motion
         pos = pygame.math.Vector2(1, 3)
-        data.apply_movement(pos, 250, False)
+        data.apply_movement(pos, 250)
         self.assertEqual(data.face_x, movement.FaceDirection.RIGHT)
         self.assertAlmostEqual(pos.x, 1.0)
         self.assertAlmostEqual(pos.y, 3.0)
@@ -65,7 +65,7 @@ class MovementPhysicsTest(unittest.TestCase):
         data.force.x = 1.0
         data.force.y = -0.5
         data.face_x = movement.FaceDirection.LEFT
-        old_pos = data.apply_movement(pos, 10, False)
+        old_pos = data.apply_movement(pos, 10)
         self.assertEqual(data.face_x, movement.FaceDirection.RIGHT)
         self.assertGreater(pos.x, 1.0)
         self.assertLess(pos.y, 3.0)
@@ -74,7 +74,7 @@ class MovementPhysicsTest(unittest.TestCase):
         delta = pos - old_pos
         pos = pygame.math.Vector2(1, 3)
         data.force.x = -1.0
-        data.apply_movement(pos, 250, False)
+        data.apply_movement(pos, 250)
         new_delta = pos - old_pos
         self.assertEqual(data.face_x, movement.FaceDirection.LEFT)
         self.assertLess(new_delta.x, -delta.x)
