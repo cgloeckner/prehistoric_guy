@@ -11,6 +11,9 @@ from platformer.physics.actors import Actor
 from platformer.physics.platforms import Platform
 
 
+GRAVITY_WEIGHT: float = 0.1
+
+
 @dataclass
 class Projectile:
     pos: pygame.math.Vector2  # center

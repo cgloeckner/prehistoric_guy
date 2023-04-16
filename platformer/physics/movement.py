@@ -52,10 +52,12 @@ class MovementData:
 
         return self.force.y < 0 < old_force_y
 
-    def apply_movement(self, pos: pygame.math.Vector2, elapsed_ms: int, is_on_ladder: bool = False) \
-            -> pygame.math.Vector2:
+    def apply_movement(self, pos: pygame.math.Vector2, elapsed_ms: int, is_on_ladder: bool = False,
+                       gravity_weight: float = 1.0) -> pygame.math.Vector2:
         """Applies the force to the given position vector in place. This updates the facing direction as well.
-        FIXME: write about gravity- vs. ladder forcey
+        If on a ladder, the force vector is also used for climbing.
+        The gravity_weight factor can be used to alter the effect of gravity (e.g. for projectiles). Only the given
+        fraction of the delta height is applied.
         Returns a copy of the old position before the in-place change happened.
         """
         if self.force.x > 0.0:
@@ -70,7 +72,7 @@ class MovementData:
             pos.y += self.force.y * self.speed * MOVE_SPEED_FACTOR * elapsed_ms / 1000.0
 
         elif self.force.y != 0.0:
-            delta_y = self.get_jump_height_difference(elapsed_ms)
+            delta_y = self.get_jump_height_difference(elapsed_ms) * gravity_weight
             pos.y += delta_y
 
         return old_pos

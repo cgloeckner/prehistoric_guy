@@ -142,7 +142,7 @@ class Renderer(object):
         #angle *= proj.spin_speed
         #objects = self.cache.get_rotated_surface_clip(self.objects, clip, angle, flip=proj.face_x < 0.0)
 
-        self.camera.buffer.blit(self.objects, pos)
+        self.camera.buffer.blit(self.objects, pos, clip)
 
     def update(self, elapsed_ms: int) -> None:
         pass

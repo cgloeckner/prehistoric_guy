@@ -101,12 +101,12 @@ class ObjectManager(physics.EventListener, animations.EventListener, characters.
     #    self.destroy_object(obj)
     #    self.create_random_object()
 
-    # FIXME: not triggered atm
-    #def on_impact_platform(self, proj: physics.Projectile, platform: physics.Platform) -> None:
-    #    """Triggered when a projectile hits a platform.
-    #    """
-    #    self.create_object(x=proj.x, y=proj.y - physics.OBJECT_RADIUS, object_type=proj.object_type)
-    #    self.destroy_projectile(proj)
+    def on_impact_platform(self, proj: physics.Projectile, platform: physics.Platform) -> None:
+        """Triggered when a projectile hits a platform.
+        """
+        self.create_object(pos=pygame.math.Vector2(x=proj.pos.x, y=proj.pos.y - physics.OBJECT_RADIUS),
+                           object_type=proj.object_type)
+        self.destroy_projectile(proj)
 
     # FIXME: not triggered atm
     #def on_impact_actor(self, proj: physics.Projectile, phys_actor: physics.Actor) -> None:
@@ -161,6 +161,9 @@ class ObjectManager(physics.EventListener, animations.EventListener, characters.
                                       pos=pygame.math.Vector2(x=phys_actor.pos.x, y=phys_actor.pos.y + phys_actor.radius),
                                       radius=physics.OBJECT_RADIUS, object_type=physics.ObjectType.WEAPON)
         proj.movement.face_x = phys_actor.movement.face_x
+        proj.movement.force.x = phys_actor.movement.face_x
+        proj.movement.force.y = 0.5
+        proj.movement.speed = 4.0
 
     def on_died(self, ani_actor: animations.Actor) -> None:
         """Triggered when a dying animation finished.

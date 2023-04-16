@@ -34,6 +34,17 @@ class Context:
 class EventListener(ABC):
 
     @abstractmethod
+    def on_grab(self, actor: actors.Actor) -> None:
+        """Triggered when the actor grabs a ladder.
+        """
+
+    @abstractmethod
+    def on_release(self, actor: actors.Actor) -> None:
+        """Triggered when the actor released a ladder.
+        """
+
+
+    @abstractmethod
     def on_falling(self, actor: actors.Actor) -> None:
         """Triggered when the actor starts falling.
         """
@@ -49,12 +60,6 @@ class EventListener(ABC):
         """
 
     @abstractmethod
-    def on_grab(self, actor: actors.Actor) -> None:
-        """Triggered when the actor grabs a ladder.
+    def on_impact_platform(self, projectile: projectiles.Projectile, platform: platforms.Platform) -> None:
+        """Triggered when the projectile impact at the platform.
         """
-
-    @abstractmethod
-    def on_release(self, actor: actors.Actor) -> None:
-        """Triggered when the actor released a ladder.
-        """
-

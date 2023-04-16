@@ -103,15 +103,19 @@ class ProjectileSystem(object):
     def update(self, elapsed_ms: int) -> None:
         for projectile in self.context.projectiles:
             projectile.movement.apply_gravity(elapsed_ms)
-            old_pos = projectile.movement.apply_movement(projectile.pos, elapsed_ms)
+            old_pos = projectile.movement.apply_movement(projectile.pos, elapsed_ms,
+                                                         gravity_weight=projectiles.GRAVITY_WEIGHT)
 
-            # platform collision
+            # platform collision (part 1 and 2)
             platform = platforms.get_landing_platform(old_pos, projectile.pos, self.context.platforms)
             if platform is not None:
                 projectile.land_on_platform(platform, old_pos)
+                self.listener.on_impact_platform(projectile, platform)
+
             platform = platforms.get_platform_collision(projectile.pos, self.context.platforms)
             if platform is not None:
                 projectile.collide_with_platform(old_pos)
+                self.listener.on_impact_platform(projectile, platform)
 
 
 # ----------------------------------------------------------------------------------------------------------------------
