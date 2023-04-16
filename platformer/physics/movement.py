@@ -6,16 +6,6 @@ from enum import IntEnum
 GRAVITY: float = 9.81
 MAX_FALLING_SPEED: float = -5.0
 
-"""
-JUMP_SPEED_FACTOR: float = 0.5
-JUMP_DURATION: int = 500
-
-GRAVITY_EFFECT_ON_FORCE_VECTOR_PERCENT: float = 2.0
-MIN_GRAVITY_EFFECT: float = 4.5
-MAX_GRAVITY_EFFECT: float = 4.5
-JUMP_TO_FALL_THRESHOLD: float = 0.5
-"""
-
 MOVE_SPEED_FACTOR: float = 4.0
 
 
@@ -51,7 +41,7 @@ class MovementData:
             return True
 
         old_force_y = self.force.y
-        self.force.y -= 2.0 * elapsed_ms / 1000.0
+        self.force.y -= 3.0 * elapsed_ms / 1000.0
 
         if self.force.y == 0.0:
             self.force.y -= 0.001
