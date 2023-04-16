@@ -79,6 +79,26 @@ class ActorSystem(object):
             actor.collide_with_platform(platform, old_pos)
             self.listener.on_collision(actor, platform)
 
+    def handle_object_collision(self, actor: actors.Actor) -> None:
+        """Finds and reports collisions between the actor and all relevant objects.
+        """
+        circ1 = actor.get_circ()
+        for obj in self.context.objects:
+            circ2 = obj.get_circ()
+            if circ1.collidecirc(circ2):
+                self.listener.on_touch_object(actor, obj)
+
+    def handle_actor_collision(self, actor: actors.Actor) -> None:
+        """Finds and reports collisions between the actor and all relevant actors.
+        """
+        circ1 = actor.get_circ()
+        for other in self.context.actors:
+            if actor == other:
+                continue
+            circ2 = other.get_circ()
+            if circ1.collidecirc(circ2):
+                self.listener.on_touch_actor(actor, other)
+
     def update(self, elapsed_ms: int) -> None:
         for actor in self.context.actors:
             self.handle_ladders(actor)
@@ -88,6 +108,9 @@ class ActorSystem(object):
             if actor.on_ladder is None:
                 self.handle_landing(actor, old_pos)
                 self.handle_platform_collision(actor, old_pos)
+
+            self.handle_object_collision(actor)
+            self.handle_actor_collision(actor)
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -100,22 +123,39 @@ class ProjectileSystem(object):
         self.listener = listener
         self.context = context
 
+    def handle_platform_collision(self, projectile: projectiles.Projectile, old_pos: pygame.math.Vector2) -> None:
+        """Checks for platform collision, both from above and x-wise.
+        """
+        platform = platforms.get_landing_platform(old_pos, projectile.pos, self.context.platforms)
+        if platform is not None:
+            projectile.land_on_platform(platform, old_pos)
+            self.listener.on_impact_platform(projectile, platform)
+
+        platform = platforms.get_platform_collision(projectile.pos, self.context.platforms)
+        if platform is not None:
+            projectile.collide_with_platform(old_pos)
+            self.listener.on_impact_platform(projectile, platform)
+
+    def handle_actor_collision(self, projectile: projectiles.Projectile) -> None:
+        """Finds and reports collisions between the projectile and all relevant actors.
+        """
+        circ1 = projectile.get_circ()
+        for actor in self.context.actors:
+            if not projectile.can_hit(actor):
+                continue
+            circ2 = actor.get_circ()
+            if circ1.collidecirc(circ2):
+                self.listener.on_impact_actor(projectile, actor)
+                projectile.movement.force.x = 0.0
+
     def update(self, elapsed_ms: int) -> None:
         for projectile in self.context.projectiles:
             projectile.movement.apply_gravity(elapsed_ms)
             old_pos = projectile.movement.apply_movement(projectile.pos, elapsed_ms,
                                                          gravity_weight=projectiles.GRAVITY_WEIGHT)
 
-            # platform collision (part 1 and 2)
-            platform = platforms.get_landing_platform(old_pos, projectile.pos, self.context.platforms)
-            if platform is not None:
-                projectile.land_on_platform(platform, old_pos)
-                self.listener.on_impact_platform(projectile, platform)
-
-            platform = platforms.get_platform_collision(projectile.pos, self.context.platforms)
-            if platform is not None:
-                projectile.collide_with_platform(old_pos)
-                self.listener.on_impact_platform(projectile, platform)
+            self.handle_platform_collision(projectile, old_pos)
+            self.handle_actor_collision(projectile)
 
 
 # ----------------------------------------------------------------------------------------------------------------------

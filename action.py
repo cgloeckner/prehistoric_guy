@@ -36,8 +36,8 @@ class GameState(state_machine.State):
         self.manager.camera.follow.append(phys_actor)
 
         # --- create demo scene ---------------------------------------------------------------------------------------
-        #self.manager.create_character(sprite_sheet=grey_guy, pos=pygame.math.Vector2(x=6.5, y=6.5))
-        #self.manager.create_character(sprite_sheet=grey_guy, pos=pygame.math.Vector2(x=6.5, y=4.5))
+        self.manager.create_character(sprite_sheet=grey_guy, pos=pygame.math.Vector2(x=6.5, y=6.5))
+        self.manager.create_character(sprite_sheet=grey_guy, pos=pygame.math.Vector2(x=6.5, y=4.5))
 
         # horizontal platforms
         self.manager.create_platform(pos=pygame.math.Vector2(x=1, y=1), width=3, height=1)

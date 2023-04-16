@@ -88,8 +88,8 @@ class Characters(object):
     def apply_projectile_hit(self, victim: Actor, damage: int, proj: physics.Projectile) -> None:
         # try to find projectile's causing character
         cause = None
-        if proj.origin is not None:
-            cause = self.try_get_by_id(proj.origin.object_id)
+        if proj.from_actor is not None:
+            cause = self.try_get_by_id(proj.from_actor.object_id)
 
         self.apply_damage(victim, damage, cause)
 

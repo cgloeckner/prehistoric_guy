@@ -125,7 +125,7 @@ class CharacterSystemTest(unittest.TestCase):
         self.listener.last = None
         actor2 = characters.Actor(13)
         self.sys.characters.append(actor2)
-        proj.origin = actor2
+        proj.from_actor = actor2
         self.sys.apply_projectile_hit(self.actor, 1, proj)
         self.assertEqual(self.actor.hit_points, 2)
         self.assertIsInstance(self.listener.last, tuple)
@@ -146,7 +146,7 @@ class CharacterSystemTest(unittest.TestCase):
         self.assertEqual(self.listener.last[3], actor2)
 
         # anonymous can kill actor
-        proj.origin = None
+        proj.from_actor = None
         self.listener.last = None
         self.actor.hit_points = 1
         self.sys.apply_projectile_hit(self.actor, 1, proj)

@@ -43,7 +43,6 @@ class EventListener(ABC):
         """Triggered when the actor released a ladder.
         """
 
-
     @abstractmethod
     def on_falling(self, actor: actors.Actor) -> None:
         """Triggered when the actor starts falling.
@@ -62,4 +61,19 @@ class EventListener(ABC):
     @abstractmethod
     def on_impact_platform(self, projectile: projectiles.Projectile, platform: platforms.Platform) -> None:
         """Triggered when the projectile impact at the platform.
+        """
+
+    @abstractmethod
+    def on_impact_actor(self, projectile: projectiles.Projectile, actor: actors.Actor) -> None:
+        """Triggered when the projectile impact at the actor.
+        """
+
+    @abstractmethod
+    def on_touch_object(self, actor: actors.Actor, obj: objects.Object) -> None:
+        """Triggered when the actor touches at the object.
+        """
+
+    @abstractmethod
+    def on_touch_actor(self, actor: actors.Actor, other: actors.Actor) -> None:
+        """Triggered when the actor touches the other actor.
         """

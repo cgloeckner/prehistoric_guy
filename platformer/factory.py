@@ -82,24 +82,23 @@ class ObjectManager(physics.EventListener, animations.EventListener, characters.
         """
         pass
 
-    # FIXME: not triggered atm
-    #def on_reach_object(self, phys_actor: physics.Actor, obj: physics.Object) -> None:
-    #    """Triggered when the actor reaches an object.
-    #    """
-    #    char_actor = self.chars.try_get_by_id(phys_actor.object_id)
-    #    if char_actor is not None:
-    #        if obj.object_type == FOOD_OBJ:
-    #            # heal him
-    #            char_actor.hit_points += 1
-    #            # FIXME: on_player_healed
-    #
-    #        elif obj.object_type == WEAPON_OBJ:
-    #            # grab axe
-    #            char_actor.num_axes += 1
-    #            # FIXME: on_weapon_collected
-    #
-    #    self.destroy_object(obj)
-    #    self.create_random_object()
+    def on_touch_object(self, phys_actor: physics.Actor, obj: physics.Object) -> None:
+        """Triggered when the actor reaches an object.
+        """
+        char_actor = self.chars.try_get_by_id(phys_actor.object_id)
+        if char_actor is not None:
+            if obj.object_type == physics.ObjectType.FOOD:
+                # heal him
+                char_actor.hit_points += 1
+                # FIXME: on_player_healed
+
+            elif obj.object_type == physics.ObjectType.WEAPON:
+                # grab axe
+                char_actor.num_axes += 1
+                # FIXME: on_weapon_collected
+
+        self.destroy_object(obj)
+        self.create_random_object()
 
     def on_impact_platform(self, proj: physics.Projectile, platform: physics.Platform) -> None:
         """Triggered when a projectile hits a platform.
@@ -108,18 +107,23 @@ class ObjectManager(physics.EventListener, animations.EventListener, characters.
                            object_type=proj.object_type)
         self.destroy_projectile(proj)
 
-    # FIXME: not triggered atm
-    #def on_impact_actor(self, proj: physics.Projectile, phys_actor: physics.Actor) -> None:
-    #    """Triggered when a projectile hits an actor.
-    #    """
-    #    char_actor = self.chars.try_get_by_id(phys_actor.object_id)
-    #    if char_actor is not None:
-    #        self.chars.apply_projectile_hit(char_actor, 2, proj)
-    #
-    #    # drop projectile as object
-    #    self.create_object(x=proj.x, y=proj.y - physics.OBJECT_RADIUS, object_type=proj.object_type)
-    #
-    #    self.destroy_projectile(proj)
+    def on_impact_actor(self, proj: physics.Projectile, phys_actor: physics.Actor) -> None:
+        """Triggered when a projectile hits an actor.
+        """
+        char_actor = self.chars.try_get_by_id(phys_actor.object_id)
+        if char_actor is not None:
+            self.chars.apply_projectile_hit(char_actor, 2, proj)
+
+        # drop projectile as object
+        self.create_object(pos=pygame.math.Vector2(x=proj.pos.x, y=proj.pos.y - physics.OBJECT_RADIUS),
+                           object_type=proj.object_type)
+
+        self.destroy_projectile(proj)
+
+    def on_touch_actor(self, proj: physics.Projectile, phys_actor: physics.Actor) -> None:
+        """Triggered when an actor touches another actor.
+        """
+        pass
 
     # --- Animation Events -
 
@@ -157,8 +161,9 @@ class ObjectManager(physics.EventListener, animations.EventListener, characters.
             return
 
         char_actor.num_axes -= 1
-        proj = self.create_projectile(origin=phys_actor,
-                                      pos=pygame.math.Vector2(x=phys_actor.pos.x, y=phys_actor.pos.y + phys_actor.radius),
+        proj = self.create_projectile(from_actor=phys_actor,
+                                      pos=pygame.math.Vector2(x=phys_actor.pos.x,
+                                                              y=phys_actor.pos.y + phys_actor.radius),
                                       radius=physics.OBJECT_RADIUS, object_type=physics.ObjectType.WEAPON)
         proj.movement.face_x = phys_actor.movement.face_x
         proj.movement.force.x = phys_actor.movement.face_x

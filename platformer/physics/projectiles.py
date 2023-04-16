@@ -23,14 +23,14 @@ class Projectile:
 
     object_type: ObjectType = ObjectType.WEAPON
     # FIXME: not implemented yet: spin_speed: float = PROJECTILE_SPIN
-    origin: Optional[Actor] = None
+    from_actor: Optional[Actor] = None
 
     def get_circ(self) -> shapes.Circ:
         """Returns the projectile's bounding circle."""
         return shapes.Circ(*self.pos, self.radius)
 
     def can_hit(self, actor: Actor) -> bool:
-        return self.origin is None or self.origin != actor
+        return self.from_actor is None or self.from_actor != actor
 
     def land_on_platform(self, platform: Platform, old_pos: pygame.math.Vector2) -> None:
         """Handles landing on a platform by calculating a landing point, resetting the force vector and similar

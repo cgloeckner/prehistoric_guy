@@ -411,7 +411,7 @@ class Physics(object):
 
         circ1 = get_projectile_circ(proj)
         for actor in self.actors:
-            if actor == proj.origin or not actor.can_collide:
+            if actor == proj.from_actor or not actor.can_collide:
                 # ignore projectile's origin
                 continue
 

@@ -580,7 +580,7 @@ class PhysicsSystemTest(unittest.TestCase):
     def test__update_projectile__2(self):
         self.actor.x = 2
         self.actor.y = 3
-        proj = physics.Projectile(x=4, y=3, radius=0.2, face_x=-1, object_type=9, origin=self.actor)
+        proj = physics.Projectile(x=4, y=3, radius=0.2, face_x=-1, object_type=9, from_actor=self.actor)
         self.sys.projectiles.append(proj)
 
         for i in range(100):
