@@ -56,10 +56,10 @@ class CameraTest(unittest.TestCase):
     # ------------------------------------------------------------------------------------------------------------------
 
     def test__get_obj_rects(self):
-        obj = physics.Object(x=2, y=3, object_type=4)
+        obj = physics.Object(pos=pygame.math.Vector2(2, 3), object_type=ObjectType.WEAPON)
         pos, clip = self.cam.get_object_rects(obj)
 
-        screen_pos = self.cam.world_to_screen_coord(obj.x, obj.y)
+        screen_pos = self.cam.world_to_screen_coord(*obj.pos)
 
         self.assertEqual(pos.x, screen_pos.x - OBJECT_SCALE // 2)
         self.assertEqual(pos.y, screen_pos.y - OBJECT_SCALE)
@@ -67,15 +67,15 @@ class CameraTest(unittest.TestCase):
         self.assertEqual(pos.height, OBJECT_SCALE)
 
         self.assertEqual(clip.x, 0 * OBJECT_SCALE)
-        self.assertEqual(clip.y, 4 * OBJECT_SCALE)
+        self.assertEqual(clip.y, ObjectType.WEAPON * OBJECT_SCALE)
         self.assertEqual(clip.width, OBJECT_SCALE)
         self.assertEqual(clip.height, OBJECT_SCALE)
 
     def test__get_actor_rects(self):
-        actor = physics.Actor(object_id=1, x=2, y=3, radius=5)
-        ani = animations.Actor(object_id=1, frame_id=7, action=11)
+        actor = physics.Actor(object_id=1, pos=pygame.math.Vector2(2, 3), radius=5)
+        ani = animations.Actor(object_id=1, frame_id=7, action=animations.Action.THROW)
 
-        screen_pos = self.cam.world_to_screen_coord(actor.x, actor.y)
+        screen_pos = self.cam.world_to_screen_coord(*actor.pos)
 
         pos, clip = self.cam.get_actor_rects(actor, ani)
 
@@ -85,14 +85,14 @@ class CameraTest(unittest.TestCase):
         self.assertEqual(pos.height, SPRITE_SCALE)
 
         self.assertEqual(clip.x, 7 * SPRITE_SCALE)
-        self.assertEqual(clip.y, 11 * SPRITE_SCALE)
+        self.assertEqual(clip.y, animations.Action.THROW * SPRITE_SCALE)
         self.assertEqual(clip.width, SPRITE_SCALE)
         self.assertEqual(clip.height, SPRITE_SCALE)
 
     def test__get_ladder_rect(self):
-        ladder = physics.Ladder(x=3, y=2, height=5)
+        ladder = physics.Ladder(pos=pygame.math.Vector2(3, 2), height=5)
 
-        screen_pos = self.cam.world_to_screen_coord(ladder.x, ladder.y)
+        screen_pos = self.cam.world_to_screen_coord(*ladder.pos)
 
         pos, top, mid, bottom = self.cam.get_ladder_rects(ladder, 11)
 
@@ -117,9 +117,9 @@ class CameraTest(unittest.TestCase):
         self.assertEqual(bottom.height, WORLD_SCALE)
 
     def test__get_platform_rect(self):
-        platform = physics.Platform(x=1, y=2, width=5, height=3)
+        platform = physics.Platform(pos=pygame.math.Vector2(1, 2), width=5, height=3)
 
-        screen_pos = self.cam.world_to_screen_coord(platform.x, platform.y)
+        screen_pos = self.cam.world_to_screen_coord(*platform.pos)
 
         pos, left, plat, right, tex = self.cam.get_platform_rects(platform, 7)
 
@@ -149,10 +149,10 @@ class CameraTest(unittest.TestCase):
         self.assertEqual(tex.height, WORLD_SCALE)
 
     def test__get_projectile_rects(self):
-        proj = physics.Projectile(x=2, y=3, radius=0.5, face_x=1, object_type=9)
+        proj = physics.Projectile(pos=pygame.math.Vector2(2, 3), radius=0.5, object_type=ObjectType.DANGER)
         pos, clip = self.cam.get_projectile_rects(proj)
 
-        screen_pos = self.cam.world_to_screen_coord(proj.x, proj.y)
+        screen_pos = self.cam.world_to_screen_coord(*proj.pos)
 
         self.assertEqual(pos.x, screen_pos.x - OBJECT_SCALE // 2)
         self.assertEqual(pos.y, screen_pos.y - OBJECT_SCALE // 2)
@@ -160,6 +160,6 @@ class CameraTest(unittest.TestCase):
         self.assertEqual(pos.height, OBJECT_SCALE)
 
         self.assertEqual(clip.x, 0 * OBJECT_SCALE)
-        self.assertEqual(clip.y, 9 * OBJECT_SCALE)
+        self.assertEqual(clip.y, ObjectType.DANGER * OBJECT_SCALE)
         self.assertEqual(clip.width, OBJECT_SCALE)
         self.assertEqual(clip.height, OBJECT_SCALE)

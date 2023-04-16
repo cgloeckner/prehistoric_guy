@@ -1,4 +1,5 @@
 import unittest
+import pygame
 from typing import Optional
 
 from platformer import characters
@@ -111,7 +112,7 @@ class CharacterSystemTest(unittest.TestCase):
     # ------------------------------------------------------------------------------------------------------------------
 
     def test__apply_projectile_hit(self):
-        proj = physics.Projectile(x=0, y=0, radius=0.5, object_type=12, face_x=1)
+        proj = physics.Projectile(pos=pygame.math.Vector2(0, 0), radius=0.5)
 
         # anonymous projectile can hit actor
         self.sys.apply_projectile_hit(self.actor, 2, proj)
