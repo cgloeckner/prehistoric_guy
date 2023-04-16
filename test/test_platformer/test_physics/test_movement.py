@@ -6,11 +6,21 @@ from platformer.physics import movement
 
 class MovementPhysicsTest(unittest.TestCase):
 
-    def test__get_gravity_growth_factor(self):
-        for ms in (0, 10, 250, 15000):
-            factor = movement.MovementData.get_gravity_growth_factor(ms)
-            self.assertGreaterEqual(factor, movement.MIN_GRAVITY_EFFECT)
-            self.assertLessEqual(factor, movement.MAX_GRAVITY_EFFECT)
+    def test__jump_height_difference(self):
+        data = movement.MovementData()
+        data.force.y = -1.0
+
+        delta1 = data.get_jump_height_difference(10)
+        delta2 = data.get_jump_height_difference(20)
+        self.assertLess(delta1, 0)
+        self.assertLess(delta2, delta1)
+
+        data.force.y = 0.5
+
+        delta1 = data.get_jump_height_difference(10)
+        delta2 = data.get_jump_height_difference(20)
+        self.assertGreater(delta1, 0)
+        self.assertGreater(delta2, delta1)
 
     def test__apply_gravity(self):
         data = movement.MovementData()
@@ -37,7 +47,7 @@ class MovementPhysicsTest(unittest.TestCase):
         self.assertLess(data.force.y, old_y_force)
 
         # until the highest point is reached
-        data.force.y = movement.JUMP_TO_FALL_THRESHOLD
+        data.force.y = 0.00001
         self.assertTrue(data.apply_gravity(10))
         self.assertLess(data.force.y, 0.0)
 
@@ -55,8 +65,7 @@ class MovementPhysicsTest(unittest.TestCase):
         data.force.x = 1.0
         data.force.y = -0.5
         data.face_x = movement.FaceDirection.LEFT
-        old_pos = pos.copy()
-        data.apply_movement(pos, 10)
+        old_pos = data.apply_movement(pos, 10)
         self.assertEqual(data.face_x, movement.FaceDirection.RIGHT)
         self.assertGreater(pos.x, 1.0)
         self.assertLess(pos.y, 3.0)

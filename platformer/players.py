@@ -151,13 +151,13 @@ class Players(object):
             animations.start(ani_actor, animations.Action.ATTACK)
             return
 
-        if phys_actor.at_ladder is None:
+        if phys_actor.on_ladder is None:
             # jumping?
             if player.delta_y > 0.0:
                 # jump
                 if animations.start(ani_actor, animations.Action.JUMP):
                     phys_actor.movement.force.y = player.delta_y
-                    phys_actor.at_ladder = None
+                    phys_actor.on_ladder = None
                     phys_actor.on_platform = None
                 phys_actor.movement.force.x = player.delta_x
                 return
@@ -181,7 +181,7 @@ class Players(object):
             # jump off ladder
             if animations.start(ani_actor, animations.Action.JUMP):
                 phys_actor.movement.force.y = player.delta_y
-                phys_actor.at_ladder = None
+                phys_actor.on_ladder = None
                 phys_actor.on_platform = None
             phys_actor.movement.force.x = player.delta_x
             return
@@ -197,7 +197,7 @@ class Players(object):
         phys_actor.movement.force.y = 0.0
 
         # idle at top or bottom of the ladder?
-        if phys_actor.at_ladder.contains_point(phys_actor.pos):
+        if phys_actor.on_ladder.contains_point(phys_actor.pos):
             animations.start(ani_actor, animations.Action.HOLD)
             return
 

@@ -91,7 +91,7 @@ class Platform:
         return top.collideline(motion)
 
 
-def get_any_colliding_platform(pos: pygame.math.Vector2, platform_seq: Sequence[Platform]) -> Optional[Platform]:
+def get_platform_collision(pos: pygame.math.Vector2, platform_seq: Sequence[Platform]) -> Optional[Platform]:
     """Returns the next-best platform from the list that contains the given position, or None.
     """
     for platform in platform_seq:
@@ -100,11 +100,14 @@ def get_any_colliding_platform(pos: pygame.math.Vector2, platform_seq: Sequence[
     return None
 
 
-def get_closest_platform_traversed_from_above(start_point: pygame.math.Vector2, end_point: pygame.math.Vector2,
-                                              platform_seq: Sequence[Platform]) -> Optional[Platform]:
+def get_landing_platform(start_point: pygame.math.Vector2, end_point: pygame.math.Vector2,
+                         platform_seq: Sequence[Platform]) -> Optional[Platform]:
     """Returns the closest platform that was traversed from above, or None.
     The approximated traversal collision point is used as a metric to get the closest platform but not returned.
     """
+    if start_point.y == end_point.y:
+        return None
+
     relevant: List[Tuple[Platform, float]] = list()
     for platform in platform_seq:
         if not platform.was_traverse_from_above(start_point, end_point):
@@ -120,7 +123,7 @@ def get_closest_platform_traversed_from_above(start_point: pygame.math.Vector2, 
     return min(relevant, key=lambda tup: tup[1])[0]
 
 
-def get_any_platform_supporting_point(pos: pygame.math.Vector2, platform_seq: Sequence[Platform]) -> Optional[Platform]:
+def get_support_platform(pos: pygame.math.Vector2, platform_seq: Sequence[Platform]) -> Optional[Platform]:
     """Returns any platform whose top edges the point is located, or None.
     """
     for platform in platform_seq:

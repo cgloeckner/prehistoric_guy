@@ -113,7 +113,7 @@ class PlatformPhysicsTest(unittest.TestCase):
         self.assertTrue(plat.supports_point(pygame.math.Vector2(2, 3)))
 
         # higher platform (y_top == 4
-        plat = platforms.Platform(pygame.math.Vector2(1, 3), width=3, height = 1)
+        plat = platforms.Platform(pygame.math.Vector2(1, 3), width=3, height=1)
         self.assertFalse(plat.supports_point(pygame.math.Vector2(2, 3)))
         self.assertTrue(plat.supports_point(pygame.math.Vector2(2, 4)))
 
@@ -164,41 +164,40 @@ class PlatformPhysicsTest(unittest.TestCase):
     def test__get_landing_point(self):
         plat = platforms.Platform(pygame.math.Vector2(1, 2), 10)
         pos = plat.get_landing_point(pygame.math.Vector2(2, 3), pygame.math.Vector2(3, -4))
-        print(pos)
         self.assertAlmostEqual(pos.x, 2.143, places=2)
         self.assertAlmostEqual(pos.y, 2)
 
     # ------------------------------------------------------------------------------------------------------------------
 
-    def test__get_any_colliding_platform(self):
+    def test__get_platform_collision(self):
         plats: List[platforms.Platform] = list()
 
         # no collision if no platforms
-        p = platforms.get_any_colliding_platform(pygame.math.Vector2(), plats)
+        p = platforms.get_platform_collision(pygame.math.Vector2(), plats)
         self.assertIsNone(p)
 
         # no collision if platforms are not relevant
         plats.append(platforms.Platform(pygame.math.Vector2(1, 2), 3, 1))  # does not contain (0, 0)
-        p = platforms.get_any_colliding_platform(pygame.math.Vector2(), plats)
+        p = platforms.get_platform_collision(pygame.math.Vector2(), plats)
         self.assertIsNone(p)
 
         # get first platform that fits collision condition
         plats.append(platforms.Platform(pygame.math.Vector2(0, 2), 3, 1))  # 2nd platform that contains (1, 2)
-        p = platforms.get_any_colliding_platform(pygame.math.Vector2(1, 2), plats)
+        p = platforms.get_platform_collision(pygame.math.Vector2(1, 2), plats)
         self.assertEqual(p, plats[0])
 
-    def test__get_closest_platform_traversed_from_above(self):
+    def test__get_landing_platform(self):
         plats: List[platforms.Platform] = list()
         start = pygame.math.Vector2(1.942, 1.13)
         end = pygame.math.Vector2(2.204, 0.85)
 
         # no closest if no platforms
-        p = platforms.get_closest_platform_traversed_from_above(start, end, plats)
+        p = platforms.get_landing_platform(start, end, plats)
         self.assertIsNone(p)
 
         # no closest if platforms are not relevant
         plats.append(platforms.Platform(pygame.math.Vector2(3, 2), 3))
-        p = platforms.get_closest_platform_traversed_from_above(start, end, plats)
+        p = platforms.get_landing_platform(start, end, plats)
         self.assertIsNone(p)
 
         # closest that fits
@@ -206,20 +205,26 @@ class PlatformPhysicsTest(unittest.TestCase):
         plats.append(platforms.Platform(pygame.math.Vector2(0.5, 1.01), 3))
         plats.append(platforms.Platform(pygame.math.Vector2(0.5, 1.12), 3))
         plats.append(platforms.Platform(pygame.math.Vector2(0.5, 0.9), 3))
-        p = platforms.get_closest_platform_traversed_from_above(start, end, plats)
+        p = platforms.get_landing_platform(start, end, plats)
         self.assertEqual(p, plats[3])
 
-    def test__get_any_platform_supporting_point(self):
+        # no platform if y did not change
+        start = pygame.math.Vector2(1.942, 1.0)
+        end = pygame.math.Vector2(2.204, 1.0)
+        p = platforms.get_landing_platform(start, end, plats)
+        self.assertIsNone(p)
+
+    def test__get_support_platform(self):
         plats: List[platforms.Platform] = list()
         pos = pygame.math.Vector2(2, 2)
 
         # no closest if no platforms
-        relevant = platforms.get_any_platform_supporting_point(pos, plats)
+        relevant = platforms.get_support_platform(pos, plats)
         self.assertIsNone(relevant)
 
         # no closest if platforms are not relevant
         plats.append(platforms.Platform(pygame.math.Vector2(3, 2), 3))
-        relevant = platforms.get_any_platform_supporting_point(pos, plats)
+        relevant = platforms.get_support_platform(pos, plats)
         self.assertIsNone(relevant)
 
         # closest that fits
@@ -227,5 +232,5 @@ class PlatformPhysicsTest(unittest.TestCase):
         plats.append(platforms.Platform(pygame.math.Vector2(1, 1), 3, height=1))  # yields y_top == 2
         plats.append(platforms.Platform(pygame.math.Vector2(-2, 2), 2))
         plats.append(platforms.Platform(pygame.math.Vector2(0, 2), 3))
-        relevant = platforms.get_any_platform_supporting_point(pos, plats)
+        relevant = platforms.get_support_platform(pos, plats)
         self.assertEqual(relevant, plats[2])

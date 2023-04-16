@@ -13,12 +13,6 @@ from platformer.physics import projectiles
 
 @dataclass
 class Context:
-    platforms: List[platforms.Platform]
-    ladders: List[ladders.Ladder]
-    objects: List[objects.Object]
-    actors: List[actors.Actor]
-    projectiles: List[projectiles.Projectile]
-
     def get_by_id(self, object_id: int) -> actors.Actor:
         for actor in self.actors:
             if actor.object_id == object_id:
@@ -26,6 +20,13 @@ class Context:
 
         # FIXME
         raise ValueError(f'No such Actor {object_id}')
+
+
+    platforms: List[platforms.Platform]
+    ladders: List[ladders.Ladder]
+    objects: List[objects.Object]
+    actors: List[actors.Actor]
+    projectiles: List[projectiles.Projectile]
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -58,48 +59,32 @@ class System(object):
         self.context = context
 
     def update_actor(self, actor: actors.Actor, elapsed_ms: int) -> None:
-        # handle gravity and movement
+        # gravity
         if actor.can_fall():
-            if actor.movement.apply_gravity(actor.pos, elapsed_ms):
-                # notify falling
+            starts_falling = actor.movement.apply_gravity(elapsed_ms)
+            if starts_falling:
                 self.listener.on_falling(actor)
 
+        # movement
         old_pos = actor.pos.copy()
         actor.movement.apply_movement(actor.pos, elapsed_ms)
 
-        reloaded_support = False
+        # landing
+        has_reloaded_support_platform = False
+        platform = platforms.get_landing_platform(old_pos, actor.pos, self.context.platforms)
+        if platform is not None:
+            actor.land_on_platform(platform, old_pos)
+            has_reloaded_support_platform = True
+            self.listener.on_landing(actor)
 
-        if actor.movement.force.y < 0.0:
-            # check for landing
-            platform = platforms.get_closest_platform_traversed_from_above(old_pos, actor.pos, self.context.platforms)
-            #print(old_pos, actor.pos)
-            #print(f'land {platform}')
-            if platform is not None:
-                # calculate landing position
-                landing_pos = platform.get_landing_point(old_pos, actor.pos)
-                if landing_pos is not None:
-                    # land on platform
-                    actor.pos = landing_pos.copy()
-                    actor.movement.force = pygame.math.Vector2()
-                    actor.on_platform = platform
-                    actor.jump_ms = 0
-                    #print('landed')
-                    reloaded_support = True
-                    self.listener.on_landing(actor)
+        if not has_reloaded_support_platform:
+            actor.on_platform = platforms.get_support_platform(actor.pos, self.context.platforms)
 
-        if actor.movement.force.x != 0.0:
-            if not reloaded_support:
-                # refresh support platform
-                actor.on_platform = platforms.get_any_platform_supporting_point(actor.pos, self.context.platforms)
-
-            # check for collisions
-            platform = platforms.get_any_colliding_platform(actor.pos, self.context.platforms)
-            if platform is not None:
-                # collide with platform
-                actor.pos = old_pos.copy()
-                actor.movement.force.x = 0.0
-                actor.on_platform = platform
-                self.listener.on_collision(actor, platform)
+        # platform collision
+        platform = platforms.get_platform_collision(actor.pos, self.context.platforms)
+        if platform is not None:
+            actor.collide_with_platform(platform, old_pos)
+            self.listener.on_collision(actor, platform)
 
     def update_projectile(self, proj: projectiles.Projectile, elapsed_ms: int) -> None:
         pass
