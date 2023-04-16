@@ -19,8 +19,8 @@ class AsciiMapping:
 
 class AsciiRenderer(base.Renderer):
 
-    def __init__(self, canvas_size: pygame.math.Vector2, context: physics.Context, mapping: AsciiMapping):
-        self.canvas_size = canvas_size
+    def __init__(self, camera: base.Camera, context: physics.Context, mapping: AsciiMapping):
+        super().__init__(camera)
         self.context = context
         self.mapping = mapping
         self.buffer: List[List[str]]
@@ -29,38 +29,40 @@ class AsciiRenderer(base.Renderer):
 
     def _clear_buffer(self):
         self.buffer = list()
-        for y in range(int(self.canvas_size.y)):
-            self.buffer.append([self.mapping.empty] * int(self.canvas_size.x))
+        for y in range(self.camera.height):
+            self.buffer.append([self.mapping.empty] * self.camera.width)
 
     def update(self, elapsed_ms: int) -> None:
         pass
 
     def world_coord_to_index(self, pos: pygame.math.Vector2) -> Tuple[int, int]:
-        x = int(pos.x)
-        y = int(self.canvas_size.y - pos.y)
-        return x, y
+        pos.x = int(pos.x)
+        pos.y = int(pos.y)
+        cam_pos = self.camera.world2cam_coord(pos)
+        pos.y = self.camera.height - cam_pos.y
+        return int(pos.x), int(pos.y)
 
     def draw_platform(self, platform: physics.Platform) -> None:
         x, y = self.world_coord_to_index(platform.pos)
 
         # filled texture
         for h in range(platform.height):
-            if 0 <= y + h + 1 < self.canvas_size.y:
+            if 0 <= y - h - 1 < self.camera.height:
                 for w in range(platform.width):
-                    if 0 <= x - w + 1 < self.canvas_size.x:
-                        self.buffer[y + h + 1][x - w + 1] = self.mapping.filled
+                    if 0 <= x + w < self.camera.width:
+                        self.buffer[y - h - 1][x + w] = self.mapping.filled
 
-        if 0 <= y < self.canvas_size.y:
+        if 0 <= y - platform.height - 1 < self.camera.height:
             for w in range(platform.width):
-                if 0 <= x - w + 1 < self.canvas_size.x:
-                    self.buffer[y][x - w + 1] = self.mapping.platform
+                if 0 <= x + w < self.camera.width:
+                    self.buffer[y - platform.height - 1][x + w] = self.mapping.platform
 
     def draw_ladder(self, ladder: physics.Ladder) -> None:
         x, y = self.world_coord_to_index(ladder.pos)
 
-        if 0 <= x < self.canvas_size.x:
+        if 0 <= x < self.camera.width:
             for h in range(ladder.height):
-                if 0 <= y - h - 1 < self.canvas_size.y:
+                if 0 <= y - h - 1 < self.camera.height:
                     self.buffer[y - h - 1][x] = self.mapping.ladder
 
     def draw_object(self, obj: physics.Object) -> None:
@@ -71,8 +73,8 @@ class AsciiRenderer(base.Renderer):
         x, y = self.world_coord_to_index(projectile.pos)
         self.buffer[y][x] = self.mapping.projectile
 
-    def draw_actor(self, obj: physics.Actor) -> None:
-        x, y = self.world_coord_to_index(obj.pos)
+    def draw_actor(self, actor: physics.Actor) -> None:
+        x, y = self.world_coord_to_index(actor.pos)
         self.buffer[y][x] = self.mapping.actor
 
     def draw(self) -> None:
@@ -95,18 +97,22 @@ class AsciiRenderer(base.Renderer):
 
 
 if __name__ == '__main__':
-    context = physics.Context()
-    context.create_platform(x=1, y=3, width=3, height=2)
-    context.create_platform(x=8, y=3, width=4)
-    context.create_platform(x=8, y=5, width=2)
-    context.create_platform(x=1, y=5, width=3)
-    context.create_ladder(x=8, y=2, height=2)
-    context.create_object(x=1, y=3, object_type=physics.ObjectType.FOOD)
-    context.create_actor(1, x=7, y=5)
-    context.create_projectile(x=5, y=5)
+    ctx = physics.Context()
+    ctx.create_platform(x=1, y=0, width=3, height=2)
+    ctx.create_platform(x=8, y=3, width=4)
+    ctx.create_platform(x=7, y=5, width=2)
+    ctx.create_platform(x=1, y=5, width=3)
+    ctx.create_ladder(x=9, y=3, height=2)
+    ctx.create_object(x=1.5, y=3, object_type=physics.ObjectType.FOOD)
+    ctx.create_actor(1, x=8.5, y=5)
+    ctx.create_projectile(x=6.5, y=5.5)
 
     mapping = AsciiMapping()
-    r = AsciiRenderer(pygame.math.Vector2(10, 6), context, mapping)
+
+    cam = base.Camera(10, 6)
+    #cam.move_ip(-1, 0)
+
+    r = AsciiRenderer(cam, ctx, mapping)
     r.draw()
 
     out = ''
