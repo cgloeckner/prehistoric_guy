@@ -8,7 +8,7 @@ from core import shapes
 
 from platformer import physics
 from platformer import animations
-from platformer import render
+from platformer.renderer import blit_renderer
 from platformer import factory
 
 

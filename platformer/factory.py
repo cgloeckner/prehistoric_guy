@@ -4,10 +4,9 @@ from typing import Optional
 
 from core import resources
 
-from platformer import camera
 from platformer import physics
 from platformer import animations
-from platformer import render
+from platformer.renderer import camera
 from platformer import characters
 from platformer import players
 

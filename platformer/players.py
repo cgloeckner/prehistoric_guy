@@ -8,7 +8,7 @@ from core import ui
 
 from platformer import animations
 from platformer import physics
-from platformer import render
+from platformer.renderer import blit_renderer
 from platformer import characters
 
 

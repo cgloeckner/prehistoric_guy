@@ -1,13 +1,12 @@
 import pygame
 import pygame.gfxdraw
-import math
 from dataclasses import dataclass
 from typing import List
 
 from core.constants import *
 from core import resources
 
-from platformer import camera
+from platformer.renderer import camera
 from platformer import animations
 from platformer import physics
 

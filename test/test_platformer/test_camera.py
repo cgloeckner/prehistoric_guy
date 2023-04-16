@@ -3,7 +3,7 @@ import pygame
 
 from core.constants import *
 
-from platformer import camera
+from platformer.renderer import camera
 from platformer import physics
 from platformer import animations
 
