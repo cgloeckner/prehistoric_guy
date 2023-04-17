@@ -2,18 +2,13 @@ import pygame
 from dataclasses import dataclass
 from typing import List, Optional
 
-from core.constants import *
-from core import resources
-from core import ui
+from core import constants, resources, ui
 
-from platformer import animations
-from platformer import physics
-from platformer.renderer import images
-from platformer import characters
+from platformer import animations, physics, renderer, characters
 
 
 # keypress time required to throw
-THROW_THRESHOLD: int = int(animations.ANIMATION_NUM_FRAMES * animations.ANIMATION_FRAME_DURATION)
+THROW_THRESHOLD: int = int(constants.ANIMATION_NUM_FRAMES * animations.ANIMATION_FRAME_DURATION)
 
 
 # HUD tileset columns
@@ -52,19 +47,12 @@ def get_throwing_process(player: Actor) -> float:
 
 
 class Players(object):
-    def __init__(self, context: physics.Context, ani_system: animations.Animating, render_system: renderer.ImageRenderer,
-                 char_system: characters.Characters, cache: resources.Cache, hud_target: pygame.Surface):
-        """
-        :param context: Physics Context
-        :param ani_system:  Animation System
-        :param render_system: Renderer System
-        :param char_system: Character System
-        :param cache: Resource Cache
-        :param hud_target: Target for drawing HUD related things
-        """
-        self.context = context
-        self.ani_system = ani_system
-        self.render_system = render_system
+    def __init__(self, physics_context: physics.Context, animations_context: animations.Context,
+                 renderer_context: renderer.Context, char_system: characters.Characters, cache: resources.Cache,
+                 hud_target: pygame.Surface):
+        self.physics_context = physics_context
+        self.animations_context = animations_context
+        self.renderer_context = renderer_context
         self.char_system = char_system
         self.hud_target = hud_target
 
@@ -125,8 +113,8 @@ class Players(object):
     def handle_inputs(self, player: Actor) -> None:
         """Triggers movement, jumping, climbing, attacking etc.
         """
-        ani_actor = self.ani_system.get_by_id(player.object_id)
-        phys_actor = self.context.get_actor_by_id(player.object_id)
+        ani_actor = self.animations_context.get_actor_by_id(player.object_id)
+        phys_actor = self.physics_context.get_actor_by_id(player.object_id)
 
         if ani_actor.action in animations.BLOCKING_ANIMATIONS:
             # nothing allowed
@@ -188,20 +176,23 @@ class Players(object):
 
     def draw_icons(self, char_actor: characters.Actor) -> None:
         for i in range(char_actor.hit_points):
-            self.hud_target.blit(self.tileset, (i * OBJECT_SCALE, 0),
-                                 (0 * OBJECT_SCALE, HEART_HUD * OBJECT_SCALE, OBJECT_SCALE, OBJECT_SCALE))
+            self.hud_target.blit(self.tileset, (i * constants.OBJECT_SCALE, 0),
+                                 (0 * constants.OBJECT_SCALE, HEART_HUD * constants.OBJECT_SCALE,
+                                  constants.OBJECT_SCALE, constants.OBJECT_SCALE))
 
         for i in range(char_actor.num_axes):
-            self.hud_target.blit(self.tileset, (i * OBJECT_SCALE, OBJECT_SCALE),
-                                 (0 * OBJECT_SCALE, WEAPON_HUD * OBJECT_SCALE, OBJECT_SCALE, OBJECT_SCALE))
+            self.hud_target.blit(self.tileset, (i * constants.OBJECT_SCALE, constants.OBJECT_SCALE),
+                                 (0 * constants.OBJECT_SCALE, WEAPON_HUD * constants.OBJECT_SCALE,
+                                  constants.OBJECT_SCALE, constants.OBJECT_SCALE))
 
     def draw_throw_progress(self, char_actor: characters.Actor, value: float) -> None:
-        phys_actor = self.context.get_actor_by_id(char_actor.object_id)
+        phys_actor = self.physics_context.get_actor_by_id(char_actor.object_id)
 
-        pos = self.render_system.camera.from_world_coord(phys_actor.pos.x, phys_actor.pos.y)
-        pos.y -= WORLD_SCALE
+        # FIXME: find a way to access coord transformation
+        #pos = self.render_system.camera.from_world_coord(phys_actor.pos.x, phys_actor.pos.y)
+        #pos.y -= constants.WORLD_SCALE
 
-        ui.progress_bar(self.hud_target, pos.x, pos.y, 15, 3, value)
+        #ui.progress_bar(self.hud_target, pos.x, pos.y, 15, 3, value)
 
     def draw(self) -> None:
         for player in self.players:

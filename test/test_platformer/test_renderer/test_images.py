@@ -37,7 +37,7 @@ class ImageRendererTest(unittest.TestCase):
         # create empty dummy surfaces of the correct sizes
         self.cache = resources.Cache()
         guy_path = self.cache.get_image_filename('guy')
-        self.cache.images[str(guy_path)] = pygame.Surface((animations.ANIMATION_NUM_FRAMES * constants.SPRITE_SCALE,
+        self.cache.images[str(guy_path)] = pygame.Surface((constants.ANIMATION_NUM_FRAMES * constants.SPRITE_SCALE,
                                                            len(animations.Action) * constants.SPRITE_SCALE))
         obj_path = self.cache.get_image_filename('object')
         self.cache.images[str(obj_path)] = pygame.Surface((constants.OBJECT_NUM_VERSIONS * constants.OBJECT_SCALE,

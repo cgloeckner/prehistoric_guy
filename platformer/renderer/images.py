@@ -209,36 +209,3 @@ class ImageRenderer(shapes.ShapeRenderer):
 
     def update(self, elapsed_ms: int) -> None:
         self.physics_context.platforms.sort(key=lambda plat: plat.pos.y)
-
-
-if __name__ == '__main__':
-    phy_ctx = physics.Context()
-    phy_ctx.create_platform(x=1, y=0, width=3, height=2)
-    phy_ctx.create_platform(x=8, y=3, width=4)
-    phy_ctx.create_platform(x=7, y=5, width=2)
-    phy_ctx.create_platform(x=1, y=5, width=3)
-    phy_ctx.create_ladder(x=9, y=3, height=2)
-    phy_ctx.create_object(x=1.5, y=3, object_type=physics.ObjectType.FOOD)
-    phy_ctx.create_actor(1, x=8.5, y=5)
-    phy_ctx.create_projectile(2, x=6.5, y=5.5)
-
-    ani_ctx = animations.Context()
-    ani_ctx.create_actor(1)
-
-    sprite_ctx = Context()
-
-    cam = base.Camera(10 * WORLD_SCALE, 6 * WORLD_SCALE)
-    #cam.center.x += -0.5
-
-    import os
-    os.environ["SDL_VIDEODRIVER"] = "dummy"
-    pygame.init()
-    buffer = pygame.Surface((cam.width, cam.height))
-
-    img_cache = resources.Cache('../../data')
-    sprite_ctx.create_actor(1, img_cache.get_image('guy'))
-
-    r = ImageRenderer(cam, buffer, phy_ctx, ani_ctx, sprite_ctx, img_cache)
-    r.draw()
-
-    pygame.image.save(buffer, '/tmp/test.png')

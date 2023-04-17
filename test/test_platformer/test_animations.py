@@ -1,6 +1,6 @@
 import unittest
 
-from core import resources
+from core import constants, resources
 
 from platformer import animations
 
@@ -79,10 +79,11 @@ class AnimatingSystemTest(unittest.TestCase):
                 self.last = ('died', ani)
 
         self.listener = DemoListener()
-        self.sys = animations.Animating(self.listener)
+        self.ctx = animations.Context()
+        self.sys = animations.Animating(self.listener, self.ctx)
 
         self.actor = animations.Actor(45)
-        self.sys.animations.append(self.actor)
+        self.ctx.actors.append(self.actor)
 
         animations.start(self.actor, animations.Action.ATTACK, 300)
         self.actor.frame_duration_ms = 200
@@ -93,14 +94,14 @@ class AnimatingSystemTest(unittest.TestCase):
 
     # Case 1: get existing actor
     def test__get_by_id__1(self):
-        got = self.sys.get_by_id(45)
+        got = self.sys.get_actor_by_id(45)
 
         self.assertEqual(id(self.actor), id(got))
 
     # Case 2: cannot get non-existing actor
     def test__get_by_id__2(self):
         with self.assertRaises(IndexError):
-            self.sys.get_by_id(23)
+            self.sys.get_actor_by_id(23)
 
     # ------------------------------------------------------------------------------------------------------------------
 
@@ -160,7 +161,7 @@ class AnimatingSystemTest(unittest.TestCase):
 
     # Case 3: update and go to next frame
     def test__update_frame__3(self):
-        self.actor.frame_id = animations.ANIMATION_NUM_FRAMES - 1
+        self.actor.frame_id = constants.ANIMATION_NUM_FRAMES - 1
         self.sys.update_frame(self.actor, 220)
 
         self.assertEqual(self.actor.frame_duration_ms, 280)
@@ -181,7 +182,7 @@ class AnimatingSystemTest(unittest.TestCase):
     def test__update_frame__5(self):
         for action in animations.LOOPED_ANIMATIONS:
             self.actor.action = action
-            self.actor.frame_id = animations.ANIMATION_NUM_FRAMES - 1
+            self.actor.frame_id = constants.ANIMATION_NUM_FRAMES - 1
             self.actor.frame_duration_ms = 5
             self.sys.update_frame(self.actor, 10)
 
@@ -193,7 +194,7 @@ class AnimatingSystemTest(unittest.TestCase):
     def test__update_frame__6(self):
         for action in animations.RESET_TO_IDLE_ANIMATIONS:
             self.actor.action = action
-            self.actor.frame_id = animations.ANIMATION_NUM_FRAMES - 1
+            self.actor.frame_id = constants.ANIMATION_NUM_FRAMES - 1
             self.actor.frame_duration_ms = 5
             self.sys.update_frame(self.actor, 10)
 
@@ -204,7 +205,7 @@ class AnimatingSystemTest(unittest.TestCase):
     # Case 7: climbing leads to holding
     def test__update_frame__7(self):
         self.actor.action = animations.Action.CLIMB
-        self.actor.frame_id = animations.ANIMATION_NUM_FRAMES - 1
+        self.actor.frame_id = constants.ANIMATION_NUM_FRAMES - 1
         self.actor.frame_duration_ms = 5
         self.sys.update_frame(self.actor, 10)
 
@@ -216,12 +217,12 @@ class AnimatingSystemTest(unittest.TestCase):
     def test__update_frame__8(self):
         for action in animations.FREEZE_AT_END_ANIMATIONS:
             self.actor.action = action
-            self.actor.frame_id = animations.ANIMATION_NUM_FRAMES - 1
+            self.actor.frame_id = constants.ANIMATION_NUM_FRAMES - 1
             self.actor.frame_duration_ms = 5
             self.sys.update_frame(self.actor, 10)
 
             self.assertEqual(self.actor.frame_duration_ms, 295)
-            self.assertEqual(self.actor.frame_id, animations.ANIMATION_NUM_FRAMES-1)
+            self.assertEqual(self.actor.frame_id, constants.ANIMATION_NUM_FRAMES-1)
             self.assertEqual(self.actor.action, action)
 
     # ------------------------------------------------------------------------------------------------------------------

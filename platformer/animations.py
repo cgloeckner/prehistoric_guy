@@ -1,10 +1,10 @@
 import math
 from dataclasses import dataclass
 from abc import ABC, abstractmethod
-from typing import Optional, List
+from typing import List
+from enum import IntEnum
 
-from core.constants import *
-from core import resources
+from core import constants, resources
 
 
 ANIMATION_FRAME_DURATION: int = 120
@@ -151,15 +151,15 @@ class EventListener(ABC):
 class Animating(object):
     """Handles all frame set animations.
     """
-    def __init__(self, animation_listener: EventListener):
-        self.animations: List[Actor] = list()
+    def __init__(self, animation_listener: EventListener, context: Context):
         self.event_listener = animation_listener
+        self.context = context
 
-    def get_by_id(self, object_id: int) -> Actor:
+    def get_actor_by_id(self, object_id: int) -> Actor:
         """Returns the animation who matches the given object_id.
         May throw an IndexError.
         """
-        return [a for a in self.animations if a.object_id == object_id][0]
+        return [a for a in self.context.actors if a.object_id == object_id][0]
 
     def notify_animation(self, ani: Actor) -> None:
         """Notify about a finished animation.
@@ -185,7 +185,7 @@ class Animating(object):
             ani.frame_duration_ms += ani.frame_max_duration_ms
             ani.frame_id += 1
 
-        if ani.frame_id < ANIMATION_NUM_FRAMES:
+        if ani.frame_id < constants.ANIMATION_NUM_FRAMES:
             return
 
         # handle animation type (loop, reset, freeze)
@@ -227,6 +227,6 @@ class Animating(object):
         """Updates all animations' frame durations. It automatically switches frames and loops/returns/freezes the
         animation once finished.
         """
-        for ani in self.animations:
+        for ani in self.context.actors:
             self.update_frame(ani, elapsed_ms)
             self.update_movement(ani, elapsed_ms)
