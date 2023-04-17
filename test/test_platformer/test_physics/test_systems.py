@@ -254,7 +254,7 @@ class ProjectileSystemsTest(unittest.TestCase):
         self.system = systems.ProjectileSystem(self.listener, self.context)
 
     def test__handle_movement(self):
-        proj = self.context.create_projectile(x=2.0, y=1.0)
+        proj = self.context.create_projectile(object_id=10, x=2.0, y=1.0)
         proj.movement.force.x = 1.0
         proj.movement.force.y = -1.0
 
@@ -263,7 +263,7 @@ class ProjectileSystemsTest(unittest.TestCase):
         self.assertLess(proj.pos.y, old_pos.y)
 
     def test__handle_platform_collision(self):
-        proj = self.context.create_projectile(x=2.0, y=2.0)
+        proj = self.context.create_projectile(object_id=10, x=2.0, y=2.0)
         proj.movement.force.x = 1.0
         proj.movement.force.y = -0.1
         old_pos = proj.pos.copy()
@@ -306,7 +306,7 @@ class ProjectileSystemsTest(unittest.TestCase):
         self.assertEqual(self.listener.last[2], platform)
 
     def test__handle_actor_collision(self):
-        proj = self.context.create_projectile(x=2.0, y=2.0)
+        proj = self.context.create_projectile(object_id=10, x=2.0, y=2.0)
         proj.movement.force.x = 1.0
 
         # no actor means no collision

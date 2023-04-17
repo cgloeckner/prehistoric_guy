@@ -8,7 +8,7 @@ from core import ui
 
 from platformer import animations
 from platformer import physics
-from platformer.renderer import blit_renderer
+from platformer.renderer import images
 from platformer import characters
 
 
@@ -52,7 +52,7 @@ def get_throwing_process(player: Actor) -> float:
 
 
 class Players(object):
-    def __init__(self, context: physics.Context, ani_system: animations.Animating, render_system: render.Renderer,
+    def __init__(self, context: physics.Context, ani_system: animations.Animating, render_system: renderer.ImageRenderer,
                  char_system: characters.Characters, cache: resources.Cache, hud_target: pygame.Surface):
         """
         :param context: Physics Context
@@ -126,7 +126,7 @@ class Players(object):
         """Triggers movement, jumping, climbing, attacking etc.
         """
         ani_actor = self.ani_system.get_by_id(player.object_id)
-        phys_actor = self.context.get_by_id(player.object_id)
+        phys_actor = self.context.get_actor_by_id(player.object_id)
 
         if ani_actor.action in animations.BLOCKING_ANIMATIONS:
             # nothing allowed
@@ -196,7 +196,7 @@ class Players(object):
                                  (0 * OBJECT_SCALE, WEAPON_HUD * OBJECT_SCALE, OBJECT_SCALE, OBJECT_SCALE))
 
     def draw_throw_progress(self, char_actor: characters.Actor, value: float) -> None:
-        phys_actor = self.context.get_by_id(char_actor.object_id)
+        phys_actor = self.context.get_actor_by_id(char_actor.object_id)
 
         pos = self.render_system.camera.world_to_screen_coord(phys_actor.pos.x, phys_actor.pos.y)
         pos.y -= WORLD_SCALE

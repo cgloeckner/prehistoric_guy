@@ -7,7 +7,7 @@ from platformer.renderer import base
 
 
 @dataclass
-class AsciiMapping:
+class Mapping:
     empty: str = '.'
     filled: str = 'X'
     platform: str = '_'
@@ -19,10 +19,10 @@ class AsciiMapping:
 
 class AsciiRenderer(base.Renderer):
 
-    def __init__(self, camera: base.Camera, context: physics.Context, mapping: AsciiMapping):
+    def __init__(self, camera: base.Camera, context: physics.Context):
         super().__init__(camera)
         self.context = context
-        self.mapping = mapping
+        self.mapping = Mapping()
         self.buffer: List[List[str]]
 
         self._clear_buffer()
@@ -105,14 +105,12 @@ if __name__ == '__main__':
     ctx.create_ladder(x=9, y=3, height=2)
     ctx.create_object(x=1.5, y=3, object_type=physics.ObjectType.FOOD)
     ctx.create_actor(1, x=8.5, y=5)
-    ctx.create_projectile(x=6.5, y=5.5)
-
-    mapping = AsciiMapping()
+    ctx.create_projectile(2, x=6.5, y=5.5)
 
     cam = base.Camera(10, 6)
-    #cam.move_ip(-1, 0)
+    #cam.center.x += -1.0
 
-    r = AsciiRenderer(cam, ctx, mapping)
+    r = AsciiRenderer(cam, ctx)
     r.draw()
 
     out = ''

@@ -50,9 +50,46 @@ class Actor:
     # movement animation
     delta_y: float = 0.0
     total_frame_time_ms: int = 0
-    # hsl animation
-    hsl: Optional[resources.HslTransform] = None
-    hsl_duration_ms: int = ANIMATION_FRAME_DURATION
+
+
+@dataclass
+class Projectile:
+    object_id: int
+    # FIXME: add stuff for spinning animation
+
+
+class Context:
+    def __init__(self):
+        self.actors: List[Actor] = list()
+        self.projectiles: List[Projectile] = list()
+
+    def get_actor_by_id(self, object_id: int) -> Actor:
+        for actor in self.actors:
+            if actor.object_id == object_id:
+                return actor
+
+        # FIXME
+        raise ValueError(f'No such Actor {object_id}')
+
+    def get_projectile_by_id(self, object_id: int) -> Projectile:
+        for proj in self.projectiles:
+            if proj.object_id == object_id:
+                return proj
+
+        # FIXME
+        raise ValueError(f'No such Actor {object_id}')
+
+    def create_actor(self, object_id: int) -> Actor:
+        a = Actor(object_id=object_id)
+        self.actors.append(a)
+        return a
+
+    def create_projectile(self, object_id: int, ) -> Projectile:
+        p = Projectile(object_id=object_id)
+        self.projectiles.append(p)
+        return p
+
+# ----------------------------------------------------------------------------------------------------------------------
 
 
 def start(ani: Actor, action: Action, duration_ms: int = ANIMATION_FRAME_DURATION) -> bool:
@@ -169,17 +206,6 @@ class Animating(object):
             # freeze at last frame
             ani.frame_id -= 1
 
-    def update_hsl(self, ani: Actor, elapsed_ms: int) -> None:
-        if ani.hsl is None:
-            return
-
-        ani.hsl_duration_ms -= elapsed_ms
-        if ani.hsl_duration_ms > 0:
-            return
-
-        ani.hsl_duration_ms = 0
-        ani.hsl = None
-
     def update_movement(self, ani: Actor, elapsed_ms: int) -> None:
         """Updates the movement animation, where a small height difference is applied while moving and climbing.
         """
@@ -203,5 +229,4 @@ class Animating(object):
         """
         for ani in self.animations:
             self.update_frame(ani, elapsed_ms)
-            self.update_hsl(ani, elapsed_ms)
             self.update_movement(ani, elapsed_ms)

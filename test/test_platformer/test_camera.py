@@ -149,7 +149,7 @@ class CameraTest(unittest.TestCase):
         self.assertEqual(tex.height, WORLD_SCALE)
 
     def test__get_projectile_rects(self):
-        proj = physics.Projectile(pos=pygame.math.Vector2(2, 3), radius=0.5, object_type=ObjectType.DANGER)
+        proj = physics.Projectile(object_id=10, pos=pygame.math.Vector2(2, 3), radius=0.5, object_type=ObjectType.DANGER)
         pos, clip = self.cam.get_projectile_rects(proj)
 
         screen_pos = self.cam.world_to_screen_coord(*proj.pos)

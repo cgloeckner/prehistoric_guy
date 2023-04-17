@@ -18,10 +18,18 @@ class Context:
         self.actors: List[actors.Actor] = list()
         self.projectiles: List[projectiles.Projectile] = list()
 
-    def get_by_id(self, object_id: int) -> actors.Actor:
+    def get_actor_by_id(self, object_id: int) -> actors.Actor:
         for actor in self.actors:
             if actor.object_id == object_id:
                 return actor
+
+        # FIXME
+        raise ValueError(f'No such Actor {object_id}')
+
+    def get_projectile_by_id(self, object_id: int) -> projectiles.Projectile:
+        for proj in self.projectiles:
+            if proj.object_id == object_id:
+                return proj
 
         # FIXME
         raise ValueError(f'No such Actor {object_id}')
@@ -47,9 +55,9 @@ class Context:
         self.actors.append(a)
         return a
 
-    def create_projectile(self, x: float, y: float, from_actor: Optional[actors.Actor] = None) \
+    def create_projectile(self, object_id: int, x: float, y: float, from_actor: Optional[actors.Actor] = None) \
             -> projectiles.Projectile:
-        p = projectiles.Projectile(pos=pygame.math.Vector2(x, y), from_actor=from_actor)
+        p = projectiles.Projectile(object_id=object_id, pos=pygame.math.Vector2(x, y), from_actor=from_actor)
         self.projectiles.append(p)
         if from_actor is not None:
             p.movement.face_x = from_actor.movement.face_x

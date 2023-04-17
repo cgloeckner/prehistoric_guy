@@ -53,28 +53,6 @@ class AnimationFunctionsTest(unittest.TestCase):
         self.assertEqual(actor.frame_max_duration_ms, 235)
         self.assertEqual(actor.total_frame_time_ms, 0)
 
-    # ------------------------------------------------------------------------------------------------------------------
-
-    # Case 1: Change HSL
-    def test__flash__1(self):
-        actor = animations.Actor(13)
-
-        hsl = resources.HslTransform(hue=123, saturation=45, lightness=67)
-        animations.flash(actor, hsl)
-
-        self.assertEqual(actor.hsl, hsl)
-        self.assertEqual(actor.hsl_duration_ms, animations.ANIMATION_FRAME_DURATION)
-
-    # Case 2: Change HSL with custom duration
-    def test__flash__2(self):
-        actor = animations.Actor(13)
-
-        hsl = resources.HslTransform(hue=123, saturation=45, lightness=67)
-        animations.flash(actor, hsl, 835)
-
-        self.assertEqual(actor.hsl, hsl)
-        self.assertEqual(actor.hsl_duration_ms, 835)
-
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -110,8 +88,6 @@ class AnimatingSystemTest(unittest.TestCase):
         self.actor.frame_duration_ms = 200
         self.actor.total_frame_time_ms = 100
         self.actor.frame_id = 1
-
-        self.actor.hsl_duration_ms = 200
 
     # ------------------------------------------------------------------------------------------------------------------
 
@@ -250,23 +226,6 @@ class AnimatingSystemTest(unittest.TestCase):
 
     # ------------------------------------------------------------------------------------------------------------------
 
-    # Case 1: update HSL if provided
-    def test__update_hsl__1(self):
-        self.actor.hsl = resources.HslTransform(hue=150)
-        self.sys.update_hsl(self.actor, 50)
-
-        self.assertIsNotNone(self.actor.hsl)
-        self.assertEqual(self.actor.hsl_duration_ms, 150)
-
-    # Case 2: skipped if no HSL provided
-    def test__update_hsl__2(self):
-        self.sys.update_hsl(self.actor, 50)
-
-        self.assertIsNone(self.actor.hsl)
-        self.assertEqual(self.actor.hsl_duration_ms, 200)  # prev. value
-
-    # ------------------------------------------------------------------------------------------------------------------
-
     # Case 1: y-offset is not used for most animations
     def test__update_movement__1(self):
         for _, action in animations.Action.__members__.items():
@@ -294,11 +253,8 @@ class AnimatingSystemTest(unittest.TestCase):
     # ------------------------------------------------------------------------------------------------------------------
 
     def test__update(self):
-        self.actor.hsl = resources.HslTransform(hue=25)
-        self.actor.hsl_duration_ms = 230
         self.actor.action = animations.Action.MOVE
         self.sys.update(210)
 
         self.assertEqual(self.actor.frame_id, 2)
-        self.assertEqual(self.actor.hsl_duration_ms, 20)
         self.assertAlmostEqual(self.actor.delta_y, -0.766, 2)

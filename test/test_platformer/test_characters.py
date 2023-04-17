@@ -112,7 +112,7 @@ class CharacterSystemTest(unittest.TestCase):
     # ------------------------------------------------------------------------------------------------------------------
 
     def test__apply_projectile_hit(self):
-        proj = physics.Projectile(pos=pygame.math.Vector2(0, 0), radius=0.5)
+        proj = physics.Projectile(object_id=10, pos=pygame.math.Vector2(0, 0), radius=0.5)
 
         # anonymous projectile can hit actor
         self.sys.apply_projectile_hit(self.actor, 2, proj)

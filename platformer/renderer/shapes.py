@@ -9,7 +9,7 @@ from platformer.renderer import base
 
 
 @dataclass
-class ColorMapping:
+class Mapping:
     platform: str = 'red'
     ladder: str = 'yellow'
     object: str = 'blue'
@@ -17,13 +17,13 @@ class ColorMapping:
     projectile: str = 'red'
 
 
-class ShapesRenderer(base.Renderer):
+class ShapeRenderer(base.Renderer):
 
-    def __init__(self, camera: base.Camera, context: physics.Context, mapping: ColorMapping, target: pygame.Surface):
+    def __init__(self, camera: base.Camera, target: pygame.Surface, physics_context: physics.Context):
         super().__init__(camera)
-        self.context = context
-        self.mapping = mapping
         self.target = target
+        self.physics_context = physics_context
+        self.mapping = Mapping()
 
     def world_to_screen_coord(self, pos: pygame.math.Vector2) -> pygame.math.Vector2:
         """Translates world coordinates into screen coordinates.
@@ -125,26 +125,19 @@ class ShapesRenderer(base.Renderer):
         pygame.gfxdraw.circle(self.target, *pos.center, r, c)
 
     def draw(self) -> None:
-        grey = pygame.Color('#303030')
-        for y in range(self.camera.height // WORLD_SCALE + 1):
-            for x in range(self.camera.width // WORLD_SCALE):
-                if x % 2 != y % 2:
-                    continue
-                pygame.draw.rect(self.target, grey, (x * WORLD_SCALE, self.camera.height - y * WORLD_SCALE, WORLD_SCALE, WORLD_SCALE))
-
-        for platform in self.context.platforms:
+        for platform in self.physics_context.platforms:
             self.draw_platform(platform)
 
-        for ladder in self.context.ladders:
+        for ladder in self.physics_context.ladders:
             self.draw_ladder(ladder)
 
-        for obj in self.context.objects:
+        for obj in self.physics_context.objects:
             self.draw_object(obj)
 
-        for projectile in self.context.projectiles:
+        for projectile in self.physics_context.projectiles:
             self.draw_projectile(projectile)
 
-        for actor in self.context.actors:
+        for actor in self.physics_context.actors:
             self.draw_actor(actor)
 
 
@@ -157,19 +150,26 @@ if __name__ == '__main__':
     ctx.create_ladder(x=9, y=3, height=2)
     ctx.create_object(x=1.5, y=3, object_type=physics.ObjectType.FOOD)
     ctx.create_actor(1, x=8.5, y=5)
-    ctx.create_projectile(x=6.5, y=5.5)
+    ctx.create_projectile(2, x=6.5, y=5.5)
 
-    mapping = ColorMapping()
+    mapping = Mapping()
 
     cam = base.Camera(10 * WORLD_SCALE, 6 * WORLD_SCALE)
-    #cam.move_ip(-1, 0)
+    #cam.center.x += -1.0
 
     import os
     os.environ["SDL_VIDEODRIVER"] = "dummy"
     pygame.init()
-    buffer = pygame.Surface(cam.size)
+    buffer = pygame.Surface((cam.width, cam.height))
 
-    r = ShapesRenderer(cam, ctx, mapping, buffer)
-    r.draw()
+    grey = pygame.Color('#303030')
+    for y in range(cam.height // WORLD_SCALE + 1):
+        for x in range(cam.width // WORLD_SCALE):
+            if x % 2 != y % 2:
+                continue
+            pygame.draw.rect(buffer, grey, (x * WORLD_SCALE, cam.height - y * WORLD_SCALE, WORLD_SCALE, WORLD_SCALE))
+
+    ren = ShapeRenderer(cam, buffer, ctx)
+    ren.draw()
 
     pygame.image.save(buffer, '/tmp/test.png')

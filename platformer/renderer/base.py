@@ -3,23 +3,25 @@ import pygame
 from abc import ABC, abstractmethod
 
 
-class Camera(pygame.Rect):
+class Camera:
     def __init__(self, width: int, height: int):
-        super().__init__(0, 0, width, height)
+        self.center = pygame.math.Vector2()
+        self.width = width
+        self.height = height
 
     def world2cam_coord(self, pos: pygame.math.Vector2) -> pygame.math.Vector2:
         """Transforms coordinates form world to cam
         Example: Camera (topleft) at (2|3) moves all coordinates using (-2|-3).
         """
-        x = pos.x - self.left
-        y = pos.y - self.top
+        x = pos.x - self.center.x
+        y = pos.y - self.center.y
         return pygame.math.Vector2(x, y)
 
     def cam2world_coord(self, pos: pygame.math.Vector2) -> pygame.math.Vector2:
         """Transforms coordinates from cam/screen to world.
         """
-        x = pos.x + self.left
-        y = pos.y + self.top
+        x = pos.x + self.center.x
+        y = pos.y + self.center.y
         return pygame.math.Vector2(x, y)
 
 

@@ -137,7 +137,7 @@ class ObjectManager(physics.EventListener, animations.EventListener, characters.
             return
 
         # query target actors
-        phys_actor = self.context.get_by_id(ani.object_id)
+        phys_actor = self.context.get_actor_by_id(ani.object_id)
         targets = phys_actor.get_all_faced_actors(self.context.actors, characters.MELEE_ATTACK_RADIUS)
 
         # damage their characters if possible
@@ -152,7 +152,7 @@ class ObjectManager(physics.EventListener, animations.EventListener, characters.
         """Triggered when an attack animation finished.
         """
         char_actor = self.chars.get_by_id(ani_actor.object_id)
-        phys_actor = self.context.get_by_id(ani_actor.object_id)
+        phys_actor = self.context.get_actor_by_id(ani_actor.object_id)
         if char_actor.num_axes == 0:
             return
 
@@ -251,9 +251,9 @@ class ObjectManager(physics.EventListener, animations.EventListener, characters.
     def destroy_actor_by_id(self, object_id: int) -> None:
         """Remove an actor (with all components) using the object id.
         """
-        phys_actor = self.context.get_by_id(object_id)
+        phys_actor = self.context.get_actor_by_id(object_id)
         ani_actor = self.animation.get_by_id(object_id)
-        render_actor = self.renderer.get_by_id(object_id)
+        render_actor = self.renderer.get_actor_by_id(object_id)
         self.context.actors.remove(phys_actor)
         self.animation.animations.remove(ani_actor)
         self.renderer.sprites.remove(render_actor)
@@ -274,7 +274,7 @@ class ObjectManager(physics.EventListener, animations.EventListener, characters.
         """
         if keep_components:
             # stop movement and make unable to collide anymore
-            phys_actor = self.context.get_by_id(character.object_id)
+            phys_actor = self.context.get_actor_by_id(character.object_id)
             phys_actor.force_x = 0.0
             phys_actor.can_collide = False
         else:

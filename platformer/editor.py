@@ -8,7 +8,7 @@ from core import shapes
 
 from platformer import physics
 from platformer import animations
-from platformer.renderer import blit_renderer
+from platformer.renderer import images
 from platformer import factory
 
 
@@ -191,8 +191,8 @@ class SceneEditor(object):
             self.selected = None
 
         if isinstance(self.selected, physics.Actor):
-            ani_actor = self.obj_manager.animation.get_by_id(self.selected.object_id)
-            render_actor = self.obj_manager.renderer.get_by_id(self.selected.object_id)
+            ani_actor = self.obj_manager.animation.get_actor_by_id(self.selected.object_id)
+            render_actor = self.obj_manager.renderer.get_actor_by_id(self.selected.object_id)
             if actor_ui(self.selected, ani_actor, render_actor):
                 self.selected = None
 

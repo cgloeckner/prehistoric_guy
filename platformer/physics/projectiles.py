@@ -16,6 +16,7 @@ GRAVITY_WEIGHT: float = 0.1
 
 @dataclass
 class Projectile:
+    object_id: int
     pos: pygame.math.Vector2  # center
     radius: float = OBJECT_RADIUS
     object_type: ObjectType = ObjectType.WEAPON
