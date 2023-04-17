@@ -49,7 +49,7 @@ class GameState(state_machine.State):
         self.manager.create_platform(x=3, y=7, width=1, hover=physics.Hovering(x=math.cos, amplitude=-2))
 
         self.manager.create_random_object()
-        self.manager.create_object(x=1, y=1, object_type=physics.ObjectType.FOOD)
+        self.manager.create_object(x=1, y=1, object_type=constants.ObjectType.FOOD)
 
         # ladders
         self.manager.create_ladder(x=1.5, y=2, height=4)
@@ -105,11 +105,11 @@ class GameState(state_machine.State):
             left_bound = phys_enemy.on_platform.pos.x + phys_enemy.on_platform.width * 0.05
             right_bound = phys_enemy.on_platform.pos.x + phys_enemy.on_platform.width * 0.95
             if phys_enemy.pos.x < left_bound:
-                phys_enemy.movement.face_x = 1.0
+                phys_enemy.move.face_x = 1.0
             elif phys_enemy.pos.x > right_bound:
-                phys_enemy.movement.face_x = -1.0
+                phys_enemy.move.face_x = -1.0
 
-            phys_enemy.movement.force.x = phys_enemy.movement.face_x
+            phys_enemy.move.force.x = phys_enemy.move.face_x
             animations.start(ani_enemy, animations.Action.MOVE)
 
         # --- Demo: limit pos to screen --------------------------------------------------------------------------------

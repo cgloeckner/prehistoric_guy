@@ -19,4 +19,6 @@ class ObjectType(IntEnum):
     WEAPON = 3
 
 
+OBJECT_RADIUS: float = 0.25
+
 OBJECT_NUM_VERSIONS: int = 6

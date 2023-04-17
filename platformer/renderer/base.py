@@ -18,8 +18,7 @@ class Camera:
         return pygame.math.Vector2(x, y)
 
     def to_world_coord(self, pos: pygame.math.Vector2) -> pygame.math.Vector2:
-        """Transforms coordinates from cam/screen to world.
-        """
+        """Transforms coordinates from cam/screen to world."""
         x = pos.x + self.center.x
         y = pos.y + self.center.y
         return pygame.math.Vector2(x, y)

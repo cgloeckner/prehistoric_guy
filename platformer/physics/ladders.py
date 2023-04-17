@@ -2,9 +2,7 @@ import pygame
 from dataclasses import dataclass
 from typing import Sequence, Tuple, Optional, List
 
-from core import shapes
-
-from platformer.physics.constants import *
+from core import constants, shapes
 
 
 @dataclass
@@ -21,13 +19,12 @@ class Ladder:
         The ladder is in reach +/- OBJECT_RADIUS in x-wise.
         The ladder's top is in reach y-wise, bottom is excluded with a padding by OBJECT_RADIUS.
         """
-        return self.pos.x - OBJECT_RADIUS <= pos.x <= self.pos.x + OBJECT_RADIUS and \
-            self.pos.y + OBJECT_RADIUS <= pos.y <= self.pos.y + self.height
+        return self.pos.x - constants.OBJECT_RADIUS <= pos.x <= self.pos.x + constants.OBJECT_RADIUS and \
+            self.pos.y + constants.OBJECT_RADIUS <= pos.y <= self.pos.y + self.height
 
 
 def get_closest_ladder_in_reach(pos: pygame.math.Vector2, ladder_seq: Sequence[Ladder]) -> Optional[Ladder]:
-    """Returns the closest ladder in reach.
-    """
+    """Returns the closest ladder in reach."""
     relevant: List[Tuple[Ladder, float]] = list()
     for ladder in ladder_seq:
         if not ladder.is_in_reach_of(pos):

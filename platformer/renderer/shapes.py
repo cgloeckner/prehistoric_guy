@@ -4,8 +4,8 @@ from dataclasses import dataclass
 
 from core import constants
 
-from platformer import physics
-from platformer.renderer import base
+from .. import physics
+from . import base
 
 
 @dataclass
@@ -38,9 +38,7 @@ class ShapeRenderer(base.Renderer):
         return p
 
     def to_world_coord(self, pos: pygame.math.Vector2) -> pygame.math.Vector2:
-        """Translates screen coordinates into world coordinates.
-        Returns a vector of float coordinates.
-        """
+        """Translates screen coordinates into world coordinates. Returns a vector of float coordinates."""
         p = pos.copy()
         p.y = self.target.get_height() - p.y
         p /= constants.WORLD_SCALE
@@ -48,24 +46,21 @@ class ShapeRenderer(base.Renderer):
         return p
 
     def get_platform_rect(self, platform: physics.Platform) -> pygame.Rect:
-        """Returns the positioning rect.
-        """
+        """Returns the positioning rect."""
         pos_rect = pygame.Rect(0, 0, platform.width * constants.WORLD_SCALE, platform.height * constants.WORLD_SCALE)
         pos_rect.topleft = self.from_world_coord(platform.pos)
 
         return pos_rect
 
     def get_ladder_rect(self, ladder: physics.Ladder) -> pygame.Rect:
-        """Returns the positioning rect.
-        """
+        """Returns the positioning rect."""
         pos_rect = pygame.Rect(0, 0, constants.WORLD_SCALE, ladder.height * constants.WORLD_SCALE)
         pos_rect.midbottom = self.from_world_coord(ladder.pos)
 
         return pos_rect
 
     def get_object_rect(self, obj: physics.Object) -> pygame.Rect:
-        """Returns the positioning and clipping rectangles.
-        """
+        """Returns the positioning and clipping rectangles."""
         # FIXME: make more flexible
         variation_col = 0
 
@@ -75,16 +70,14 @@ class ShapeRenderer(base.Renderer):
         return pos_rect
 
     def get_actor_rect(self, actor: physics.Actor) -> pygame.Rect:
-        """Returns the positioning rect.
-        """
+        """Returns the positioning rect."""
         pos_rect = pygame.Rect(0, 0, constants.SPRITE_SCALE, constants.SPRITE_SCALE)
         pos_rect.midbottom = self.from_world_coord(actor.pos)
 
         return pos_rect
 
     def get_projectile_rect(self, proj: physics.Projectile) -> pygame.Rect:
-        """Returns the positioning rect.
-        """
+        """Returns the positioning rect."""
         # FIXME: make more flexible
         variation_col = 0
 
@@ -107,7 +100,7 @@ class ShapeRenderer(base.Renderer):
 
     def draw_object(self, obj: physics.Object) -> None:
         pos = self.get_object_rect(obj)
-        r = int(physics.OBJECT_RADIUS * constants.WORLD_SCALE)
+        r = int(constants.OBJECT_RADIUS * constants.WORLD_SCALE)
         c = pygame.Color(self.mapping.object)
         pygame.gfxdraw.circle(self.target, *pos.center, r, c)
 

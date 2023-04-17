@@ -1,5 +1,6 @@
 import unittest
 
+from core import constants
 from platformer.renderer import base, ascii
 from platformer import physics
 
@@ -13,7 +14,7 @@ class AsciiRendererTest(unittest.TestCase):
         self.ctx.create_platform(x=7, y=5, width=2)
         self.ctx.create_platform(x=1, y=5, width=3)
         self.ctx.create_ladder(x=9, y=3, height=2)
-        self.ctx.create_object(x=1.5, y=3, object_type=physics.ObjectType.FOOD)
+        self.ctx.create_object(x=1.5, y=3, object_type=constants.ObjectType.FOOD)
         self.ctx.create_actor(1, x=8.5, y=5)
         self.ctx.create_projectile(2, x=6.5, y=5.5)
 

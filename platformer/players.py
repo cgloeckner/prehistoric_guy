@@ -4,7 +4,7 @@ from typing import List, Optional
 
 from core import constants, resources, ui
 
-from platformer import animations, physics, renderer, characters
+from . import animations, physics, renderer, characters
 
 
 # keypress time required to throw
@@ -38,8 +38,7 @@ class Actor:
 
 
 def get_throwing_process(player: Actor) -> float:
-    """Returns a float in [0.0; 1.0] that yields the percentage of the keydown-for-throwing duration.
-    """
+    """Returns a float in [0.0; 1.0] that yields the percentage of the keydown-for-throwing duration."""
     if player.attack_held_ms == -1:
         return 0.0
 
@@ -61,22 +60,18 @@ class Players(object):
         self.tileset = cache.get_image('hud')
 
     def get_by_id(self, object_id: int) -> Actor:
-        """Returns the actor who matches the given object_id.
-        May throw an IndexError.
-        """
+        """Returns the actor who matches the given object_id. May throw an IndexError."""
         return [a for a in self.players if a.object_id == object_id][0]
 
     def try_get_by_id(self, object_id: int) -> Optional[Actor]:
-        """Returns the actor who matches the given object_id or None
-        """
+        """Returns the actor who matches the given object_id or None."""
         try:
             return self.get_by_id(object_id)
         except IndexError:
             return None
 
     def process_event(self, event: pygame.event.Event) -> None:
-        """Handles inputs and sets the action accordingly.
-        """
+        """Handles inputs and sets the action accordingly."""
         for player in self.players:
             if event.type == pygame.KEYDOWN and event.key == player.attack_key:
                 player.attack_held_ms = 0
@@ -89,8 +84,7 @@ class Players(object):
                 player.attack_held_ms = -1
 
     def get_inputs(self, player: Actor, elapsed_ms: int) -> None:
-        """Grabs the movement vector and whether it's an attack or not.
-        """
+        """Grabs the movement vector and whether it's an attack or not."""
         keys = pygame.key.get_pressed()
 
         # query movement vector
@@ -111,15 +105,14 @@ class Players(object):
                 player.attack_held_ms = 0.0
 
     def handle_inputs(self, player: Actor) -> None:
-        """Triggers movement, jumping, climbing, attacking etc.
-        """
+        """Triggers movement, jumping, climbing, attacking etc."""
         ani_actor = self.animations_context.get_actor_by_id(player.object_id)
         phys_actor = self.physics_context.get_actor_by_id(player.object_id)
 
         if ani_actor.action in animations.BLOCKING_ANIMATIONS:
             # nothing allowed
-            phys_actor.movement.force.x = 0.0
-            phys_actor.movement.force.y = 0.0
+            phys_actor.move.force.x = 0.0
+            phys_actor.move.force.y = 0.0
             return
 
         if player.char_action == characters.Action.THROW:
@@ -158,13 +151,12 @@ class Players(object):
         if player.char_action != animations.Action.JUMP:
             was_started = True
 
-        phys_actor.movement.force.x = player.delta_x
+        phys_actor.move.force.x = player.delta_x
         if was_started and player.delta_y != 0.0:
-            phys_actor.movement.force.y = player.delta_y
+            phys_actor.move.force.y = player.delta_y
 
     def update(self, elapsed_ms: int) -> None:
-        """Triggers movement/attack and animations.
-        """
+        """Triggers movement/attack and animations."""
         for player in self.players:
             self.get_inputs(player, elapsed_ms)
             self.handle_inputs(player)

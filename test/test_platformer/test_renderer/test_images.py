@@ -17,7 +17,7 @@ class ImageRendererTest(unittest.TestCase):
         self.phy_ctx.create_platform(x=7, y=5, width=2)
         self.phy_ctx.create_platform(x=1, y=5, width=3)
         self.phy_ctx.create_ladder(x=9, y=3, height=2)
-        self.phy_ctx.create_object(x=1.5, y=3, object_type=physics.ObjectType.FOOD)
+        self.phy_ctx.create_object(x=1.5, y=3, object_type=constants.ObjectType.FOOD)
         self.phy_ctx.create_actor(1, x=8.5, y=5)
         self.phy_ctx.create_projectile(2, x=6.5, y=5.5)
 
@@ -108,7 +108,7 @@ class ImageRendererTest(unittest.TestCase):
         ani_actor = self.ani_ctx.actors[0]
         ani_actor.frame_id = 7
         ani_actor.action = animations.Action.THROW
-        clip = self.renderer.get_actor_clip(face_x=phy_actor.movement.face_x, frame_id=ani_actor.frame_id,
+        clip = self.renderer.get_actor_clip(face_x=phy_actor.move.face_x, frame_id=ani_actor.frame_id,
                                             action=ani_actor.action)
 
         self.assertEqual(clip.x, 7 * constants.SPRITE_SCALE)

@@ -1,6 +1,6 @@
 import unittest
 
-from core import constants, resources
+from core import constants
 
 from platformer import animations
 

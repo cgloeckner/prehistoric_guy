@@ -4,7 +4,7 @@ from typing import Optional
 from abc import ABC, abstractmethod
 from enum import IntEnum
 
-from platformer import physics
+from . import physics
 
 
 class Action(IntEnum):
@@ -29,9 +29,7 @@ class Actor:
 
 
 def get_falling_damage(height: float) -> int:
-    """Calculates falling damage based on falling height.
-    Returns integer damage.
-    """
+    """Calculates falling damage based on falling height. Returns integer damage."""
     return int(height / 4.0)
 
 
@@ -43,14 +41,12 @@ class EventListener(ABC):
 
     @abstractmethod
     def on_char_damaged(self, actor: Actor, damage: int, cause: Optional[Actor]) -> None:
-        """Triggered when an actor got damaged.
-        """
+        """Triggered when an actor got damaged."""
         pass
 
     @abstractmethod
     def on_char_died(self, actor: Actor, damage: int, cause: Optional[Actor]) -> None:
-        """Triggered when an actor died. An optional cause can be provided.
-        """
+        """Triggered when an actor died. An optional cause can be provided."""
         pass
 
 
@@ -60,14 +56,11 @@ class Characters(object):
         self.characters = list()
 
     def get_by_id(self, object_id: int) -> Actor:
-        """Returns the actor who matches the given object_id.
-        May throw an IndexError.
-        """
+        """Returns the actor who matches the given object_id. May throw an IndexError."""
         return [a for a in self.characters if a.object_id == object_id][0]
 
     def try_get_by_id(self, object_id: int) -> Optional[Actor]:
-        """Returns the actor who matches the given object_id or None
-        """
+        """Returns the actor who matches the given object_id or None"""
         try:
             return self.get_by_id(object_id)
         except IndexError:

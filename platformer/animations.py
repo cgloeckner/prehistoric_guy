@@ -109,8 +109,7 @@ def start(ani: Actor, action: Action, duration_ms: int = ANIMATION_FRAME_DURATIO
 
 
 def flash(ani: Actor, hsl: resources.HslTransform, duration_ms: int = ANIMATION_FRAME_DURATION) -> None:
-    """Resets the color animation with the given color.
-    """
+    """Resets the color animation with the given color."""
     ani.hsl = hsl
     ani.hsl_duration_ms = duration_ms
 
@@ -119,51 +118,42 @@ class EventListener(ABC):
 
     @abstractmethod
     def on_step(self, ani: Actor) -> None:
-        """Triggered when a cycle of a move animation finished.
-        """
+        """Triggered when a cycle of a move animation finished."""
         pass
 
     @abstractmethod
     def on_climb(self, ani: Actor) -> None:
-        """Triggered when a cycle of a climbing animation finished.
-        """
+        """Triggered when a cycle of a climbing animation finished."""
         pass
 
     @abstractmethod
     def on_attack(self, ani: Actor) -> None:
-        """Triggered when an attack animation finished.
-        """
+        """Triggered when an attack animation finished."""
         pass
 
     @abstractmethod
     def on_throw(self, ani: Actor) -> None:
-        """Triggered when a throwing animation finished.
-        """
+        """Triggered when a throwing animation finished."""
         pass
 
     @abstractmethod
     def on_died(self, ani: Actor) -> None:
-        """Triggered when a dying animation finished.
-        """
+        """Triggered when a dying animation finished."""
         pass
 
 
 class Animating(object):
-    """Handles all frame set animations.
-    """
+    """Handles all frame set animations."""
     def __init__(self, animation_listener: EventListener, context: Context):
         self.event_listener = animation_listener
         self.context = context
 
     def get_actor_by_id(self, object_id: int) -> Actor:
-        """Returns the animation who matches the given object_id.
-        May throw an IndexError.
-        """
+        """Returns the animation who matches the given object_id. May throw an IndexError."""
         return [a for a in self.context.actors if a.object_id == object_id][0]
 
     def notify_animation(self, ani: Actor) -> None:
-        """Notify about a finished animation.
-        """
+        """Notify about a finished animation."""
         if ani.action == Action.MOVE:
             self.event_listener.on_step(ani)
         elif ani.action == Action.ATTACK:
@@ -174,8 +164,7 @@ class Animating(object):
             self.event_listener.on_died(ani)
 
     def update_frame(self, ani: Actor, elapsed_ms: int) -> None:
-        """Update a single frame animation.
-        """
+        """Update a single frame animation."""
         # continue animation
         ani.frame_duration_ms -= elapsed_ms
         if ani.frame_duration_ms > 0:
@@ -207,8 +196,7 @@ class Animating(object):
             ani.frame_id -= 1
 
     def update_movement(self, ani: Actor, elapsed_ms: int) -> None:
-        """Updates the movement animation, where a small height difference is applied while moving and climbing.
-        """
+        """Updates the movement animation, where a small height difference is applied while moving and climbing."""
         if ani.action not in [Action.MOVE, Action.CLIMB]:
             ani.total_frame_time_ms = 0
             return

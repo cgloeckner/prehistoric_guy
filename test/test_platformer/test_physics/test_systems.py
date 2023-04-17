@@ -1,5 +1,6 @@
 import unittest
 
+from core import constants
 from platformer.physics import actors, platforms, objects, projectiles, ladders, systems, context
 
 
@@ -46,7 +47,7 @@ class ActorSystemsTest(unittest.TestCase):
         self.system = systems.ActorSystem(self.listener, self.context)
 
     def test__handle_ladders(self):
-        actor = self.context.create_actor(1, x=2.0, y=1.0 + objects.OBJECT_RADIUS)
+        actor = self.context.create_actor(1, x=2.0, y=1.0 + constants.OBJECT_RADIUS)
         ladder = self.context.create_ladder(x=2.0, y=1.0, height=4)
 
         # grab slightly above bottom (since bottom pos itself does not lead to grabbing)
@@ -65,7 +66,7 @@ class ActorSystemsTest(unittest.TestCase):
 
         # release
         self.listener.last = None
-        actor.pos.x += objects.OBJECT_RADIUS + 0.01
+        actor.pos.x += constants.OBJECT_RADIUS + 0.01
         self.system.handle_ladders(actor)
         self.assertIsNone(actor.on_ladder)
         self.assertIsInstance(self.listener.last, tuple)
@@ -93,7 +94,7 @@ class ActorSystemsTest(unittest.TestCase):
 
         # starts falling
         self.system.handle_gravity(actor, 10)
-        self.assertLess(actor.movement.force.y, 0.0)
+        self.assertLess(actor.move.force.y, 0.0)
         self.assertIsInstance(self.listener.last, tuple)
         self.assertEqual(len(self.listener.last), 2)
         self.assertEqual(self.listener.last[0], 'falling')
@@ -106,17 +107,17 @@ class ActorSystemsTest(unittest.TestCase):
         self.assertIsNone(self.listener.last)
 
         # jump off ladder
-        actor.movement.force.x = 1.0
-        actor.movement.force.y = 1.0
+        actor.move.force.x = 1.0
+        actor.move.force.y = 1.0
         self.system.handle_gravity(actor, 10)
-        self.assertGreater(actor.movement.force.y, 0.0)
+        self.assertGreater(actor.move.force.y, 0.0)
         self.assertIsNone(self.listener.last)
 
         # turn falling
         actor.on_ladder = None
-        actor.movement.force.y = 0.01
+        actor.move.force.y = 0.01
         self.system.handle_gravity(actor, 10)
-        self.assertLess(actor.movement.force.y, 0.0)
+        self.assertLess(actor.move.force.y, 0.0)
         self.assertIsInstance(self.listener.last, tuple)
         self.assertEqual(len(self.listener.last), 2)
         self.assertEqual(self.listener.last[0], 'falling')
@@ -136,8 +137,8 @@ class ActorSystemsTest(unittest.TestCase):
         self.assertEqual(old_pos, actor.pos)
 
         # force is applied
-        actor.movement.force.x = 1.0
-        actor.movement.force.y = 1.0
+        actor.move.force.x = 1.0
+        actor.move.force.y = 1.0
         old_pos = self.system.handle_movement(actor, 10)
         self.assertGreater(actor.pos.x, old_pos.x)
         self.assertGreater(actor.pos.y, old_pos.y)
@@ -165,15 +166,15 @@ class ActorSystemsTest(unittest.TestCase):
         self.assertIsNone(self.listener.last)
 
         # platform causes anchoring
-        actor.movement.force.x = 1.0
-        actor.movement.force.y = 1.0
+        actor.move.force.x = 1.0
+        actor.move.force.y = 1.0
         platform = self.context.create_platform(x=1.0, y=1.0, width=5)
         self.system.handle_landing(actor, old_pos)
         self.assertEqual(actor.on_platform, platform)
         self.assertAlmostEqual(actor.pos.x, 2.0)
         self.assertAlmostEqual(actor.pos.y, 1.0)
-        self.assertAlmostEqual(actor.movement.force.x, 0.0)
-        self.assertAlmostEqual(actor.movement.force.y, 0.0)
+        self.assertAlmostEqual(actor.move.force.x, 0.0)
+        self.assertAlmostEqual(actor.move.force.y, 0.0)
         self.assertIsInstance(self.listener.last, tuple)
         self.assertEqual(len(self.listener.last), 2)
         self.assertEqual(self.listener.last[0], 'landing')
@@ -202,8 +203,8 @@ class ActorSystemsTest(unittest.TestCase):
         self.system.handle_platform_collision(actor, old_pos)
         self.assertAlmostEqual(actor.pos.x, 1.0)
         self.assertAlmostEqual(actor.pos.y, 1.0)
-        self.assertAlmostEqual(actor.movement.force.x, 0.0)
-        self.assertAlmostEqual(actor.movement.force.y, 0.0)
+        self.assertAlmostEqual(actor.move.force.x, 0.0)
+        self.assertAlmostEqual(actor.move.force.y, 0.0)
         self.assertIsInstance(self.listener.last, tuple)
         self.assertEqual(len(self.listener.last), 3)
         self.assertEqual(self.listener.last[0], 'collision')
@@ -218,7 +219,7 @@ class ActorSystemsTest(unittest.TestCase):
         self.assertIsNone(self.listener.last)
 
         # object can be touched
-        obj = self.context.create_object(x=2.1, y=1.0, object_type=objects.ObjectType.FOOD)
+        obj = self.context.create_object(x=2.1, y=1.0, object_type=constants.ObjectType.FOOD)
         self.system.handle_object_collision(actor)
         self.assertIsInstance(self.listener.last, tuple)
         self.assertEqual(len(self.listener.last), 3)
@@ -255,8 +256,8 @@ class ProjectileSystemsTest(unittest.TestCase):
 
     def test__handle_movement(self):
         proj = self.context.create_projectile(object_id=10, x=2.0, y=1.0)
-        proj.movement.force.x = 1.0
-        proj.movement.force.y = -1.0
+        proj.move.force.x = 1.0
+        proj.move.force.y = -1.0
 
         old_pos = self.system.handle_movement(proj, 10)
         self.assertGreater(proj.pos.x, old_pos.x)
@@ -264,8 +265,8 @@ class ProjectileSystemsTest(unittest.TestCase):
 
     def test__handle_platform_collision(self):
         proj = self.context.create_projectile(object_id=10, x=2.0, y=2.0)
-        proj.movement.force.x = 1.0
-        proj.movement.force.y = -0.1
+        proj.move.force.x = 1.0
+        proj.move.force.y = -0.1
         old_pos = proj.pos.copy()
         old_pos.x = 1.0
         old_pos.y = 2.0
@@ -279,8 +280,8 @@ class ProjectileSystemsTest(unittest.TestCase):
         self.system.handle_platform_collision(proj, old_pos)
         self.assertAlmostEqual(proj.pos.x, old_pos.x)
         self.assertAlmostEqual(proj.pos.y, old_pos.y)
-        self.assertAlmostEqual(proj.movement.force.x, 0.0)
-        self.assertAlmostEqual(proj.movement.force.y, 0.0)
+        self.assertAlmostEqual(proj.move.force.x, 0.0)
+        self.assertAlmostEqual(proj.move.force.y, 0.0)
         self.assertIsInstance(self.listener.last, tuple)
         self.assertEqual(len(self.listener.last), 3)
         self.assertEqual(self.listener.last[0], 'impact_platform')
@@ -297,8 +298,8 @@ class ProjectileSystemsTest(unittest.TestCase):
         self.system.handle_platform_collision(proj, old_pos)
         self.assertAlmostEqual(proj.pos.x, 2.0)
         self.assertAlmostEqual(proj.pos.y, 1.0)
-        self.assertAlmostEqual(proj.movement.force.x, 0.0)
-        self.assertAlmostEqual(proj.movement.force.y, 0.0)
+        self.assertAlmostEqual(proj.move.force.x, 0.0)
+        self.assertAlmostEqual(proj.move.force.y, 0.0)
         self.assertIsInstance(self.listener.last, tuple)
         self.assertEqual(len(self.listener.last), 3)
         self.assertEqual(self.listener.last[0], 'impact_platform')
@@ -307,7 +308,7 @@ class ProjectileSystemsTest(unittest.TestCase):
 
     def test__handle_actor_collision(self):
         proj = self.context.create_projectile(object_id=10, x=2.0, y=2.0)
-        proj.movement.force.x = 1.0
+        proj.move.force.x = 1.0
 
         # no actor means no collision
         self.system.handle_actor_collision(proj)
@@ -316,7 +317,7 @@ class ProjectileSystemsTest(unittest.TestCase):
         # actor can be hit
         actor = self.context.create_actor(1, x=2.2, y=2.0)
         self.system.handle_actor_collision(proj)
-        self.assertEqual(proj.movement.force.x, 0.0)
+        self.assertEqual(proj.move.force.x, 0.0)
         self.assertIsInstance(self.listener.last, tuple)
         self.assertEqual(len(self.listener.last), 3)
         self.assertEqual(self.listener.last[0], 'impact_actor')

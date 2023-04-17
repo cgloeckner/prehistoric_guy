@@ -5,8 +5,8 @@ from enum import IntEnum
 
 from core import constants, resources
 
-from platformer.renderer import base, shapes
-from platformer import animations, physics
+from .. import animations, physics
+from . import base, shapes
 
 
 NUM_FRAMES_PER_TILE: int = 3
@@ -110,7 +110,7 @@ class ImageRenderer(shapes.ShapeRenderer):
         return Ladder(top_clip_rect=top_clip_rect, mid_clip_rect=mid_clip_rect, bottom_clip_rect=bottom_clip_rect)
 
     @staticmethod
-    def get_object_clip(object_type: physics.ObjectType, variation_col: int) -> pygame.Rect:
+    def get_object_clip(object_type: constants.ObjectType, variation_col: int) -> pygame.Rect:
         clip_rect = pygame.Rect(0, 0, constants.OBJECT_SCALE, constants.OBJECT_SCALE)
         clip_rect.topleft = (variation_col * constants.OBJECT_SCALE, object_type * constants.OBJECT_SCALE)
 
@@ -128,7 +128,7 @@ class ImageRenderer(shapes.ShapeRenderer):
         return clip_rect
 
     @staticmethod
-    def get_projectile_clip(object_type: physics.ObjectType, variation_col: int) -> pygame.Rect:
+    def get_projectile_clip(object_type: constants.ObjectType, variation_col: int) -> pygame.Rect:
         clip_rect = pygame.Rect(0, 0, constants.OBJECT_SCALE, constants.OBJECT_SCALE)
         clip_rect.topleft = (variation_col * constants.OBJECT_SCALE, object_type * constants.OBJECT_SCALE)
 
@@ -188,7 +188,7 @@ class ImageRenderer(shapes.ShapeRenderer):
         ani_actor = self.ani_context.get_actor_by_id(actor.object_id)
 
         pos = self.get_actor_rect(actor)
-        clip = self.get_actor_clip(face_x=actor.movement.face_x, frame_id=ani_actor.frame_id, action=ani_actor.action)
+        clip = self.get_actor_clip(face_x=actor.move.face_x, frame_id=ani_actor.frame_id, action=ani_actor.action)
 
         # apply movement offset from animation
         pos.y += ani_actor.delta_y

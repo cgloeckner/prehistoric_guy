@@ -64,8 +64,7 @@ def flip_sprite_sheet(src: pygame.Surface, tile_size: int) -> pygame.Surface:
 
 
 def fill_pixels(surface: pygame.Surface, color: pygame.Color):
-    """Replaces all non-transparent pixels with the given color in place.
-    """
+    """Replaces all non-transparent pixels with the given color in place."""
     pixels = pygame.PixelArray(surface)
 
     for y in range(surface.get_height()):
@@ -106,9 +105,7 @@ class Cache(object):
         return self.root / f'{filename}.png'
 
     def get_image(self, filename: str) -> pygame.Surface:
-        """Loads the image via filename. If already loaded, it's taken from the cache.
-        Returns the image's surface.
-        """
+        """Loads the image via filename. If already loaded, it's taken from the cache. Returns the image's surface."""
         if filename not in self.images:
             path = self.get_image_filename(filename)
             self.images[filename] = pygame.image.load(path)
@@ -116,9 +113,7 @@ class Cache(object):
         return self.images[filename]
 
     def get_sprite_sheet(self, filename: str) -> pygame.Surface:
-        """Adds the x-flipped sprites into the sprite sheet.
-        Returns the finished sheet
-        """
+        """Adds the x-flipped sprites into the sprite sheet. Returns the finished sheet."""
         if filename not in self.sprites:
             image = self.get_image(filename)
             self.sprites[filename] = flip_sprite_sheet(image, SPRITE_SCALE)
@@ -126,9 +121,7 @@ class Cache(object):
         return self.sprites[filename]
 
     def get_font(self, fontname: str = '', font_size: int = 18) -> pygame.font.Font:
-        """Loads a SysFont via filename and size.
-        Returns the font object.
-        """
+        """Loads a SysFont via filename and size. Returns the font object."""
         if fontname == '':
             return pygame.font.SysFont(pygame.font.get_default_font(), font_size)
 

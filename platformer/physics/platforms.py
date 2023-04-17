@@ -67,14 +67,12 @@ class Platform:
         return self.pos.x <= pos.x <= self.pos.x + self.width and self.pos.y <= pos.y < self.pos.y + self.height
 
     def supports_point(self, pos: pygame.math.Vector2) -> bool:
-        """Tests if the pos is on the platform's top edge or not.
-        """
+        """Tests if the pos is on the platform's top edge or not."""
         line = self.get_line()
         return line.collidepoint(pos.x, pos.y)
 
     def was_traverse_from_above(self, start_point: pygame.math.Vector2, end_point: pygame.math.Vector2) -> bool:
-        """Test whether the move from start_point to end_point went through the top of the platform.
-        """
+        """Test whether the move from start_point to end_point went through the top of the platform."""
         # NOTE: cannot use regular line intersection, because jumping up through a platform is no collision
         line = self.get_line()
         y_top = self.pos.y + self.height
@@ -92,8 +90,7 @@ class Platform:
 
 
 def get_platform_collision(pos: pygame.math.Vector2, platform_seq: Sequence[Platform]) -> Optional[Platform]:
-    """Returns the next-best platform from the list that contains the given position, or None.
-    """
+    """Returns the next-best platform from the list that contains the given position, or None."""
     for platform in platform_seq:
         if platform.contains_point(pos):
             return platform
@@ -124,8 +121,7 @@ def get_landing_platform(start_point: pygame.math.Vector2, end_point: pygame.mat
 
 
 def get_support_platform(pos: pygame.math.Vector2, platform_seq: Sequence[Platform]) -> Optional[Platform]:
-    """Returns any platform whose top edges the point is located, or None.
-    """
+    """Returns any platform whose top edges the point is located, or None."""
     for platform in platform_seq:
         if platform.supports_point(pos):
             return platform

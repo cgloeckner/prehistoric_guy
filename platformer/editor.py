@@ -5,7 +5,7 @@ from typing import List
 
 from core import resources, shapes
 
-from platformer import physics, animations, renderer, factory
+from . import physics, animations, renderer, factory
 
 
 MOUSE_SELECT_RADIUS: float = 0.2
@@ -68,8 +68,8 @@ def actor_ui(phys_actor: physics.Actor, ani_actor: animations.Actor, render_acto
     _, phys_actor.x = imgui.input_float('x', phys_actor.pos.x, 0.1)
     _, phys_actor.y = imgui.input_float('y', phys_actor.pos.y, 0.1)
     #imgui.text(f'face_x={phys_actor.face_x}')
-    imgui.text(f'force_x={phys_actor.movement.force.x}')
-    imgui.text(f'force_y={phys_actor.movement.force.y}')
+    imgui.text(f'force_x={phys_actor.move.force.x}')
+    imgui.text(f'force_y={phys_actor.move.force.y}')
     imgui.text(f'anchor={phys_actor.on_platform}')
     imgui.text(f'ladder={phys_actor.on_ladder}')
     _, phys_actor.radius = imgui.input_float('y', phys_actor.radius, 0.1)

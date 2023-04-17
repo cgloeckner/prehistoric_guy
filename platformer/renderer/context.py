@@ -1,6 +1,6 @@
 import pygame
 
-from platformer.physics import Platform
+from .. import physics
 
 
 class PygameContext:
@@ -12,7 +12,7 @@ class PygameContext:
         self.actors = pygame.sprite.Group()
         self.projectiles = pygame.sprite.Group()
 
-    def add_platform(self, platform: Platform) -> pygame.sprite.Sprite:
+    def add_platform(self, platform: physics.Platform) -> pygame.sprite.Sprite:
         sprite = pygame.sprite.Sprite()
         sprite.parent = platform
         sprite.add(self.platforms)

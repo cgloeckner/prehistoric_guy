@@ -62,7 +62,7 @@ class ActorsPhysicsTest(unittest.TestCase):
         self.assertEqual(result[1], actor2)
 
         # closest actor to the left
-        actor.movement.face_x = -1.0
+        actor.move.face_x = -1.0
         result = actor.get_all_faced_actors(actor_list, 2.5)
         self.assertEqual(len(result), 2)
         self.assertEqual(result[0], actor5)
@@ -79,7 +79,7 @@ class ActorsPhysicsTest(unittest.TestCase):
         actor3.pos.x = 15
         actor4.pos.x = 0.5
         actor5.pos.x = 1
-        actor.movement.face_x = 1.0
+        actor.move.face_x = 1.0
         result = actor.get_all_faced_actors(actor_list, 2.5)
         self.assertEqual(len(result), 0)
 
@@ -92,8 +92,8 @@ class ActorsPhysicsTest(unittest.TestCase):
 
         self.assertAlmostEqual(actor.pos.x, 2.5)
         self.assertAlmostEqual(actor.pos.y, 1.0)
-        self.assertAlmostEqual(actor.movement.force.x, 0.0)
-        self.assertAlmostEqual(actor.movement.force.y, 0.0)
+        self.assertAlmostEqual(actor.move.force.x, 0.0)
+        self.assertAlmostEqual(actor.move.force.y, 0.0)
         self.assertEqual(actor.on_platform, platform)
 
     # ------------------------------------------------------------------------------------------------------------------
@@ -106,7 +106,7 @@ class ActorsPhysicsTest(unittest.TestCase):
 
         self.assertAlmostEqual(actor.pos.x, -1.0)
         self.assertAlmostEqual(actor.pos.y, 2.0)
-        self.assertAlmostEqual(actor.movement.force.x, 0.0)
-        self.assertAlmostEqual(actor.movement.force.y, 0.0)
+        self.assertAlmostEqual(actor.move.force.x, 0.0)
+        self.assertAlmostEqual(actor.move.force.y, 0.0)
         self.assertEqual(actor.on_platform, platform)
         self.assertNotEqual(id(actor.pos), id(old_pos))

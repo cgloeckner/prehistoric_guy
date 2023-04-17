@@ -2,8 +2,8 @@ import pygame
 from dataclasses import dataclass
 from typing import List, Tuple
 
-from platformer import physics
-from platformer.renderer import base
+from .. import physics
+from . import base
 
 
 @dataclass

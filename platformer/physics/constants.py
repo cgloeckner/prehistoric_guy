@@ -1,1 +1,0 @@
-OBJECT_RADIUS: float = 0.25

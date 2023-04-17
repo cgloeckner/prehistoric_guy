@@ -1,5 +1,5 @@
 import pygame
-from typing import Tuple, Optional
+from typing import Optional
 
 
 class Line:
@@ -68,9 +68,7 @@ class Circ:
         self.radius = radius
 
     def collidepoint(self, x: float, y: float) -> bool:
-        """Points on the arc of the circle are excepted.
-        Returns True if the position lies within the radius.
-        """
+        """Points on the arc of the circle are excepted. Returns True if the position lies within the radius."""
         pos = pygame.math.Vector2(x, y)
         distance = self.center.distance_squared_to(pos)
         return distance < self.radius ** 2

@@ -2,15 +2,13 @@ import pygame
 import random
 from typing import Optional
 
-from core import resources
+from core import constants, resources
 
-from platformer import physics, animations, renderer, characters, players
+from . import physics, animations, renderer, characters, players
 
 
 class ObjectManager(physics.EventListener, animations.EventListener, characters.EventListener):
-    """Factory for creating game objects.
-    Creation and deletion of objects considers all relevant systems.
-    """
+    """Factory for creating game objects. Creation and deletion of objects considers all relevant systems."""
     def __init__(self, cache: resources.Cache, target: pygame.Surface):
         self.next_obj_id = 0
         self.physics_context = physics.Context()
@@ -30,28 +28,24 @@ class ObjectManager(physics.EventListener, animations.EventListener, characters.
         p = random.choice(self.physics_context.platforms)
         x = random.randrange(p.width)
 
-        self.create_object(x=p.pos.x + x, y=p.pos.y + 0.5, object_type=random.choice(list(physics.ObjectType)))
+        self.create_object(x=p.pos.x + x, y=p.pos.y + 0.5, object_type=random.choice(list(constants.ObjectType)))
 
     # --- Physics Events ----------------------------------------------------------------------------------------------
 
     def on_grab(self, actor: physics.Actor) -> None:
-        """Triggered when the actor grabs a ladder.
-        """
+        """Triggered when the actor grabs a ladder."""
         pass
 
     def on_release(self, actor: physics.Actor) -> None:
-        """Triggered when the actor releases a ladder.
-        """
+        """Triggered when the actor releases a ladder."""
         pass
 
     def on_falling(self, actor: physics.Actor) -> None:
-        """Triggered when the actor starts falling.
-        """
+        """Triggered when the actor starts falling."""
         pass
 
     def on_landing(self, phys_actor: physics.Actor) -> None:
-        """Triggered when the actor landed on a platform.
-        """
+        """Triggered when the actor landed on a platform."""
         ani_actor = self.animation.get_actor_by_id(phys_actor.object_id)
         action = animations.Action.IDLE
 
@@ -76,21 +70,19 @@ class ObjectManager(physics.EventListener, animations.EventListener, characters.
         #    self.chars.apply_damage(char_actor, damage)
 
     def on_collision(self, actor: physics.Actor, platform: physics.Platform) -> None:
-        """Triggered when the actor runs into a platform.
-        """
+        """Triggered when the actor runs into a platform."""
         pass
 
     def on_touch_object(self, phys_actor: physics.Actor, obj: physics.Object) -> None:
-        """Triggered when the actor reaches an object.
-        """
+        """Triggered when the actor reaches an object."""
         char_actor = self.chars.try_get_by_id(phys_actor.object_id)
         if char_actor is not None:
-            if obj.object_type == physics.ObjectType.FOOD:
+            if obj.object_type == constants.ObjectType.FOOD:
                 # heal him
                 char_actor.hit_points += 1
                 # FIXME: on_player_healed
 
-            elif obj.object_type == physics.ObjectType.WEAPON:
+            elif obj.object_type == constants.ObjectType.WEAPON:
                 # grab axe
                 char_actor.num_axes += 1
                 # FIXME: on_weapon_collected
@@ -99,26 +91,23 @@ class ObjectManager(physics.EventListener, animations.EventListener, characters.
         self.create_random_object()
 
     def on_impact_platform(self, proj: physics.Projectile, platform: physics.Platform) -> None:
-        """Triggered when a projectile hits a platform.
-        """
-        self.create_object(x=proj.pos.x, y=proj.pos.y - physics.OBJECT_RADIUS, object_type=proj.object_type)
+        """Triggered when a projectile hits a platform."""
+        self.create_object(x=proj.pos.x, y=proj.pos.y - constants.OBJECT_RADIUS, object_type=proj.object_type)
         self.destroy_projectile(proj)
 
     def on_impact_actor(self, proj: physics.Projectile, phys_actor: physics.Actor) -> None:
-        """Triggered when a projectile hits an actor.
-        """
+        """Triggered when a projectile hits an actor."""
         char_actor = self.chars.try_get_by_id(phys_actor.object_id)
         if char_actor is not None:
             self.chars.apply_projectile_hit(char_actor, 2, proj)
 
         # drop projectile as object
-        self.create_object(x=proj.pos.x, y=proj.pos.y - physics.OBJECT_RADIUS, object_type=proj.object_type)
+        self.create_object(x=proj.pos.x, y=proj.pos.y - constants.OBJECT_RADIUS, object_type=proj.object_type)
 
         self.destroy_projectile(proj)
 
     def on_touch_actor(self, proj: physics.Projectile, phys_actor: physics.Actor) -> None:
-        """Triggered when an actor touches another actor.
-        """
+        """Triggered when an actor touches another actor."""
         pass
 
     # --- Animation Events -
@@ -130,8 +119,7 @@ class ObjectManager(physics.EventListener, animations.EventListener, characters.
         pass
 
     def on_attack(self, ani: animations.Actor) -> None:
-        """Triggered when an attack animation finished.
-        """
+        """Triggered when an attack animation finished."""
         char_actor = self.chars.try_get_by_id(ani.object_id)
         if char_actor is None:
             return
@@ -149,8 +137,7 @@ class ObjectManager(physics.EventListener, animations.EventListener, characters.
             self.chars.apply_damage(other_char, 1, char_actor)
 
     def on_throw(self, ani_actor: animations.Actor) -> None:
-        """Triggered when an attack animation finished.
-        """
+        """Triggered when an attack animation finished."""
         char_actor = self.chars.get_by_id(ani_actor.object_id)
         phys_actor = self.physics_context.get_actor_by_id(ani_actor.object_id)
         if char_actor.num_axes == 0:
@@ -158,27 +145,24 @@ class ObjectManager(physics.EventListener, animations.EventListener, characters.
 
         char_actor.num_axes -= 1
         proj = self.create_projectile(x=phys_actor.pos.x, y=phys_actor.pos.y + phys_actor.radius, from_actor=phys_actor)
-        proj.movement.face_x = phys_actor.movement.face_x
-        proj.movement.force.x = phys_actor.movement.face_x
+        proj.movement.face_x = phys_actor.move.face_x
+        proj.movement.force.x = phys_actor.move.face_x
         proj.movement.force.y = 0.5
         proj.movement.speed = 4.0
 
     def on_died(self, ani_actor: animations.Actor) -> None:
-        """Triggered when a dying animation finished.
-        """
+        """Triggered when a dying animation finished."""
         pass
 
     # --- Character events
 
     def on_char_damaged(self, actor: characters.Actor, damage: int, cause: Optional[characters.Actor]) -> None:
-        """Triggered when an actor got damaged.
-        """
+        """Triggered when an actor got damaged."""
         ani_actor = self.animation.get_actor_by_id(actor.object_id)
         animations.flash(ani_actor, resources.HslTransform(lightness=100), 200)
 
     def on_char_died(self, char_actor: characters.Actor, damage: int, cause: Optional[characters.Actor]) -> None:
-        """Triggered when an actor died. An optional cause can be provided.
-        """
+        """Triggered when an actor died. An optional cause can be provided."""
         ani_actor = self.animation.get_actor_by_id(char_actor.object_id)
         animations.start(ani_actor, animations.Action.DIE)
         self.destroy_character(char_actor, keep_components=True)
@@ -188,32 +172,27 @@ class ObjectManager(physics.EventListener, animations.EventListener, characters.
     # FIXME: remove if inside context (and add destroy_* to context)
 
     def create_platform(self, **kwargs) -> physics.Platform:
-        """Create a new platform.
-        """
+        """Create a new platform."""
         platform = self.physics_context.create_platform(**kwargs)
         # NOTE: The renderer grabs platforms from the physics system.
         return platform
 
     def destroy_platform(self, platform: physics.Platform) -> None:
-        """Remove an existing platform.
-        """
+        """Remove an existing platform."""
         self.physics_context.platforms.remove(platform)
 
     def create_ladder(self, **kwargs) -> physics.Ladder:
-        """Create a new ladder.
-        """
+        """Create a new ladder."""
         ladder = self.physics_context.create_ladder(**kwargs)
         # NOTE: The renderer grabs ladders from the physics system.
         return ladder
 
     def destroy_ladder(self, ladder: physics.Ladder) -> None:
-        """Remove an existing ladder.
-        """
+        """Remove an existing ladder."""
         self.physics_context.ladders.remove(ladder)
 
     def create_object(self, **kwargs) -> physics.Object:
-        """Create a static object such as fireplaces or powerups.
-        """
+        """Create a static object such as fireplaces or powerups."""
         obj = self.physics_context.create_object(**kwargs)
         # NOTE: The renderer grabs objects from the physics system.
         return obj
@@ -223,8 +202,7 @@ class ObjectManager(physics.EventListener, animations.EventListener, characters.
         self.physics_context.objects.remove(obj)
 
     def create_projectile(self, **kwargs) -> physics.Projectile:
-        """Create a projectile e.g. a thrown weapon.
-        """
+        """Create a projectile e.g. a thrown weapon."""
         proj = self.physics_context.create_projectile(**kwargs)
         # NOTE: The renderer grabs objects from the physics system.
         return proj
@@ -234,9 +212,7 @@ class ObjectManager(physics.EventListener, animations.EventListener, characters.
         self.physics_context.projectiles.remove(proj)
 
     def create_actor(self, sprite_sheet: pygame.Surface, **kwargs) -> int:
-        """Create an actor object such as player or enemy characters.
-        Returns the object id.
-        """
+        """Create an actor object such as player or enemy characters. Returns the object id."""
         object_id = self.next_obj_id
         self.next_obj_id += 1
 
@@ -251,8 +227,7 @@ class ObjectManager(physics.EventListener, animations.EventListener, characters.
         return object_id
 
     def destroy_actor_by_id(self, object_id: int) -> None:
-        """Remove an actor (with all components) using the object id.
-        """
+        """Remove an actor (with all components) using the object id."""
         phys_actor = self.physics_context.get_actor_by_id(object_id)
         ani_actor = self.animation.get_actor_by_id(object_id)
         render_actor = self.renderer.sprite_context.get_actor_by_id(object_id)
@@ -261,9 +236,7 @@ class ObjectManager(physics.EventListener, animations.EventListener, characters.
         self.renderer.sprite_context.actors.remove(render_actor)
 
     def create_character(self, sprite_sheet: pygame.Surface, **kwargs) -> characters.Actor:
-        """Create a character.
-        Returns the character
-        """
+        """Creates and returns a character """
         object_id = self.create_actor(sprite_sheet, **kwargs)
         character = characters.Actor(object_id)
         self.chars.characters.append(character)
@@ -271,9 +244,7 @@ class ObjectManager(physics.EventListener, animations.EventListener, characters.
         return character
 
     def destroy_character(self, character: characters.Actor, keep_components: bool = False) -> None:
-        """Remove a character.
-        If keep_components is True, the underlying actor remains intact.
-        """
+        """Remove a character. If keep_components is True, the underlying actor remains intact."""
         if keep_components:
             # stop movement and make unable to collide anymore
             phys_actor = self.physics_context.get_actor_by_id(character.object_id)
@@ -285,16 +256,13 @@ class ObjectManager(physics.EventListener, animations.EventListener, characters.
         self.chars.characters.remove(character)
 
     def create_player(self, character: characters.Actor, **kwargs) -> players.Actor:
-        """Create a player for an existing character actor.
-        Returns the player actor.
-        """
+        """Create a player for an existing character actor. Returns the player actor."""
         player_actor = players.Actor(object_id=character.object_id, **kwargs)
         self.players.players.append(player_actor)
         return player_actor
 
     def update(self, elapsed_ms: int) -> None:
-        """Update all related systems.
-        """
+        """Update all related systems."""
         self.physics.update(elapsed_ms)
         self.animation.update(elapsed_ms)
         self.renderer.update(elapsed_ms)

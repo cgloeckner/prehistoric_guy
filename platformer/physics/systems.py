@@ -1,25 +1,18 @@
 import pygame
 
-from platformer.physics import platforms
-from platformer.physics import ladders
-from platformer.physics import objects
-from platformer.physics import actors
-from platformer.physics import projectiles
-
-from platformer.physics.context import EventListener, Context
+from . import platforms, ladders, actors, projectiles
+from .context import EventListener, Context
 
 
 class ActorSystem(object):
-    """Handles updating all actors.
-    """
+    """Handles updating all actors."""
 
     def __init__(self, listener: EventListener, context: Context):
         self.listener = listener
         self.context = context
 
     def handle_ladders(self, actor: actors.Actor) -> None:
-        """Handles grabbing and releasing a ladder.
-        """
+        """Handles grabbing and releasing a ladder."""
         if actor.on_ladder is None:
             ladder = ladders.get_closest_ladder_in_reach(actor.pos, self.context.ladders)
             if ladder is not None:
@@ -34,34 +27,30 @@ class ActorSystem(object):
                 self.listener.on_release(actor)
 
     def handle_gravity(self, actor: actors.Actor, elapsed_ms: int) -> None:
-        """Handles gravity simulation.
-        """
+        """Handles gravity simulation."""
         if not actor.can_fall():
             return
 
-        starts_falling = actor.movement.apply_gravity(elapsed_ms)
+        starts_falling = actor.move.apply_gravity(elapsed_ms)
         if starts_falling:
             self.listener.on_falling(actor)
 
     def handle_movement(self, actor: actors.Actor, elapsed_ms: int) -> pygame.math.Vector2:
-        """Handles movement and jumping off a ladder.
-        Returns the previous position.
-        """
+        """Handles movement and jumping off a ladder. Returns the previous position."""
         has_ladder = actor.on_ladder is not None
-        old_pos = actor.movement.apply_movement(actor.pos, elapsed_ms, has_ladder=has_ladder)
+        old_pos = actor.move.apply_movement(actor.pos, elapsed_ms, has_ladder=has_ladder)
 
         # moving off the ladder?
         if has_ladder:
-            actor.movement.force.y = 0.0
-            if actor.movement.force.x != 0.0:
+            actor.move.force.y = 0.0
+            if actor.move.force.x != 0.0:
                 actor.on_ladder = None
                 self.listener.on_release(actor)
 
         return old_pos
 
     def handle_landing(self, actor: actors.Actor, old_pos: pygame.math.Vector2) -> None:
-        """Handles landing on a platform.
-        """
+        """Handles landing on a platform."""
         has_reloaded_support_platform = False
 
         platform = platforms.get_landing_platform(old_pos, actor.pos, self.context.platforms)
@@ -74,8 +63,7 @@ class ActorSystem(object):
             actor.on_platform = platforms.get_support_platform(actor.pos, self.context.platforms)
 
     def handle_platform_collision(self, actor: actors.Actor, old_pos: pygame.math.Vector2) -> None:
-        """Handles collision with platforms.
-        """
+        """Handles collision with platforms."""
         # platform collision
         platform = platforms.get_platform_collision(actor.pos, self.context.platforms)
         if platform is not None:
@@ -83,8 +71,7 @@ class ActorSystem(object):
             self.listener.on_collision(actor, platform)
 
     def handle_object_collision(self, actor: actors.Actor) -> None:
-        """Finds and reports collisions between the actor and all relevant objects.
-        """
+        """Finds and reports collisions between the actor and all relevant objects."""
         circ1 = actor.get_circ()
         for obj in self.context.objects:
             circ2 = obj.get_circ()
@@ -92,8 +79,7 @@ class ActorSystem(object):
                 self.listener.on_touch_object(actor, obj)
 
     def handle_actor_collision(self, actor: actors.Actor) -> None:
-        """Finds and reports collisions between the actor and all relevant actors.
-        """
+        """Finds and reports collisions between the actor and all relevant actors."""
         circ1 = actor.get_circ()
         for other in self.context.actors:
             if actor == other:
@@ -119,8 +105,7 @@ class ActorSystem(object):
 # ----------------------------------------------------------------------------------------------------------------------
 
 class ProjectileSystem(object):
-    """Handles updating all projectiles.
-    """
+    """Handles updating all projectiles."""
 
     def __init__(self, listener: EventListener, context: Context):
         self.listener = listener
@@ -131,14 +116,13 @@ class ProjectileSystem(object):
         """Handles gravity and movement, updating the projectile's position in place.
         Returns the previous position.
         """
-        projectile.movement.apply_gravity(elapsed_ms)
-        old_pos = projectile.movement.apply_movement(projectile.pos, elapsed_ms,
+        projectile.move.apply_gravity(elapsed_ms)
+        old_pos = projectile.move.apply_movement(projectile.pos, elapsed_ms,
                                                      gravity_weight=projectiles.GRAVITY_WEIGHT)
         return old_pos
 
     def handle_platform_collision(self, projectile: projectiles.Projectile, old_pos: pygame.math.Vector2) -> None:
-        """Checks for platform collision, both from above and x-wise.
-        """
+        """Checks for platform collision, both from above and x-wise."""
         platform = platforms.get_landing_platform(old_pos, projectile.pos, self.context.platforms)
         if platform is not None:
             projectile.land_on_platform(platform, old_pos)
@@ -150,8 +134,7 @@ class ProjectileSystem(object):
             self.listener.on_impact_platform(projectile, platform)
 
     def handle_actor_collision(self, projectile: projectiles.Projectile) -> None:
-        """Finds and reports collisions between the projectile and all relevant actors.
-        """
+        """Finds and reports collisions between the projectile and all relevant actors."""
         circ1 = projectile.get_circ()
         for actor in self.context.actors:
             if not projectile.can_hit(actor):
@@ -159,7 +142,7 @@ class ProjectileSystem(object):
             circ2 = actor.get_circ()
             if circ1.collidecirc(circ2):
                 self.listener.on_impact_actor(projectile, actor)
-                projectile.movement.force.x = 0.0
+                projectile.move.force.x = 0.0
 
     def update(self, elapsed_ms: int) -> None:
         for projectile in self.context.projectiles:
