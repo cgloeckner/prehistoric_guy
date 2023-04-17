@@ -137,7 +137,7 @@ class SceneEditor(object):
 
     def get_mouse_world_pos(self) -> pygame.math.Vector2:
         # transform screen coordinates to game coordinates
-        return self.obj_manager.camera.screen_to_world_coord(*pygame.mouse.get_pos())
+        return self.obj_manager.camera.to_world_coord(*pygame.mouse.get_pos())
 
     def get_hovered(self) -> List:
         pos = self.get_mouse_world_pos()

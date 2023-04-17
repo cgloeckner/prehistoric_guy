@@ -1,5 +1,5 @@
 import pygame
-import os
+import pathlib
 from dataclasses import dataclass
 from typing import Dict, Tuple, List, Optional
 
@@ -88,7 +88,7 @@ class Cache(object):
     def __init__(self, root='./data'):
         """Initializes the cache with the given root directory.
         """
-        self.root = root
+        self.root = pathlib.Path(root)
 
         # regular resources
         self.images: Dict[str, pygame.Surface] = dict()
@@ -101,12 +101,16 @@ class Cache(object):
         self.hsl_transforms: Dict[Tuple[pygame.Surface, HSL_TUPLE, Optional[COLOR_TUPLE]]] = dict()
         self.rotated: Dict[Tuple[pygame.Surface, RECT_TUPLE, bool], List[pygame.Surface]] = dict()
 
+    def get_image_filename(self, filename: str) -> pathlib.Path:
+        """Returns full path object including file extension."""
+        return self.root / f'{filename}.png'
+
     def get_image(self, filename: str) -> pygame.Surface:
         """Loads the image via filename. If already loaded, it's taken from the cache.
         Returns the image's surface.
         """
         if filename not in self.images:
-            path = os.path.join(self.root, f'{filename}.png')
+            path = self.get_image_filename(filename)
             self.images[filename] = pygame.image.load(path)
 
         return self.images[filename]

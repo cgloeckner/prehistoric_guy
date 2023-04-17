@@ -18,3 +18,5 @@ class ObjectType(IntEnum):
     BONUS = 2
     WEAPON = 3
 
+
+OBJECT_NUM_VERSIONS: int = 6

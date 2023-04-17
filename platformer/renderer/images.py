@@ -1,14 +1,12 @@
 import pygame
 from typing import List
 from dataclasses import dataclass
+from enum import IntEnum
 
-from core.constants import *
-from core import resources
+from core import constants, resources
 
-from platformer.renderer import base
-from platformer.renderer import shapes
-from platformer import animations
-from platformer import physics
+from platformer.renderer import base, shapes
+from platformer import animations, physics
 
 
 NUM_FRAMES_PER_TILE: int = 3
@@ -75,107 +73,114 @@ class ImageRenderer(shapes.ShapeRenderer):
         self.objects = self.cache.get_image('objects')
 
     @staticmethod
-    def get_platform_clip(scale: int, tileset_col: int) -> Platform:
-        left_clip_rect = pygame.Rect(0, 0, scale, scale)
-        left_clip_rect.topleft = (NUM_FRAMES_PER_TILE * tileset_col * scale, TileOffset.PLATFORM * scale)
+    def get_platform_clip(tileset_col: int) -> Platform:
+        left_clip_rect = pygame.Rect(0, 0, constants.WORLD_SCALE, constants.WORLD_SCALE)
+        left_clip_rect.topleft = (NUM_FRAMES_PER_TILE * tileset_col * constants.WORLD_SCALE,
+                                  TileOffset.PLATFORM * constants.WORLD_SCALE)
 
-        top_clip_rect = pygame.Rect(0, 0, scale, scale)
-        top_clip_rect.topleft = ((NUM_FRAMES_PER_TILE * tileset_col + 1) * scale, TileOffset.PLATFORM * scale)
+        top_clip_rect = pygame.Rect(0, 0, constants.WORLD_SCALE, constants.WORLD_SCALE)
+        top_clip_rect.topleft = ((NUM_FRAMES_PER_TILE * tileset_col + 1) * constants.WORLD_SCALE,
+                                 TileOffset.PLATFORM * constants.WORLD_SCALE)
 
-        right_clip_rect = pygame.Rect(0, 0, scale, scale)
-        right_clip_rect.topleft = ((NUM_FRAMES_PER_TILE * tileset_col + 2) * scale, TileOffset.PLATFORM * scale)
+        right_clip_rect = pygame.Rect(0, 0, constants.WORLD_SCALE, constants.WORLD_SCALE)
+        right_clip_rect.topleft = ((NUM_FRAMES_PER_TILE * tileset_col + 2) * constants.WORLD_SCALE,
+                                   TileOffset.PLATFORM * constants.WORLD_SCALE)
 
-        tex_clip_rect = pygame.Rect(0, 0, scale, scale)
-        tex_clip_rect.topleft = ((NUM_FRAMES_PER_TILE * tileset_col + 1) * scale, TileOffset.TEXTURE * scale)
+        tex_clip_rect = pygame.Rect(0, 0, constants.WORLD_SCALE, constants.WORLD_SCALE)
+        tex_clip_rect.topleft = ((NUM_FRAMES_PER_TILE * tileset_col + 1) * constants.WORLD_SCALE,
+                                 TileOffset.TEXTURE * constants.WORLD_SCALE)
 
         return Platform(left_clip_rect=left_clip_rect, top_clip_rect=top_clip_rect, right_clip_rect=right_clip_rect,
                         tex_clip_rect=tex_clip_rect)
 
     @staticmethod
-    def get_ladder_clip(scale: int, tileset_col: int) -> Ladder:
-        top_clip_rect = pygame.Rect(0, 0, scale, scale)
-        top_clip_rect.topleft = (NUM_FRAMES_PER_TILE * tileset_col * scale, TileOffset.LADDER * scale)
+    def get_ladder_clip(tileset_col: int) -> Ladder:
+        top_clip_rect = pygame.Rect(0, 0, constants.WORLD_SCALE, constants.WORLD_SCALE)
+        top_clip_rect.topleft = (NUM_FRAMES_PER_TILE * tileset_col * constants.WORLD_SCALE,
+                                 TileOffset.LADDER * constants.WORLD_SCALE)
 
-        mid_clip_rect = pygame.Rect(0, 0, scale, scale)
-        mid_clip_rect.topleft = ((NUM_FRAMES_PER_TILE * tileset_col + 1) * scale, TileOffset.LADDER * scale)
+        mid_clip_rect = pygame.Rect(0, 0, constants.WORLD_SCALE, constants.WORLD_SCALE)
+        mid_clip_rect.topleft = ((NUM_FRAMES_PER_TILE * tileset_col + 1) * constants.WORLD_SCALE,
+                                 TileOffset.LADDER * constants.WORLD_SCALE)
 
-        bottom_clip_rect = pygame.Rect(0, 0, scale, scale)
-        bottom_clip_rect.topleft = ((NUM_FRAMES_PER_TILE * tileset_col + 2) * scale, TileOffset.LADDER * scale)
+        bottom_clip_rect = pygame.Rect(0, 0, constants.WORLD_SCALE, constants.WORLD_SCALE)
+        bottom_clip_rect.topleft = ((NUM_FRAMES_PER_TILE * tileset_col + 2) * constants.WORLD_SCALE,
+                                    TileOffset.LADDER * constants.WORLD_SCALE)
 
         return Ladder(top_clip_rect=top_clip_rect, mid_clip_rect=mid_clip_rect, bottom_clip_rect=bottom_clip_rect)
 
     @staticmethod
-    def get_object_clip(scale: int, object_type: physics.ObjectType, variation_col: int) -> pygame.Rect:
-        clip_rect = pygame.Rect(0, 0, scale, scale)
-        clip_rect.topleft = (variation_col * scale, object_type * scale)
+    def get_object_clip(object_type: physics.ObjectType, variation_col: int) -> pygame.Rect:
+        clip_rect = pygame.Rect(0, 0, constants.OBJECT_SCALE, constants.OBJECT_SCALE)
+        clip_rect.topleft = (variation_col * constants.OBJECT_SCALE, object_type * constants.OBJECT_SCALE)
 
         return clip_rect
 
     @staticmethod
-    def get_actor_clip(scale: int, frame_id: int, action: animations.Action, face_x: physics.FaceDirection) \
+    def get_actor_clip(face_x: physics.FaceDirection, frame_id: int, action: animations.Action) \
             -> pygame.Rect:
         x_offset = 0 if face_x == physics.FaceDirection.RIGHT else 1
-        x_offset *= ANIMATION_NUM_FRAMES * scale
+        x_offset *= constants.ANIMATION_NUM_FRAMES * constants.SPRITE_SCALE
 
-        clip_rect = pygame.Rect(0, 0, scale, scale)
-        clip_rect.topleft = (frame_id * scale + x_offset, action * scale)
+        clip_rect = pygame.Rect(0, 0, constants.SPRITE_SCALE, constants.SPRITE_SCALE)
+        clip_rect.topleft = (frame_id * constants.SPRITE_SCALE + x_offset, action * constants.SPRITE_SCALE)
 
         return clip_rect
 
     @staticmethod
-    def get_projectile_clip(scale: int, object_type: physics.ObjectType, variation_col: int) -> pygame.Rect:
-        clip_rect = pygame.Rect(0, 0, scale, scale)
-        clip_rect.topleft = (variation_col * scale, object_type * scale)
+    def get_projectile_clip(object_type: physics.ObjectType, variation_col: int) -> pygame.Rect:
+        clip_rect = pygame.Rect(0, 0, constants.OBJECT_SCALE, constants.OBJECT_SCALE)
+        clip_rect.topleft = (variation_col * constants.OBJECT_SCALE, object_type * constants.OBJECT_SCALE)
 
         return clip_rect
 
     def draw_platform(self, platform: physics.Platform) -> None:
         pos = self.get_platform_rect(platform)
         pos.h *= -1
-        clip = self.get_platform_clip(WORLD_SCALE, 0)
+        clip = self.get_platform_clip(tileset_col=0)
 
         # draw textures
         pos_tmp = pos.copy()
-        pos_tmp.y -= WORLD_SCALE
+        pos_tmp.y -= constants.WORLD_SCALE
         for y in range(platform.height):
             pos_tmp.x = pos.x
             for x in range(platform.width):
                 self.target.blit(self.tiles, pos_tmp, clip.tex_clip_rect)
-                pos_tmp.x += WORLD_SCALE
-            pos_tmp.y -= WORLD_SCALE
+                pos_tmp.x += constants.WORLD_SCALE
+            pos_tmp.y -= constants.WORLD_SCALE
 
         # draw platform
         pos_tmp = pos.copy()
-        pos_tmp.y -= WORLD_SCALE + platform.height * WORLD_SCALE
+        pos_tmp.y -= constants.WORLD_SCALE + platform.height * constants.WORLD_SCALE
         for x in range(platform.width):
             self.target.blit(self.tiles, pos_tmp, clip.top_clip_rect)
-            pos_tmp.x += WORLD_SCALE
+            pos_tmp.x += constants.WORLD_SCALE
 
         # draw edges
         self.target.blit(self.tiles, pos_tmp, clip.right_clip_rect)
-        pos_tmp.x = pos.x - WORLD_SCALE
+        pos_tmp.x = pos.x - constants.WORLD_SCALE
         self.target.blit(self.tiles, pos_tmp, clip.left_clip_rect)
 
     def draw_ladder(self, ladder: physics.Ladder) -> None:
         pos = self.get_ladder_rect(ladder)
-        clip = self.get_ladder_clip(WORLD_SCALE, 0)
+        clip = self.get_ladder_clip(tileset_col=0)
 
         # draw upper part of the ladder
-        pos.y -= WORLD_SCALE
+        pos.y -= constants.WORLD_SCALE
         self.target.blit(self.tiles, pos, clip.top_clip_rect)
-        pos.y += WORLD_SCALE
+        pos.y += constants.WORLD_SCALE
 
         # draw ladder elements
         for i in range(ladder.height):
             self.target.blit(self.tiles, pos, clip.mid_clip_rect)
-            pos.y += WORLD_SCALE
+            pos.y += constants.WORLD_SCALE
 
         # draw lower part of the ladder:
         self.target.blit(self.tiles, pos, clip.bottom_clip_rect)
 
     def draw_object(self, obj: physics.Object) -> None:
         pos = self.get_object_rect(obj)
-        clip = self.get_object_clip(OBJECT_SCALE, obj.object_type, 0)
+        clip = self.get_object_clip(object_type=obj.object_type, variation_col=0)
         self.target.blit(self.objects, pos, clip)
 
     def draw_actor(self, actor: physics.Actor) -> None:
@@ -183,7 +188,7 @@ class ImageRenderer(shapes.ShapeRenderer):
         ani_actor = self.ani_context.get_actor_by_id(actor.object_id)
 
         pos = self.get_actor_rect(actor)
-        clip = self.get_actor_clip(SPRITE_SCALE, ani_actor.frame_id, ani_actor.action, face_x=actor.movement.face_x)
+        clip = self.get_actor_clip(face_x=actor.movement.face_x, frame_id=ani_actor.frame_id, action=ani_actor.action)
 
         # apply movement offset from animation
         pos.y += ani_actor.delta_y
@@ -199,7 +204,7 @@ class ImageRenderer(shapes.ShapeRenderer):
         """
 
         pos = self.get_projectile_rect(proj)
-        clip = self.get_projectile_clip(SPRITE_SCALE, proj.object_type, 0)
+        clip = self.get_projectile_clip(object_type=proj.object_type, variation_col=0)
         self.target.blit(self.objects, pos, clip)
 
     def update(self, elapsed_ms: int) -> None:

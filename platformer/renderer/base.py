@@ -9,7 +9,7 @@ class Camera:
         self.width = width
         self.height = height
 
-    def world2cam_coord(self, pos: pygame.math.Vector2) -> pygame.math.Vector2:
+    def from_world_coord(self, pos: pygame.math.Vector2) -> pygame.math.Vector2:
         """Transforms coordinates form world to cam
         Example: Camera (topleft) at (2|3) moves all coordinates using (-2|-3).
         """
@@ -17,7 +17,7 @@ class Camera:
         y = pos.y - self.center.y
         return pygame.math.Vector2(x, y)
 
-    def cam2world_coord(self, pos: pygame.math.Vector2) -> pygame.math.Vector2:
+    def to_world_coord(self, pos: pygame.math.Vector2) -> pygame.math.Vector2:
         """Transforms coordinates from cam/screen to world.
         """
         x = pos.x + self.center.x
