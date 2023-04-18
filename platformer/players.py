@@ -109,27 +109,27 @@ class Players(object):
         ani_actor = self.animations_context.actors.get_by_id(player.object_id)
         phys_actor = self.physics_context.actors.get_by_id(player.object_id)
 
-        if ani_actor.action in animations.BLOCKING_ANIMATIONS:
+        if ani_actor.frame.action in animations.BLOCKING_ANIMATIONS:
             # nothing allowed
             phys_actor.move.force.x = 0.0
             phys_actor.move.force.y = 0.0
             return
 
         if player.char_action == characters.Action.THROW:
-            if ani_actor.action in [animations.Action.HOLD, animations.Action.CLIMB]:
+            if ani_actor.frame.action in [animations.Action.HOLD, animations.Action.CLIMB]:
                 # not allowed
                 return
 
-            animations.start(ani_actor, animations.Action.THROW)
+            ani_actor.frame.start(animations.Action.THROW)
             return
 
         if player.char_action == characters.Action.ATTACK:
-            if ani_actor.action in [animations.Action.HOLD, animations.Action.CLIMB]:
+            if ani_actor.frame.action in [animations.Action.HOLD, animations.Action.CLIMB]:
                 # not allowed
                 return
 
             # attack!
-            animations.start(ani_actor, animations.Action.ATTACK)
+            ani_actor.frame.start(animations.Action.ATTACK)
             return
 
         # determine animation action
@@ -142,11 +142,11 @@ class Players(object):
         if player.char_action == animations.Action.MOVE and player.delta_y != 0.0:
             player.char_action = animations.Action.JUMP
 
-        if ani_actor.action == animations.Action.JUMP and player.char_action in [animations.Action.IDLE,
-                                                                                 animations.Action.HOLD]:
+        if ani_actor.frame.action == animations.Action.JUMP and player.char_action in [animations.Action.IDLE,
+                                                                                       animations.Action.HOLD]:
             return
 
-        was_started = animations.start(ani_actor, player.char_action)
+        was_started = ani_actor.frame.start(player.char_action)
 
         if player.char_action != animations.Action.JUMP:
             was_started = True

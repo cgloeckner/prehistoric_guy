@@ -188,10 +188,11 @@ class ImageRenderer(shapes.ShapeRenderer):
         ani_actor = self.ani_context.actors.get_by_id(actor.object_id)
 
         pos = self.get_actor_rect(actor)
-        clip = self.get_actor_clip(face_x=actor.move.face_x, frame_id=ani_actor.frame_id, action=ani_actor.action)
+        clip = self.get_actor_clip(face_x=actor.move.face_x, frame_id=ani_actor.frame.frame_id,
+                                   action=ani_actor.frame.action)
 
         # apply movement offset from animation
-        pos.y += ani_actor.delta_y
+        pos.y += ani_actor.oscillate.delta_y
 
         self.target.blit(sprite_actor.sprite_sheet, pos, clip)
 

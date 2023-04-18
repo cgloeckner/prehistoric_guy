@@ -14,7 +14,7 @@ class ObjectManager(physics.EventListener, animations.EventListener, characters.
         self.physics_context = physics.Context()
         self.physics = physics.System(self, self.physics_context)
         self.animations_context = animations.Context()
-        self.animation = animations.Animating(self, self.animations_context)
+        self.animation = animations.AnimationSystem(self, self.animations_context)
         self.camera = renderer.Camera(*target.get_size())
         self.renderer_context = renderer.Context()
         self.renderer = renderer.Renderer(self.camera, target, self.physics_context, self.animations_context,
@@ -203,7 +203,10 @@ class ObjectManager(physics.EventListener, animations.EventListener, characters.
 
     def create_projectile(self, **kwargs) -> physics.Projectile:
         """Create a projectile e.g. a thrown weapon."""
-        proj = self.physics_context.create_projectile(**kwargs)
+        object_id = self.next_obj_id
+        self.next_obj_id += 1
+
+        proj = self.physics_context.create_projectile(object_id=object_id, **kwargs)
         # NOTE: The renderer grabs objects from the physics system.
         return proj
 

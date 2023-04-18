@@ -94,8 +94,8 @@ class GameState(state_machine.State):
                 continue
 
             ani_enemy = self.manager.animations_context.actors.get_by_id(enemy.object_id)
-            if ani_enemy.action in [animations.Action.DIE, animations.Action.ATTACK, animations.Action.THROW,
-                                    animations.Action.LANDING]:
+            if ani_enemy.frame.action in [animations.Action.DIE, animations.Action.ATTACK, animations.Action.THROW,
+                                          animations.Action.LANDING]:
                 continue
 
             phys_enemy = self.manager.physics_context.actors.get_by_id(enemy.object_id)
@@ -110,7 +110,7 @@ class GameState(state_machine.State):
                 phys_enemy.move.face_x = -1.0
 
             phys_enemy.move.force.x = phys_enemy.move.face_x
-            animations.start(ani_enemy, animations.Action.MOVE)
+            ani_enemy.frame.start(animations.Action.MOVE)
 
         # --- Demo: limit pos to screen --------------------------------------------------------------------------------
         for player in self.manager.players.players:
