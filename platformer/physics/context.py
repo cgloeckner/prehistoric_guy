@@ -15,14 +15,6 @@ class Context:
         self.actors = objectids.IdList[actors.Actor]()
         self.projectiles: List[projectiles.Projectile] = list()
 
-    def get_projectile_by_id(self, object_id: int) -> projectiles.Projectile:
-        for proj in self.projectiles:
-            if proj.object_id == object_id:
-                return proj
-
-        # FIXME
-        raise ValueError(f'No such Actor {object_id}')
-
     def create_platform(self, x: float, y: float, width: int, height: int = 0,
                         hover: Optional[platforms.Hovering] = None) -> platforms.Platform:
         p = platforms.Platform(pos=pygame.math.Vector2(x, y), width=width, height=height, hover=hover)

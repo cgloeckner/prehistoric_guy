@@ -1,10 +1,16 @@
 import pygame
 from dataclasses import dataclass
-from typing import List, Optional
+from enum import IntEnum
 
-from core import constants, resources, ui
+from core import objectids, constants, resources, ui
 
 from . import animations, physics, renderer, characters
+
+
+class Action(IntEnum):
+    NONE = 0
+    ATTACK = 1
+    THROW = 2
 
 
 # keypress time required to throw
@@ -34,7 +40,7 @@ class Actor:
     delta_x: float = 0.0
     delta_y: float = 0.0
 
-    char_action: int = characters.Action.NONE
+    char_action: int = Action.NONE
 
 
 def get_throwing_process(player: Actor) -> float:
@@ -47,28 +53,17 @@ def get_throwing_process(player: Actor) -> float:
 
 class Players(object):
     def __init__(self, physics_context: physics.Context, animations_context: animations.Context,
-                 renderer_context: renderer.images.Context, char_system: characters.Characters, cache: resources.Cache,
-                 hud_target: pygame.Surface):
+                 renderer_context: renderer.images.Context, characters_context: characters.Context,
+                 cache: resources.Cache, hud_target: pygame.Surface):
         self.physics_context = physics_context
         self.animations_context = animations_context
         self.renderer_context = renderer_context
-        self.char_system = char_system
+        self.characters_context = characters_context
         self.hud_target = hud_target
 
-        self.players: List[Actor] = list()
+        self.players = objectids.IdList[Actor]()
 
         self.tileset = cache.get_image('hud')
-
-    def get_by_id(self, object_id: int) -> Actor:
-        """Returns the actor who matches the given object_id. May throw an IndexError."""
-        return [a for a in self.players if a.object_id == object_id][0]
-
-    def try_get_by_id(self, object_id: int) -> Optional[Actor]:
-        """Returns the actor who matches the given object_id or None."""
-        try:
-            return self.get_by_id(object_id)
-        except IndexError:
-            return None
 
     def process_event(self, event: pygame.event.Event) -> None:
         """Handles inputs and sets the action accordingly."""
@@ -78,9 +73,9 @@ class Players(object):
 
             elif event.type == pygame.KEYUP and event.key == player.attack_key:
                 if player.attack_held_ms > THROW_THRESHOLD:
-                    player.char_action = characters.Action.THROW
+                    player.char_action = Action.THROW
                 else:
-                    player.char_action = characters.Action.ATTACK
+                    player.char_action = Action.ATTACK
                 player.attack_held_ms = -1
 
     def get_inputs(self, player: Actor, elapsed_ms: int) -> None:
@@ -101,7 +96,7 @@ class Players(object):
         if player.attack_held_ms >= 0:
             player.attack_held_ms += elapsed_ms
             if player.attack_held_ms > THROW_THRESHOLD:
-                player.char_action = characters.Action.THROW
+                player.char_action = Action.THROW
                 player.attack_held_ms = 0.0
 
     def handle_inputs(self, player: Actor) -> None:
@@ -115,7 +110,7 @@ class Players(object):
             phys_actor.move.force.y = 0.0
             return
 
-        if player.char_action == characters.Action.THROW:
+        if player.char_action == Action.THROW:
             if ani_actor.frame.action in [animations.Action.HOLD, animations.Action.CLIMB]:
                 # not allowed
                 return
@@ -123,7 +118,7 @@ class Players(object):
             ani_actor.frame.start(animations.Action.THROW)
             return
 
-        if player.char_action == characters.Action.ATTACK:
+        if player.char_action == Action.ATTACK:
             if ani_actor.frame.action in [animations.Action.HOLD, animations.Action.CLIMB]:
                 # not allowed
                 return
@@ -164,15 +159,15 @@ class Players(object):
             # reset all input parameters
             player.delta_x = 0
             player.delta_y = 0
-            player.char_action = characters.Action.NONE
+            player.char_action = Action.NONE
 
     def draw_icons(self, char_actor: characters.Actor) -> None:
-        for i in range(char_actor.hit_points):
+        for i in range(char_actor.hit_points.value):
             self.hud_target.blit(self.tileset, (i * constants.OBJECT_SCALE, 0),
                                  (0 * constants.OBJECT_SCALE, HEART_HUD * constants.OBJECT_SCALE,
                                   constants.OBJECT_SCALE, constants.OBJECT_SCALE))
 
-        for i in range(char_actor.num_axes):
+        for i in range(char_actor.num_axes.value):
             self.hud_target.blit(self.tileset, (i * constants.OBJECT_SCALE, constants.OBJECT_SCALE),
                                  (0 * constants.OBJECT_SCALE, WEAPON_HUD * constants.OBJECT_SCALE,
                                   constants.OBJECT_SCALE, constants.OBJECT_SCALE))
@@ -188,7 +183,7 @@ class Players(object):
 
     def draw(self) -> None:
         for player in self.players:
-            char_actor = self.char_system.try_get_by_id(player.object_id)
+            char_actor = self.characters_context.actors.get_by_id(player.object_id)
             if char_actor is None:
                 continue
 

@@ -24,7 +24,7 @@ class GameState(state_machine.State):
 
         # --- setup object manager with player character ---------------------------------------------------------------
         self.manager = factory.ObjectManager(self.cache, engine.buffer)
-        player_char_actor = self.manager.create_character(sprite_sheet=blue_guy, x=2, y=5)
+        player_char_actor = self.manager.create_character(sprite_sheet=blue_guy, x=2, y=5, max_hit_points=5, num_axes=10)
         self.manager.create_player(player_char_actor, left_key=pygame.K_a, right_key=pygame.K_d, up_key=pygame.K_w,
                                    down_key=pygame.K_s, attack_key=pygame.K_SPACE)
 
@@ -32,29 +32,29 @@ class GameState(state_machine.State):
         #self.manager.camera.follow.append(phys_actor)
 
         # --- create demo scene ---------------------------------------------------------------------------------------
-        self.manager.create_character(sprite_sheet=grey_guy, x=6.5, y=6.5)
-        self.manager.create_character(sprite_sheet=grey_guy, x=6.5, y=4.5)
+        self.manager.create_character(sprite_sheet=grey_guy, x=6.5, y=6.5, max_hit_points=2, num_axes=0)
+        self.manager.create_character(sprite_sheet=grey_guy, x=6.5, y=4.5, max_hit_points=2, num_axes=0)
 
         # horizontal platforms
-        self.manager.create_platform(x=1, y=1, width=3, height=1)
-        self.manager.create_platform(x=1, y=6, width=3)
-        self.manager.create_platform(x=7, y=2, width=3, height=2)
-        self.manager.create_platform(x=2, y=2, width=2)
-        self.manager.create_platform(x=0, y=4, width=3)
-        self.manager.create_platform(x=6, y=1, width=3)
+        self.manager.physics_context.create_platform(x=1, y=1, width=3, height=1)
+        self.manager.physics_context.create_platform(x=1, y=6, width=3)
+        self.manager.physics_context.create_platform(x=7, y=2, width=3, height=2)
+        self.manager.physics_context.create_platform(x=2, y=2, width=2)
+        self.manager.physics_context.create_platform(x=0, y=4, width=3)
+        self.manager.physics_context.create_platform(x=6, y=1, width=3)
         for i in range(100):
-            self.manager.create_platform(x=10 + i, y=0, width=1, height=1 + i)
-        self.manager.create_platform(x=5, y=6, width=4)
+            self.manager.physics_context.create_platform(x=10 + i, y=0, width=1, height=1 + i)
+        self.manager.physics_context.create_platform(x=5, y=6, width=4)
 
-        self.manager.create_platform(x=3, y=7, width=1, hover=physics.Hovering(x=math.cos, amplitude=-2))
+        self.manager.physics_context.create_platform(x=3, y=7, width=1, hover=physics.Hovering(x=math.cos, amplitude=-2))
 
         self.manager.create_random_object()
-        self.manager.create_object(x=1, y=1, object_type=constants.ObjectType.FOOD)
+        self.manager.physics_context.create_object(x=1, y=1, object_type=constants.ObjectType.FOOD)
 
         # ladders
-        self.manager.create_ladder(x=1.5, y=2, height=4)
-        self.manager.create_ladder(x=8.5, y=1, height=5)
-        self.manager.create_ladder(x=2.5, y=6, height=5)
+        self.manager.physics_context.create_ladder(x=1.5, y=2, height=4)
+        self.manager.physics_context.create_ladder(x=8.5, y=1, height=5)
+        self.manager.physics_context.create_ladder(x=2.5, y=6, height=5)
 
         self.editor_ui = editor.SceneEditor(engine.buffer, self.manager)
 
@@ -92,8 +92,8 @@ class GameState(state_machine.State):
         self.manager.update(elapsed_ms)
 
         # --- Demo Enemy Ai --------------------------------------------------------------------------------------------
-        for enemy in self.manager.chars.characters:
-            if self.manager.players.try_get_by_id(enemy.object_id) is not None:
+        for enemy in self.manager.characters_context.actors:
+            if self.manager.players.players.get_by_id(enemy.object_id) is not None:
                 # ignore players
                 continue
 

@@ -43,19 +43,10 @@ class Context:
     def __init__(self):
         self.actors = objectids.IdList()
 
-    def get_actor_by_id(self, object_id: int) -> Actor:
-        for actor in self.actors:
-            if actor.object_id == object_id:
-                return actor
-
-        # FIXME
-        raise ValueError(f'No such Actor {object_id}')
-
     def create_actor(self, object_id: int, sprite_sheet: pygame.Surface) -> Actor:
         a = Actor(object_id=object_id, sprite_sheet=sprite_sheet)
         self.actors.append(a)
         return a
-
 
 # ----------------------------------------------------------------------------------------------------------------------
 
