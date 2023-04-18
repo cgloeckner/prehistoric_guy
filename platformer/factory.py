@@ -155,8 +155,8 @@ class ObjectManager(physics.EventListener, animations.EventListener, characters.
             -> characters.Actor:
         """Creates and returns a character """
         object_id = self.create_actor(sprite_sheet, x=x, y=y)
-        character = self.characters_context.create_character(object_id, max_hit_points=max_hit_points,
-                                                             num_axes=num_axes)
+        character = self.characters_context.create_actor(object_id, max_hit_points=max_hit_points,
+                                                         num_axes=num_axes)
         return character
 
     def destroy_character(self, character: characters.Actor, keep_components: bool = False) -> None:

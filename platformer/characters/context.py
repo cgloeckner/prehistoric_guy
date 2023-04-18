@@ -20,7 +20,7 @@ class Context:
     def __init__(self):
         self.actors = objectids.IdList[Actor]()
 
-    def create_character(self, object_id: int, max_hit_points: int, num_axes: int) -> Actor:
+    def create_actor(self, object_id: int, max_hit_points: int, num_axes: int) -> Actor:
         actor = Actor(object_id=object_id, hit_points=bounded_value.Int(max_hit_points, max_hit_points),
                       num_axes=bounded_value.Int(num_axes, num_axes))
         self.actors.append(actor)

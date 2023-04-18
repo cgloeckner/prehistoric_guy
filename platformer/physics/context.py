@@ -36,9 +36,11 @@ class Context:
         self.actors.append(a)
         return a
 
-    def create_projectile(self, object_id: int, x: float, y: float, from_actor: Optional[actors.Actor] = None) \
-            -> projectiles.Projectile:
-        p = projectiles.Projectile(object_id=object_id, pos=pygame.math.Vector2(x, y), from_actor=from_actor)
+    def create_projectile(self, object_id: int, x: float, y: float,
+                          object_type: constants.ObjectType = constants.ObjectType.WEAPON,
+                          from_actor: Optional[actors.Actor] = None) -> projectiles.Projectile:
+        p = projectiles.Projectile(object_id=object_id, pos=pygame.math.Vector2(x, y), object_type=object_type,
+                                   from_actor=from_actor)
         self.projectiles.append(p)
         if from_actor is not None:
             p.move.face_x = from_actor.move.face_x
