@@ -47,7 +47,7 @@ def get_throwing_process(player: Actor) -> float:
 
 class Players(object):
     def __init__(self, physics_context: physics.Context, animations_context: animations.Context,
-                 renderer_context: renderer.Context, char_system: characters.Characters, cache: resources.Cache,
+                 renderer_context: renderer.images.Context, char_system: characters.Characters, cache: resources.Cache,
                  hud_target: pygame.Surface):
         self.physics_context = physics_context
         self.animations_context = animations_context
@@ -106,8 +106,8 @@ class Players(object):
 
     def handle_inputs(self, player: Actor) -> None:
         """Triggers movement, jumping, climbing, attacking etc."""
-        ani_actor = self.animations_context.get_actor_by_id(player.object_id)
-        phys_actor = self.physics_context.get_actor_by_id(player.object_id)
+        ani_actor = self.animations_context.actors.get_by_id(player.object_id)
+        phys_actor = self.physics_context.actors.get_by_id(player.object_id)
 
         if ani_actor.action in animations.BLOCKING_ANIMATIONS:
             # nothing allowed
@@ -178,7 +178,7 @@ class Players(object):
                                   constants.OBJECT_SCALE, constants.OBJECT_SCALE))
 
     def draw_throw_progress(self, char_actor: characters.Actor, value: float) -> None:
-        phys_actor = self.physics_context.get_actor_by_id(char_actor.object_id)
+        phys_actor = self.physics_context.actors.get_by_id(char_actor.object_id)
 
         # FIXME: find a way to access coord transformation
         #pos = self.render_system.camera.from_world_coord(phys_actor.pos.x, phys_actor.pos.y)

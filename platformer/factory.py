@@ -17,8 +17,8 @@ class ObjectManager(physics.EventListener, animations.EventListener, characters.
         self.animation = animations.Animating(self, self.animations_context)
         self.camera = renderer.Camera(*target.get_size())
         self.renderer_context = renderer.Context()
-        self.renderer = renderer.ImageRenderer(self.camera, target, self.physics_context, self.animations_context,
-                                               self.renderer_context, cache)
+        self.renderer = renderer.Renderer(self.camera, target, self.physics_context, self.animations_context,
+                                          self.renderer_context, cache)
         self.chars = characters.Characters(self)
         self.players = players.Players(self.physics_context, self.animations_context, self.renderer_context,
                                        self.chars, cache, target)
@@ -46,7 +46,7 @@ class ObjectManager(physics.EventListener, animations.EventListener, characters.
 
     def on_landing(self, phys_actor: physics.Actor) -> None:
         """Triggered when the actor landed on a platform."""
-        ani_actor = self.animation.get_actor_by_id(phys_actor.object_id)
+        ani_actor = self.animations_context.actors.get_by_id(phys_actor.object_id)
         action = animations.Action.IDLE
 
         char_actor = self.chars.try_get_by_id(phys_actor.object_id)
@@ -125,7 +125,7 @@ class ObjectManager(physics.EventListener, animations.EventListener, characters.
             return
 
         # query target actors
-        phys_actor = self.physics_context.get_actor_by_id(ani.object_id)
+        phys_actor = self.physics_context.actors.get_by_id(ani.object_id)
         targets = phys_actor.get_all_faced_actors(self.physics_context.actors, characters.MELEE_ATTACK_RADIUS)
 
         # damage their characters if possible
@@ -139,16 +139,16 @@ class ObjectManager(physics.EventListener, animations.EventListener, characters.
     def on_throw(self, ani_actor: animations.Actor) -> None:
         """Triggered when an attack animation finished."""
         char_actor = self.chars.get_by_id(ani_actor.object_id)
-        phys_actor = self.physics_context.get_actor_by_id(ani_actor.object_id)
+        phys_actor = self.physics_context.actors.get_by_id(ani_actor.object_id)
         if char_actor.num_axes == 0:
             return
 
         char_actor.num_axes -= 1
         proj = self.create_projectile(x=phys_actor.pos.x, y=phys_actor.pos.y + phys_actor.radius, from_actor=phys_actor)
-        proj.movement.face_x = phys_actor.move.face_x
-        proj.movement.force.x = phys_actor.move.face_x
-        proj.movement.force.y = 0.5
-        proj.movement.speed = 4.0
+        proj.move.face_x = phys_actor.move.face_x
+        proj.move.force.x = phys_actor.move.face_x
+        proj.move.force.y = 0.5
+        proj.move.speed = 4.0
 
     def on_died(self, ani_actor: animations.Actor) -> None:
         """Triggered when a dying animation finished."""
@@ -158,12 +158,12 @@ class ObjectManager(physics.EventListener, animations.EventListener, characters.
 
     def on_char_damaged(self, actor: characters.Actor, damage: int, cause: Optional[characters.Actor]) -> None:
         """Triggered when an actor got damaged."""
-        ani_actor = self.animation.get_actor_by_id(actor.object_id)
+        ani_actor = self.animations_context.actors.get_by_id(actor.object_id)
         animations.flash(ani_actor, resources.HslTransform(lightness=100), 200)
 
     def on_char_died(self, char_actor: characters.Actor, damage: int, cause: Optional[characters.Actor]) -> None:
         """Triggered when an actor died. An optional cause can be provided."""
-        ani_actor = self.animation.get_actor_by_id(char_actor.object_id)
+        ani_actor = self.animations_context.actors.get_by_id(char_actor.object_id)
         animations.start(ani_actor, animations.Action.DIE)
         self.destroy_character(char_actor, keep_components=True)
 
@@ -228,9 +228,9 @@ class ObjectManager(physics.EventListener, animations.EventListener, characters.
 
     def destroy_actor_by_id(self, object_id: int) -> None:
         """Remove an actor (with all components) using the object id."""
-        phys_actor = self.physics_context.get_actor_by_id(object_id)
-        ani_actor = self.animation.get_actor_by_id(object_id)
-        render_actor = self.renderer.sprite_context.get_actor_by_id(object_id)
+        phys_actor = self.physics_context.actors.get_by_id(object_id)
+        ani_actor = self.animations_context.actors.get_by_id(object_id)
+        render_actor = self.renderer_context.actors.get_by_id(object_id)
         self.physics_context.actors.remove(phys_actor)
         self.animation.context.actors.remove(ani_actor)
         self.renderer.sprite_context.actors.remove(render_actor)
@@ -247,7 +247,7 @@ class ObjectManager(physics.EventListener, animations.EventListener, characters.
         """Remove a character. If keep_components is True, the underlying actor remains intact."""
         if keep_components:
             # stop movement and make unable to collide anymore
-            phys_actor = self.physics_context.get_actor_by_id(character.object_id)
+            phys_actor = self.physics_context.actors.get_by_id(character.object_id)
             phys_actor.force_x = 0.0
             phys_actor.can_collide = False
         else:

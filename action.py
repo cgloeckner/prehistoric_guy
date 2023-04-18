@@ -28,7 +28,7 @@ class GameState(state_machine.State):
         self.manager.create_player(player_char_actor, left_key=pygame.K_a, right_key=pygame.K_d, up_key=pygame.K_w,
                                    down_key=pygame.K_s, attack_key=pygame.K_SPACE)
 
-        phys_actor = self.manager.physics_context.get_actor_by_id(player_char_actor.object_id)
+        phys_actor = self.manager.physics_context.actors.get_by_id(player_char_actor.object_id)
         #self.manager.camera.follow.append(phys_actor)
 
         # --- create demo scene ---------------------------------------------------------------------------------------
@@ -93,12 +93,12 @@ class GameState(state_machine.State):
                 # ignore players
                 continue
 
-            ani_enemy = self.manager.animations_context.get_actor_by_id(enemy.object_id)
+            ani_enemy = self.manager.animations_context.actors.get_by_id(enemy.object_id)
             if ani_enemy.action in [animations.Action.DIE, animations.Action.ATTACK, animations.Action.THROW,
                                     animations.Action.LANDING]:
                 continue
 
-            phys_enemy = self.manager.physics_context.get_actor_by_id(enemy.object_id)
+            phys_enemy = self.manager.physics_context.actors.get_by_id(enemy.object_id)
             if phys_enemy.on_platform is None:
                 continue
 
@@ -114,7 +114,7 @@ class GameState(state_machine.State):
 
         # --- Demo: limit pos to screen --------------------------------------------------------------------------------
         for player in self.manager.players.players:
-            phys_actor = self.manager.physics_context.get_actor_by_id(player.object_id)
+            phys_actor = self.manager.physics_context.actors.get_by_id(player.object_id)
             phys_actor.pos.x = max(0.0, min(phys_actor.pos.x, constants.RESOLUTION_X / constants.WORLD_SCALE))
             if phys_actor.pos.y < 0:
                 phys_actor.pos.y += constants.RESOLUTION_Y // constants.WORLD_SCALE

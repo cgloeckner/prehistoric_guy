@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from typing import List
 from enum import IntEnum
 
-from core import constants, resources
+from core import constants, resources, objectids
 
 
 ANIMATION_FRAME_DURATION: int = 120
@@ -60,16 +60,8 @@ class Projectile:
 
 class Context:
     def __init__(self):
-        self.actors: List[Actor] = list()
+        self.actors = objectids.IdList[Actor]()
         self.projectiles: List[Projectile] = list()
-
-    def get_actor_by_id(self, object_id: int) -> Actor:
-        for actor in self.actors:
-            if actor.object_id == object_id:
-                return actor
-
-        # FIXME
-        raise ValueError(f'No such Actor {object_id}')
 
     def get_projectile_by_id(self, object_id: int) -> Projectile:
         for proj in self.projectiles:

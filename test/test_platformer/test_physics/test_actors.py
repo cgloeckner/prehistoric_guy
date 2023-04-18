@@ -7,8 +7,11 @@ from platformer.physics import actors
 from platformer.physics import platforms
 
 
+generator = objectids.object_id_generator()
+
+
 def create_actor(x: float, y: float, radius: float = 1.0) -> actors.Actor:
-    return actors.Actor(object_id=next(objectids.generator), pos=pygame.math.Vector2(x, y), radius=radius)
+    return actors.Actor(object_id=next(generator), pos=pygame.math.Vector2(x, y), radius=radius)
 
 
 class ActorsPhysicsTest(unittest.TestCase):

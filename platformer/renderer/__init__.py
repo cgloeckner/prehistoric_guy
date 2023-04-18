@@ -1,3 +1,3 @@
-from platformer.renderer.context import *
-from platformer.renderer.base import *
-from platformer.renderer.images import *
+from .base import Camera
+from .images import Context, Actor
+from .images import ImageRenderer as Renderer

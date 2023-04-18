@@ -3,7 +3,7 @@ from typing import List
 from dataclasses import dataclass
 from enum import IntEnum
 
-from core import constants, resources
+from core import constants, resources, objectids
 
 from .. import animations, physics
 from . import base, shapes
@@ -41,7 +41,7 @@ class Actor:
 
 class Context:
     def __init__(self):
-        self.actors: List[Actor] = list()
+        self.actors = objectids.IdList()
 
     def get_actor_by_id(self, object_id: int) -> Actor:
         for actor in self.actors:
@@ -184,8 +184,8 @@ class ImageRenderer(shapes.ShapeRenderer):
         self.target.blit(self.objects, pos, clip)
 
     def draw_actor(self, actor: physics.Actor) -> None:
-        sprite_actor = self.sprite_context.get_actor_by_id(actor.object_id)
-        ani_actor = self.ani_context.get_actor_by_id(actor.object_id)
+        sprite_actor = self.sprite_context.actors.get_by_id(actor.object_id)
+        ani_actor = self.ani_context.actors.get_by_id(actor.object_id)
 
         pos = self.get_actor_rect(actor)
         clip = self.get_actor_clip(face_x=actor.move.face_x, frame_id=ani_actor.frame_id, action=ani_actor.action)

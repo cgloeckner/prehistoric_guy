@@ -3,7 +3,7 @@ import pygame
 from abc import ABC, abstractmethod
 from typing import List, Optional
 
-from core import constants
+from core import constants, objectids
 from . import platforms, ladders, objects, actors, projectiles
 
 
@@ -12,16 +12,8 @@ class Context:
         self.platforms: List[platforms.Platform] = list()
         self.ladders: List[ladders.Ladder] = list()
         self.objects: List[objects.Object] = list()
-        self.actors: List[actors.Actor] = list()
+        self.actors = objectids.IdList[actors.Actor]()
         self.projectiles: List[projectiles.Projectile] = list()
-
-    def get_actor_by_id(self, object_id: int) -> actors.Actor:
-        for actor in self.actors:
-            if actor.object_id == object_id:
-                return actor
-
-        # FIXME
-        raise ValueError(f'No such Actor {object_id}')
 
     def get_projectile_by_id(self, object_id: int) -> projectiles.Projectile:
         for proj in self.projectiles:
