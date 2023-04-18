@@ -145,7 +145,8 @@ class ImageRenderer(shapes.ShapeRenderer):
         for y in range(platform.height):
             pos_tmp.x = pos.x
             for x in range(platform.width):
-                self.target.blit(self.tiles, pos_tmp, clip.tex_clip_rect)
+                if self.camera.rect_is_visible(pos_tmp):
+                    self.target.blit(self.tiles, pos_tmp, clip.tex_clip_rect)
                 pos_tmp.x += constants.WORLD_SCALE
             pos_tmp.y -= constants.WORLD_SCALE
 
@@ -153,13 +154,16 @@ class ImageRenderer(shapes.ShapeRenderer):
         pos_tmp = pos.copy()
         pos_tmp.y -= constants.WORLD_SCALE + platform.height * constants.WORLD_SCALE
         for x in range(platform.width):
-            self.target.blit(self.tiles, pos_tmp, clip.top_clip_rect)
+            if self.camera.rect_is_visible(pos_tmp):
+                self.target.blit(self.tiles, pos_tmp, clip.top_clip_rect)
             pos_tmp.x += constants.WORLD_SCALE
 
         # draw edges
-        self.target.blit(self.tiles, pos_tmp, clip.right_clip_rect)
+        if self.camera.rect_is_visible(pos_tmp):
+            self.target.blit(self.tiles, pos_tmp, clip.right_clip_rect)
         pos_tmp.x = pos.x - constants.WORLD_SCALE
-        self.target.blit(self.tiles, pos_tmp, clip.left_clip_rect)
+        if self.camera.rect_is_visible(pos_tmp):
+            self.target.blit(self.tiles, pos_tmp, clip.left_clip_rect)
 
     def draw_ladder(self, ladder: physics.Ladder) -> None:
         pos = self.get_ladder_rect(ladder)
@@ -167,21 +171,26 @@ class ImageRenderer(shapes.ShapeRenderer):
 
         # draw upper part of the ladder
         pos.y -= constants.WORLD_SCALE
-        self.target.blit(self.tiles, pos, clip.top_clip_rect)
+        if self.camera.rect_is_visible(pos):
+            self.target.blit(self.tiles, pos, clip.top_clip_rect)
         pos.y += constants.WORLD_SCALE
 
         # draw ladder elements
         for i in range(ladder.height):
-            self.target.blit(self.tiles, pos, clip.mid_clip_rect)
+            if self.camera.rect_is_visible(pos):
+                self.target.blit(self.tiles, pos, clip.mid_clip_rect)
             pos.y += constants.WORLD_SCALE
 
         # draw lower part of the ladder:
-        self.target.blit(self.tiles, pos, clip.bottom_clip_rect)
+        if self.camera.rect_is_visible(pos):
+            self.target.blit(self.tiles, pos, clip.bottom_clip_rect)
 
     def draw_object(self, obj: physics.Object) -> None:
         pos = self.get_object_rect(obj)
         clip = self.get_object_clip(object_type=obj.object_type, variation_col=0)
-        self.target.blit(self.objects, pos, clip)
+
+        if self.camera.rect_is_visible(pos):
+            self.target.blit(self.objects, pos, clip)
 
     def draw_actor(self, actor: physics.Actor) -> None:
         sprite_actor = self.sprite_context.actors.get_by_id(actor.object_id)
@@ -194,7 +203,8 @@ class ImageRenderer(shapes.ShapeRenderer):
         # apply movement offset from animation
         pos.y += ani_actor.oscillate.delta_y
 
-        self.target.blit(sprite_actor.sprite_sheet, pos, clip)
+        if self.camera.rect_is_visible(pos):
+            self.target.blit(sprite_actor.sprite_sheet, pos, clip)
 
     def draw_projectile(self, proj: physics.Projectile) -> None:
         # FIXME: allow for spinning animation
@@ -206,7 +216,8 @@ class ImageRenderer(shapes.ShapeRenderer):
 
         pos = self.get_projectile_rect(proj)
         clip = self.get_projectile_clip(object_type=proj.object_type, variation_col=0)
-        self.target.blit(self.objects, pos, clip)
+        if self.camera.rect_is_visible(pos):
+            self.target.blit(self.objects, pos, clip)
 
     def update(self, elapsed_ms: int) -> None:
         self.physics_context.platforms.sort(key=lambda plat: plat.pos.y)

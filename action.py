@@ -42,7 +42,7 @@ class GameState(state_machine.State):
         self.manager.create_platform(x=2, y=2, width=2)
         self.manager.create_platform(x=0, y=4, width=3)
         self.manager.create_platform(x=6, y=1, width=3)
-        for i in range(5):
+        for i in range(100):
             self.manager.create_platform(x=10 + i, y=0, width=1, height=1 + i)
         self.manager.create_platform(x=5, y=6, width=4)
 
@@ -84,6 +84,10 @@ class GameState(state_machine.State):
         if keys[pygame.K_DOWN]:
             self.manager.camera.move_ip(0, -1)
         """
+
+        player_char_actor = self.manager.players.players[0]
+        phys_actor = self.manager.physics_context.actors.get_by_id(player_char_actor.object_id)
+        self.manager.camera.set_center(phys_actor.pos, constants.WORLD_SCALE)
 
         self.manager.update(elapsed_ms)
 

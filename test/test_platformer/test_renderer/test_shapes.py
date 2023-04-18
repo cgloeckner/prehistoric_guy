@@ -22,8 +22,8 @@ class ShapeRendererTest(unittest.TestCase):
         self.ctx.create_projectile(2, x=6.5, y=5.5)
 
         self.cam = base.Camera(320, 192)
-        self.cam.center.x = -1.5
-        self.cam.center.y = -0.5
+        self.cam.topleft.x = -1.5
+        self.cam.topleft.y = -0.5
 
         os.environ["SDL_VIDEODRIVER"] = "dummy"
         pygame.init()

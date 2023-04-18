@@ -224,8 +224,8 @@ class ObjectManager(physics.EventListener, animations.EventListener, characters.
         ani_actor = animations.Actor(object_id=object_id)
         render_actor = renderer.Actor(object_id=object_id, sprite_sheet=sprite_sheet)
 
-        self.animation.context.actors.append(ani_actor)
-        self.renderer.sprite_context.actors.append(render_actor)
+        self.animations_context.actors.append(ani_actor)
+        self.renderer_context.actors.append(render_actor)
 
         return object_id
 
@@ -235,8 +235,8 @@ class ObjectManager(physics.EventListener, animations.EventListener, characters.
         ani_actor = self.animations_context.actors.get_by_id(object_id)
         render_actor = self.renderer_context.actors.get_by_id(object_id)
         self.physics_context.actors.remove(phys_actor)
-        self.animation.context.actors.remove(ani_actor)
-        self.renderer.sprite_context.actors.remove(render_actor)
+        self.animations_context.actors.remove(ani_actor)
+        self.renderer_context.actors.remove(render_actor)
 
     def create_character(self, sprite_sheet: pygame.Surface, **kwargs) -> characters.Actor:
         """Creates and returns a character """
