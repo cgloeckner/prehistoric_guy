@@ -14,7 +14,10 @@ class Action(IntEnum):
 
 
 # animations that cannot be interrupted by user input
-BLOCKING_ANIMATIONS = [Action.DIE, Action.ATTACK, Action.THROW, Action.LANDING]
+BLOCKING_ANIMATIONS = [Action.DIE, Action.LANDING]
+
+# animations that are related to movement
+MOVEMENT_ANIMATIONS = [Action.MOVE, Action.CLIMB]
 
 # those loop until interrupted by user input
 LOOPED_ANIMATIONS = [Action.IDLE, Action.MOVE, Action.HOLD]
