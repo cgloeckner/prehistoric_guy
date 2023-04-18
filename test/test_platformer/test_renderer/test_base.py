@@ -14,7 +14,6 @@ class CameraTest(unittest.TestCase):
         self.assertEqual(cam.topleft.x, 1.5 - 16)
         self.assertEqual(cam.topleft.y, 0.75 - 10)
 
-
     def test__from_world_coord(self):
         cam = base.Camera(320, 200)
         cam.topleft.x = 1.5
