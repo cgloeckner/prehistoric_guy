@@ -139,7 +139,9 @@ class ObjectManager(physics.EventListener, animations.EventListener, characters.
     def on_throw(self, ani_actor: animations.Actor) -> None:
         """Triggered when an attack animation finished."""
         actor = self.characters_context.actors.get_by_id(ani_actor.object_id)
-        characters.throw_object(actor, 4.0, constants.ObjectType.WEAPON, self.physics_context, self.create_projectile)
+        proj = characters.throw_object(actor, 3.0, constants.ObjectType.WEAPON, self.physics_context,
+                                       self.create_projectile)
+        proj.move.force.y = 1.0
 
     def on_died(self, ani_actor: animations.Actor) -> None:
         """Triggered when a dying animation finished."""

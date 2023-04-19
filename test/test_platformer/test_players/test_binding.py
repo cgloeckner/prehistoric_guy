@@ -204,11 +204,11 @@ class InputStateTest(unittest.TestCase):
         self.assertEqual(state.attack_held_ms, 0)
         self.assertEqual(state.action, binding.Action.THROW)
 
-        # exceed threshold
+        # exceed threshold resets because it fires
         state.action = binding.Action.NONE
         state.attack_held_ms = binding.THROW_THRESHOLD + 7
         state.update_action(15)
-        self.assertEqual(state.attack_held_ms, 22)
+        self.assertEqual(state.attack_held_ms, 0)
         self.assertEqual(state.action, binding.Action.THROW)
 
     # ------------------------------------------------------------------------------------------------------------------

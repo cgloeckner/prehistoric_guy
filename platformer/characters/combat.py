@@ -1,5 +1,6 @@
 from typing import List, Callable, Optional
 
+from core import constants
 from platformer import physics
 from .context import Actor, Context
 
@@ -42,7 +43,7 @@ def throw_object(actor: Actor, projectile_speed: float, object_type: int, physic
     # prepare spawn pos at the center of the actor (rather midbottom)
     physics_actor = physics_context.actors.get_by_id(actor.object_id)
     pos = physics_actor.pos.copy()
-    pos.y += physics_actor.radius
+    pos.y += physics_actor.radius + constants.OBJECT_RADIUS
 
     if actor.num_axes == 0:
         return None

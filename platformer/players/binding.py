@@ -89,7 +89,7 @@ class InputState:
             self.attack_held_ms += elapsed_ms
             if self.attack_held_ms >= THROW_THRESHOLD:
                 self.action = Action.THROW
-                self.attack_held_ms -= THROW_THRESHOLD
+                self.attack_held_ms = 0
 
     def get_next_animation(self, is_on_ladder: bool, is_on_platform: bool) -> animations.Action:
         """Returns the related animation action or None if falling without an action-"""
