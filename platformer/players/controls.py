@@ -71,9 +71,12 @@ class ControlsSystem:
 
         # apply y-force is only applied if applicable
         if actor.state.delta.y != 0.0:
-            applicable = is_on_ladder
-            if not applicable:
-                applicable = actor.state.delta.y > 0.0
+            applicable = False
+            if is_on_ladder:
+                applicable = True
+            else:
+                if phys_actor.move.force.y == 0.0 and actor.state.delta.y > 0.0:
+                    applicable = True
 
             if applicable:
                 phys_actor.move.force.y = actor.state.delta.y
