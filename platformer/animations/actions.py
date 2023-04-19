@@ -16,6 +16,9 @@ class Action(IntEnum):
 # animations that cannot be interrupted by user input
 BLOCKING_ANIMATIONS = [Action.DIE, Action.LANDING]
 
+# animations that do not allow climbing
+BUSY_ANIMATIONS = [Action.ATTACK, Action.THROW, Action.DIE]
+
 # animations that are related to movement
 MOVEMENT_ANIMATIONS = [Action.MOVE, Action.CLIMB]
 

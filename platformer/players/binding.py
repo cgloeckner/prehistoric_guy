@@ -73,7 +73,6 @@ class InputState:
             else:
                 self.action = Action.ATTACK
             self.attack_held_ms = -1
-            print(self)
             return
 
     def get_throwing_progress(self) -> float:

@@ -4,6 +4,7 @@ from abc import ABC, abstractmethod
 from core import objectids
 
 from . import actions, frames, oscillation
+from platformer import physics
 
 
 @dataclass
@@ -67,9 +68,10 @@ class EventListener(ABC):
 
 class AnimationSystem(object):
     """Handles all frame set animations."""
-    def __init__(self, animation_listener: EventListener, context: Context):
+    def __init__(self, animation_listener: EventListener, context: Context, physics_context: physics.Context):
         self.event_listener = animation_listener
         self.context = context
+        self.physics_context = physics_context
 
     def notify_finished(self, ani: Actor) -> None:
         """Notify about a finished animation."""
@@ -84,12 +86,20 @@ class AnimationSystem(object):
         elif ani.frame.action == actions.Action.DIE:
             self.event_listener.on_died(ani)
 
+    def handle_allow_climb(self, actor: Actor) -> None:
+        """Allowed the physics actor to climb or not, based on the animation.
+        """
+        physics_actor = self.physics_context.actors.get_by_id(actor.object_id)
+        physics_actor.can_climb = actor.frame.action not in actions.BUSY_ANIMATIONS
+
     def update_actor(self, actor: Actor, elapsed_ms) -> None:
         """Updates the actor using all related sub-animations."""
         # frame animation
         if actor.frame.step_frame(elapsed_ms):
             self.notify_finished(actor)
             actor.frame.handle_finish()
+
+        self.handle_allow_climb(actor)
 
         # oscillation animation
         actor.oscillate.update(actor.frame.action, elapsed_ms)

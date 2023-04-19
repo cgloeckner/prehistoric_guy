@@ -14,7 +14,7 @@ class ObjectManager(physics.EventListener, animations.EventListener, characters.
         self.physics_context = physics.Context()
         self.physics = physics.System(self, self.physics_context)
         self.animations_context = animations.Context()
-        self.animation = animations.AnimationSystem(self, self.animations_context)
+        self.animation = animations.AnimationSystem(self, self.animations_context, self.physics_context)
         self.camera = renderer.Camera(*target.get_size())
         self.renderer_context = renderer.Context()
         self.renderer = renderer.Renderer(self.camera, target, self.physics_context, self.animations_context,

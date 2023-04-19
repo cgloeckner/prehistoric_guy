@@ -13,7 +13,7 @@ class ActorSystem(object):
 
     def handle_ladders(self, actor: actors.Actor) -> None:
         """Handles grabbing and releasing a ladder."""
-        if actor.on_ladder is None:
+        if actor.on_ladder is None and actor.can_climb:
             ladder = ladders.get_closest_ladder_in_reach(actor.pos, self.context.ladders)
             if ladder is not None:
                 actor.on_ladder = ladder
@@ -21,6 +21,12 @@ class ActorSystem(object):
 
         # leaving ladder?
         if actor.on_ladder is not None:
+            if not actor.can_climb:
+                # release ladder
+                actor.on_ladder = None
+                self.listener.on_release(actor)
+                return
+
             if not actor.on_ladder.is_in_reach_of(actor.pos):
                 # reached end of ladder
                 actor.on_ladder = None

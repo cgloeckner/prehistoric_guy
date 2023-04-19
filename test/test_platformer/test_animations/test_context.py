@@ -2,6 +2,7 @@ import unittest
 
 from core import constants
 from platformer.animations import actions, context
+from platformer import physics, animations
 
 
 class UnittestListener(context.EventListener):
@@ -30,13 +31,15 @@ class AnimationSystemTest(unittest.TestCase):
     def setUp(self):
         self.listener = UnittestListener()
         self.ctx = context.Context()
-        self.sys = context.AnimationSystem(self.listener, self.ctx)
+        self.phys_ctx = physics.Context()
+        self.sys = context.AnimationSystem(self.listener, self.ctx, self.phys_ctx)
 
     # ------------------------------------------------------------------------------------------------------------------
 
     def test__notify_finished(self):
         # movement
         actor = self.ctx.create_actor(1)
+        self.phys_ctx.create_actor(1, 2.0, 1.0)
         actor.frame.start(actions.Action.MOVE)
         self.sys.notify_finished(actor)
 
@@ -77,6 +80,7 @@ class AnimationSystemTest(unittest.TestCase):
 
     def test__update_actor(self):
         actor = self.ctx.create_actor(1)
+        self.phys_ctx.create_actor(1, 2.0, 1.0)
         actor.frame.start(actions.Action.CLIMB)
         actor.frame.frame_id = constants.ANIMATION_NUM_FRAMES - 1
         actor.frame.duration_ms = 20
@@ -100,10 +104,25 @@ class AnimationSystemTest(unittest.TestCase):
         self.assertEqual(self.listener.last[0], 'climb')
         self.assertEqual(self.listener.last[1].object_id, actor.object_id)
 
+    def test__update_actor__actor_can_be_busy(self):
+        actor = self.ctx.create_actor(1)
+        physics_actor = self.phys_ctx.create_actor(1, 2.0, 1.0)
+
+        for action in animations.Action:
+            actor.frame.start(action)
+            self.sys.update_actor(actor, 10)
+            if action in animations.BUSY_ANIMATIONS:
+                self.assertFalse(physics_actor.can_climb)
+            else:
+                self.assertTrue(physics_actor.can_climb)
+
     def test__update(self):
         self.ctx.create_actor(1)
         self.ctx.create_actor(2)
         self.ctx.create_actor(3)
+        self.phys_ctx.create_actor(1, 2.0, 1.0)
+        self.phys_ctx.create_actor(2, 2.0, 1.0)
+        self.phys_ctx.create_actor(3, 2.0, 1.0)
 
         # make them move to trigger oscillation too
         for actor in self.ctx.actors:

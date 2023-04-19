@@ -175,4 +175,36 @@ class ControlSystemTest(unittest.TestCase):
 
         self.assertAlmostEqual(phys_actor.move.force.x, -1.0)
         self.assertAlmostEqual(phys_actor.move.force.y, 0.0)
-        self.assertEqual(ani_actor.frame.action, animations.Action.IDLE)
+
+    def test_can_attack_on_ladder(self):
+        actor = self.create_actor(1, 2.0, 1.0)
+        phys_actor = self.phys_ctx.actors.get_by_id(actor.object_id)
+        phys_actor.on_ladder = self.phys_ctx.create_ladder(2.0, 0.0, 5)
+        ani_actor = self.ani_ctx.actors.get_by_id(actor.object_id)
+
+        actor.state.action = binding.Action.ATTACK
+        self.sys.apply_input(actor)
+
+        self.assertEqual(ani_actor.frame.action, animations.Action.ATTACK)
+
+    def test_can_attack_while_falling(self):
+        actor = self.create_actor(1, 2.0, 1.0)
+        phys_actor = self.phys_ctx.actors.get_by_id(actor.object_id)
+        phys_actor.move.force.y = -1.0
+        ani_actor = self.ani_ctx.actors.get_by_id(actor.object_id)
+
+        actor.state.action = binding.Action.ATTACK
+        self.sys.apply_input(actor)
+
+        self.assertEqual(ani_actor.frame.action, animations.Action.ATTACK)
+
+    def test_can_jump_while_attacking(self):
+        actor = self.create_actor(1, 2.0, 1.0)
+        phys_actor = self.phys_ctx.actors.get_by_id(actor.object_id)
+        ani_actor = self.ani_ctx.actors.get_by_id(actor.object_id)
+        ani_actor.frame.action = animations.Action.ATTACK
+
+        actor.state.delta.y = 1
+        self.sys.apply_input(actor)
+
+        self.assertEqual(ani_actor.frame.action, animations.Action.ATTACK)

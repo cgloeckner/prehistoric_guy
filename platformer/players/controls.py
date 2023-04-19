@@ -83,6 +83,11 @@ class ControlsSystem:
            ani_actor.frame.action in [animations.Action.ATTACK, animations.Action.THROW]:
             return
 
+        # attacking is priority over jumping/falling
+        if ani_action in [animations.Action.JUMP, animations.Action.MOVE] and \
+           ani_actor.frame.action in animations.BUSY_ANIMATIONS:
+            return last_action
+
         # trigger resulting animation action
         ani_actor.frame.start(ani_action)
 

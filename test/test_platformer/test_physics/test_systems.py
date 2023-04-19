@@ -89,6 +89,25 @@ class ActorSystemsTest(unittest.TestCase):
         self.assertEqual(self.listener.last[0], 'grab')
         self.assertEqual(self.listener.last[1], actor)
 
+    def test__handle_ladders_if_forbidden(self):
+        actor = self.context.create_actor(1, x=2.0, y=1.0 + constants.OBJECT_RADIUS)
+        actor.can_climb = False
+        ladder = self.context.create_ladder(x=2.0, y=1.0, height=4)
+
+        # cannot grab if busy
+        self.system.handle_ladders(actor)
+        self.assertIsNone(actor.on_ladder)
+        self.assertIsNone(self.listener.last)
+
+        # must release if busy
+        actor.on_ladder = ladder
+        self.system.handle_ladders(actor)
+        self.assertIsNone(actor.on_ladder)
+        self.assertIsInstance(self.listener.last, tuple)
+        self.assertEqual(len(self.listener.last), 2)
+        self.assertEqual(self.listener.last[0], 'release')
+        self.assertEqual(self.listener.last[1], actor)
+
     def test__handle_gravity(self):
         actor = self.context.create_actor(1, x=2.0, y=1.0)
 
