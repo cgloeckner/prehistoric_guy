@@ -3,7 +3,7 @@ import pygame
 import math
 from typing import List
 
-from core import resources, shapes
+from core import resources
 
 from . import physics, animations, renderer, factory
 
@@ -19,7 +19,7 @@ def get_dict_key_index(dictionary, value) -> int:
         index += 1
 
 
-def platform_ui(platform: physics.Platform) -> bool:
+def platform_ui(platform: physics.Platform) -> None:
     """Shows an ImGui-based UI for editing the given platform. Values are updated automatically.
     Returns True if the close button was clicked.
     """
@@ -30,59 +30,49 @@ def platform_ui(platform: physics.Platform) -> bool:
     }
     opts_keys = list(opts_dict.keys())
 
-    _, opened = imgui.begin('Platform', True)
+    with imgui.begin('Platform', True):
+        _, platform.pos.x = imgui.input_float('x', platform.pos.x, 0.1)
+        _, platform.pos.y = imgui.input_float('y', platform.pos.y, 0.1)
+        _, platform.width = imgui.input_int('width', platform.width, 0.1)
+        _, platform.height = imgui.input_int('height', platform.height, 0.1)
 
-    _, platform.pos.x = imgui.input_float('x', platform.pos.x, 0.1)
-    _, platform.pos.y = imgui.input_float('y', platform.pos.y, 0.1)
-    _, platform.width = imgui.input_int('width', platform.width, 0.1)
-    _, platform.height = imgui.input_int('height', platform.height, 0.1)
+        _, enabled = imgui.checkbox('does hover?', platform.hover is not None)
+        if enabled and platform.hover is None:
+            platform.hover = physics.Hovering()
+        if not enabled and platform.hover is not None:
+            platform.hover = None
 
-    _, enabled = imgui.checkbox('does hover?', platform.hover is not None)
-    if enabled and platform.hover is None:
-        platform.hover = physics.Hovering()
-    if not enabled and platform.hover is not None:
-        platform.hover = None
+        if platform.hover is not None:
+            clicked, current = imgui.combo('hover.x', get_dict_key_index(opts_dict, platform.hover.x), opts_keys)
+            if clicked:
+                platform.hover.x = opts_dict[opts_keys[current]]
 
-    if platform.hover is not None:
-        clicked, current = imgui.combo('hover.x', get_dict_key_index(opts_dict, platform.hover.x), opts_keys)
-        if clicked:
-            platform.hover.x = opts_dict[opts_keys[current]]
+            clicked, current = imgui.combo('hover.y', get_dict_key_index(opts_dict, platform.hover.y), opts_keys)
+            if clicked:
+                platform.hover.y = opts_dict[opts_keys[current]]
 
-        clicked, current = imgui.combo('hover.y', get_dict_key_index(opts_dict, platform.hover.y), opts_keys)
-        if clicked:
-            platform.hover.y = opts_dict[opts_keys[current]]
-
-        _, platform.hover.amplitude = imgui.input_float('amplitude', platform.hover.amplitude, 0.1)
-
-    imgui.end()
-
-    return not opened
+            _, platform.hover.amplitude = imgui.input_float('amplitude', platform.hover.amplitude, 0.1)
 
 
-def actor_ui(phys_actor: physics.Actor, ani_actor: animations.Actor, render_actor: renderer.Actor) -> bool:
+def actor_ui(phys_actor: physics.Actor, ani_actor: animations.Actor, render_actor: renderer.Actor) -> None:
     """Shows an ImGui-based UI for editing a given actor. Values are updated automatically.
     Returns True if the close button was clicked.
     """
-    _, opened = imgui.begin('Actor', True)
-
-    _, phys_actor.x = imgui.input_float('x', phys_actor.pos.x, 0.1)
-    _, phys_actor.y = imgui.input_float('y', phys_actor.pos.y, 0.1)
-    #imgui.text(f'face_x={phys_actor.face_x}')
-    imgui.text(f'force_x={phys_actor.move.force.x}')
-    imgui.text(f'force_y={phys_actor.move.force.y}')
-    imgui.text(f'anchor={phys_actor.on_platform}')
-    imgui.text(f'ladder={phys_actor.on_ladder}')
-    _, phys_actor.radius = imgui.input_float('y', phys_actor.radius, 0.1)
-    imgui.text(f'action_id={ani_actor.action}')
-    imgui.text(f'action_id={ani_actor.action}')
-    imgui.text(f'sprite_sheet={render_actor.sprite_sheet}')
-
-    imgui.end()
-
-    return not opened
+    with imgui.begin('Actor', True):
+        _, phys_actor.x = imgui.input_float('x', phys_actor.pos.x, 0.1)
+        _, phys_actor.y = imgui.input_float('y', phys_actor.pos.y, 0.1)
+        #imgui.text(f'face_x={phys_actor.face_x}')
+        imgui.text(f'force_x={phys_actor.move.force.x}')
+        imgui.text(f'force_y={phys_actor.move.force.y}')
+        imgui.text(f'anchor={phys_actor.on_platform}')
+        imgui.text(f'ladder={phys_actor.on_ladder}')
+        _, phys_actor.radius = imgui.input_float('y', phys_actor.radius, 0.1)
+        imgui.text(f'action_id={ani_actor.frame.action}')
+        imgui.text(f'action_id={ani_actor.frame.action}')
+        imgui.text(f'sprite_sheet={render_actor.sprite_sheet}')
 
 
-def object_ui(obj: physics.Object) -> bool:
+def object_ui(obj: physics.Object) -> None:
     """Shows an ImGui-based UI for editing a given object. Values are updated automatically.
     Returns True if the close button was clicked.
     """
@@ -94,33 +84,24 @@ def object_ui(obj: physics.Object) -> bool:
     #}
     #opts_keys = list(opts_dict.keys())
 
-    _, opened = imgui.begin('Object', True)
+    with imgui.begin('Object', True):
+        _, obj.x = imgui.input_float('x', obj.x, 0.1)
+        _, obj.y = imgui.input_float('y', obj.y, 0.1)
 
-    _, obj.x = imgui.input_float('x', obj.x, 0.1)
-    _, obj.y = imgui.input_float('y', obj.y, 0.1)
-
-    #clicked, current = imgui.combo('object_type', get_dict_key_index(opts_dict, obj.object_type), opts_keys)
-    #if clicked:
-    #    obj.object_type = opts_dict[opts_keys[current]]
-
-    imgui.end()
-
-    return not opened
+        #clicked, current = imgui.combo('object_type', get_dict_key_index(opts_dict, obj.object_type), opts_keys)
+        #if clicked:
+        #    obj.object_type = opts_dict[opts_keys[current]]
 
 
-def ladder_ui(ladder: physics.Ladder) -> bool:
+
+def ladder_ui(ladder: physics.Ladder) -> None:
     """Shows an ImGui-based UI for editing a given ladder. Values are updated automatically.
     Returns True if the close button was clicked.
     """
-    _, opened = imgui.begin('Ladder', True)
-
-    _, ladder.pos.x = imgui.input_float('x', ladder.pos.x, 0.1)
-    _, ladder.pos.y = imgui.input_float('y', ladder.pos.y, 0.1)
-    _, ladder.height = imgui.input_int('height', ladder.height, 1)
-
-    imgui.end()
-
-    return not opened
+    with imgui.begin('Ladder', True):
+        _, ladder.pos.x = imgui.input_float('x', ladder.pos.x, 0.1)
+        _, ladder.pos.y = imgui.input_float('y', ladder.pos.y, 0.1)
+        _, ladder.height = imgui.input_int('height', ladder.height, 1)
 
 
 class SceneEditor(object):
@@ -189,17 +170,16 @@ class SceneEditor(object):
         self.update_hover()
 
     def draw(self) -> None:
-        if isinstance(self.selected, physics.Platform) and platform_ui(self.selected):
-            self.selected = None
+        if isinstance(self.selected, physics.Platform):
+            platform_ui(self.selected)
 
         if isinstance(self.selected, physics.Actor):
             ani_actor = self.obj_manager.animation.get_actor_by_id(self.selected.object_id)
             render_actor = self.obj_manager.renderer.get_actor_by_id(self.selected.object_id)
-            if actor_ui(self.selected, ani_actor, render_actor):
-                self.selected = None
+            actor_ui(self.selected, ani_actor, render_actor)
 
-        if isinstance(self.selected, physics.Object) and object_ui(self.selected):
-            self.selected = None
+        if isinstance(self.selected, physics.Object):
+            object_ui(self.selected)
 
-        if isinstance(self.selected, physics.Ladder) and ladder_ui(self.selected):
-            self.selected = None
+        if isinstance(self.selected, physics.Ladder):
+            ladder_ui(self.selected)
