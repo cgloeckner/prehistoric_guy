@@ -67,10 +67,10 @@ class ControlsSystem:
         if actor.state.delta.y != 0.0:
             phys_actor.move.force.y = actor.state.delta.y
 
-        # avoid IDLE/HOLD blending over real actions
-        if ani_action in [animations.Action.IDLE, animations.Action.HOLD]:
-            if ani_actor.frame.action != animations.Action.JUMP:
-                return
+        # avoid IDLE/HOLD blending over ATTACK/THROW
+        if ani_action in [animations.Action.IDLE, animations.Action.HOLD] and \
+           ani_actor.frame.action in [animations.Action.ATTACK, animations.Action.THROW]:
+            return
 
         # trigger resulting animation action
         ani_actor.frame.start(ani_action)

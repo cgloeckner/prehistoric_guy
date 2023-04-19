@@ -144,3 +144,20 @@ class ControlSystemTest(unittest.TestCase):
 
         self.assertAlmostEqual(phys_actor.move.force.x, 1.0)
         self.assertEqual(ani_actor.frame.action, animations.Action.MOVE)
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def test_stopping_move_leads_to_idle(self):
+        actor = self.create_actor(1, 2.0, 1.0)
+        phys_actor = self.phys_ctx.actors.get_by_id(actor.object_id)
+        ani_actor = self.ani_ctx.actors.get_by_id(actor.object_id)
+        phys_actor.on_platform = self.phys_ctx.create_platform(0.0, 1.0, 4)
+
+        actor.state.delta.x = 1.0
+        self.sys.apply_input(actor)
+
+        actor.state.delta.x = 0.0
+        self.sys.apply_input(actor)
+
+        self.assertAlmostEqual(phys_actor.move.force.x, 0.0)
+        self.assertEqual(ani_actor.frame.action, animations.Action.IDLE)
