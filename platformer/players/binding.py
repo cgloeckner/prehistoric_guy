@@ -4,7 +4,7 @@ from typing import Optional
 from enum import IntEnum
 
 from core import constants
-from platformer import animations
+from platformer import physics, animations
 
 
 # keypress time required to throw
@@ -94,7 +94,7 @@ class InputState:
                 self.action = Action.THROW
                 self.attack_held_ms -= THROW_THRESHOLD
 
-    def to_animation(self, is_on_ladder: bool, is_on_platform: bool) -> Optional[animations.Action]:
+    def get_next_animation(self, is_on_ladder: bool, is_on_platform: bool) -> animations.Action:
         """Returns the related animation action or None if falling without an action-"""
         move_x = self.delta.x != 0.0
         move_y = self.delta.y != 0.0
@@ -114,13 +114,37 @@ class InputState:
             else:
                 return animations.Action.HOLD
 
+        if move_y:
+            return animations.Action.JUMP
+
         if move_x:
             if is_on_platform:
                 return animations.Action.MOVE
             else:
-                return None  # continue falling animation
+                return animations.Action.JUMP
 
         if is_on_platform:
             return animations.Action.IDLE
         else:
-            return None  # continue falling animation
+            return animations.Action.JUMP
+
+    def verify_animation(self, phys_actor: physics.Actor, last_action: animations.Action,
+                         next_action: animations.Action) -> Optional[animations.Action]:
+        """Verifies the given action using physics and animation data.
+
+        This checks whether the action is allowed or not (i.e. if it would interrupt an action that's meant to be not
+        interruptable), prevents jumping with the toward key and also releases the ladder in case of jumping.
+        """
+        # stop if actor is in DYING or LANDING animations, which cannot be skipped
+        if last_action in animations.BLOCKING_ANIMATIONS:
+            return None
+
+        # release ladder on case of jumping motion
+        if self.delta.x != 0.0 and self.delta.y != 0:
+            phys_actor.on_ladder = None
+
+        # no jumping while jumping
+        if last_action == next_action == animations.Action.JUMP:
+            self.delta.y = 0.0
+
+        return next_action

@@ -21,8 +21,10 @@ class ObjectManager(physics.EventListener, animations.EventListener, characters.
                                           self.renderer_context, cache)
         self.characters_context = characters.Context()
         self.characters = characters.CharacterSystem(self, self.characters_context, self.animations_context)
-        self.players = players.Players(self.physics_context, self.animations_context, self.renderer_context,
-                                       self.characters_context, cache, target)
+        self.controls_context = players.Context()
+        self.controls = players.ControlsSystem(self.controls_context, self.physics_context, self.animations_context)
+        self.huds = players.HudSystem(self.controls_context, self.physics_context, self.characters_context, target,
+                                      cache, self.camera)
 
     def create_random_object(self) -> None:
         # pick random position on random platform
@@ -68,7 +70,8 @@ class ObjectManager(physics.EventListener, animations.EventListener, characters.
                 char_actor.num_axes += 1
                 # FIXME: on_weapon_collected
 
-        self.physics_context.actors.remove(obj)
+        if obj in self.physics_context.actors:
+            self.physics_context.actors.remove(obj)
         self.create_random_object()
 
     def on_impact_platform(self, proj: physics.Projectile, platform: physics.Platform) -> None:
@@ -173,9 +176,8 @@ class ObjectManager(physics.EventListener, animations.EventListener, characters.
 
     def create_player(self, character: characters.Actor, **kwargs) -> players.Actor:
         """Create a player for an existing character actor. Returns the player actor."""
-        player_actor = players.Actor(object_id=character.object_id, **kwargs)
-        self.players.players.append(player_actor)
-        return player_actor
+        actor = self.controls_context.create_actor(character.object_id)
+        return actor
 
     def update(self, elapsed_ms: int) -> None:
         """Update all related systems."""
@@ -183,10 +185,9 @@ class ObjectManager(physics.EventListener, animations.EventListener, characters.
         self.animation.update(elapsed_ms)
         self.renderer.update(elapsed_ms)
         self.characters.update(elapsed_ms)
-        self.players.update(elapsed_ms)
+        self.controls.update(elapsed_ms)
 
     def draw(self) -> None:
-        # Scene
+        """Draw scene and HUD."""
         self.renderer.draw()
-        # HUD
-        self.players.draw()
+        self.huds.draw()

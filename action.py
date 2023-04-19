@@ -48,6 +48,8 @@ class GameState(state_machine.State):
 
         self.manager.physics_context.create_platform(x=3, y=7, width=1, hover=physics.Hovering(x=math.cos, amplitude=-2))
 
+        self.manager.physics_context.create_platform(x=1, y=11, width=12)
+
         self.manager.create_random_object()
         self.manager.physics_context.create_object(x=1, y=1, object_type=constants.ObjectType.FOOD)
 
@@ -67,7 +69,7 @@ class GameState(state_machine.State):
             # FIXME: pygame.display.toggle_fullscreen() does not work correctly when leaving fullscreen
             pass
 
-        self.manager.players.process_event(event)
+        self.manager.controls.process_event(event)
 
     def update(self, elapsed_ms: int) -> None:
         self.editor_ui.update()
@@ -85,7 +87,7 @@ class GameState(state_machine.State):
             self.manager.camera.move_ip(0, -1)
         """
 
-        player_char_actor = self.manager.players.players[0]
+        player_char_actor = self.manager.controls_context.actors[0]
         phys_actor = self.manager.physics_context.actors.get_by_id(player_char_actor.object_id)
         self.manager.camera.set_center(phys_actor.pos, constants.WORLD_SCALE)
 
@@ -93,7 +95,7 @@ class GameState(state_machine.State):
 
         # --- Demo Enemy Ai --------------------------------------------------------------------------------------------
         for enemy in self.manager.characters_context.actors:
-            if self.manager.players.players.get_by_id(enemy.object_id) is not None:
+            if self.manager.controls_context.actors.get_by_id(enemy.object_id) is not None:
                 # ignore players
                 continue
 
@@ -117,7 +119,7 @@ class GameState(state_machine.State):
             ani_enemy.frame.start(animations.Action.MOVE)
 
         # --- Demo: limit pos to screen --------------------------------------------------------------------------------
-        for player in self.manager.players.players:
+        for player in self.manager.controls_context.actors:
             phys_actor = self.manager.physics_context.actors.get_by_id(player.object_id)
             phys_actor.pos.x = max(0.0, min(phys_actor.pos.x, constants.RESOLUTION_X / constants.WORLD_SCALE))
             if phys_actor.pos.y < 0:
