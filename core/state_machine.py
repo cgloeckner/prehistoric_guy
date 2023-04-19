@@ -1,5 +1,5 @@
 import pygame
-from abc import abstractmethod
+from abc import abstractmethod, ABC
 
 from core.imgui_wrapper import OpenGlWrapper
 
@@ -65,7 +65,7 @@ class Engine(object):
             self.num_fps = self.clock.get_fps()
 
 
-class State(object):
+class State(ABC):
     def __init__(self, engine: Engine):
         self.engine = engine
 
