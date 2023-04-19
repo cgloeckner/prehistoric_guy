@@ -3,14 +3,11 @@ import math
 import imgui
 from typing import Optional
 
-from core import constants, resources
+from core import constants, resources, state_machine
 
 from platformer import animations, characters
 from platformer import editor, factory
 from platformer import controls, physics
-from platformer import level
-
-import state_machine
 
 
 class GameState(state_machine.State, factory.EventListener):
@@ -71,7 +68,7 @@ class GameState(state_machine.State, factory.EventListener):
 
         self.editor_ui = editor.SceneEditor(engine.buffer, self.factory)
 
-        s = scene.Scene(self.factory.ctx.physics)
+        s = level.Scene(self.factory.ctx.physics)
         s.to_file('data/level01.xml')
 
     # ------------------------------------------------------------------------------------------------------------------

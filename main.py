@@ -2,7 +2,7 @@ import pygame
 
 from core.constants import *
 
-import state_machine
+from core import state_machine
 import action
 
 

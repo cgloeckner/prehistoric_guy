@@ -1,7 +1,7 @@
 import pygame
 from abc import abstractmethod
 
-from imgui_wrapper import OpenGlWrapper
+from core.imgui_wrapper import OpenGlWrapper
 
 
 class Engine(object):
