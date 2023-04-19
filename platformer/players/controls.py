@@ -67,10 +67,16 @@ class ControlsSystem:
         if actor.state.delta.y != 0.0:
             phys_actor.move.force.y = actor.state.delta.y
 
+        # avoid IDLE/HOLD blending over real actions
+        if ani_action in [animations.Action.IDLE, animations.Action.HOLD]:
+            if ani_actor.frame.action != animations.Action.JUMP:
+                return
+
         # trigger resulting animation action
         ani_actor.frame.start(ani_action)
 
     def update(self, elapsed_ms: int) -> None:
         for actor in self.context.actors:
+            pygame.display.set_caption(str(actor.state))
             actor.update(elapsed_ms)
             self.apply_input(actor)

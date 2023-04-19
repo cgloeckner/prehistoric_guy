@@ -38,7 +38,16 @@ class ObjectManager(physics.EventListener, animations.EventListener, characters.
 
     def on_grab(self, actor: physics.Actor) -> None:
         """Triggered when the actor grabs a ladder."""
-        pass
+        player = self.controls_context.actors.get_by_id(actor.object_id)
+        if player is not None:
+            return
+
+        # enemy! let 'm climb
+        actor.pos.x = actor.on_ladder.pos.x
+        actor.move.force.x = 0.0
+        actor.move.force.y = 0.0
+        ani_enemy = self.animations_context.actors.get_by_id(actor.object_id)
+        ani_enemy.frame.start(animations.Action.IDLE)
 
     def on_release(self, actor: physics.Actor) -> None:
         """Triggered when the actor releases a ladder."""

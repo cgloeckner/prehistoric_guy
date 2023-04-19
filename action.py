@@ -94,6 +94,7 @@ class GameState(state_machine.State):
         self.manager.update(elapsed_ms)
 
         # --- Demo Enemy Ai --------------------------------------------------------------------------------------------
+        # FIXME: enemy.py for further implementations, maybe reuse parts of the player controls code here
         for enemy in self.manager.characters_context.actors:
             if self.manager.controls_context.actors.get_by_id(enemy.object_id) is not None:
                 # ignore players
@@ -108,6 +109,13 @@ class GameState(state_machine.State):
             if phys_enemy.on_platform is None:
                 continue
 
+            if phys_enemy.on_ladder is not None:
+                # continue climbing down
+                phys_enemy.move.force.y = -1.0
+                ani_enemy.frame.start(animations.Action.CLIMB)
+                continue
+
+            # move around
             left_bound = phys_enemy.on_platform.pos.x + phys_enemy.on_platform.width * 0.05
             right_bound = phys_enemy.on_platform.pos.x + phys_enemy.on_platform.width * 0.95
             if phys_enemy.pos.x < left_bound:

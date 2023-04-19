@@ -42,10 +42,11 @@ class ActorSystem(object):
 
         # moving off the ladder?
         if has_ladder:
-            actor.move.force.y = 0.0
             if actor.move.force.x != 0.0:
                 actor.on_ladder = None
                 self.listener.on_release(actor)
+            else:
+                actor.move.force.y = 0.0
 
         return old_pos
 

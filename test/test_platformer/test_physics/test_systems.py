@@ -243,6 +243,32 @@ class ActorSystemsTest(unittest.TestCase):
         self.assertEqual(self.listener.last[1], actor)
         self.assertEqual(self.listener.last[2], other)
 
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def test_can_release_off_ladder(self):
+        actor = self.context.create_actor(1, 2.0, 4.0)
+        actor.on_ladder = self.context.create_ladder(2.0, 2.0, 5)
+        actor.move.force.x = 1.0
+        actor.move.force.y = 0.0
+
+        for i in range(10):
+            self.system.update(15)
+
+        self.assertGreater(actor.pos.x, 2.0)
+        self.assertLess(actor.pos.y, 4.0)
+
+    def test_can_jump_off_ladder(self):
+        actor = self.context.create_actor(1, 2.0, 4.0)
+        actor.on_ladder = self.context.create_ladder(2.0, 2.0, 5)
+        actor.move.force.x = 1.0
+        actor.move.force.y = 1.0
+
+        for i in range(10):
+            self.system.update(15)
+
+        self.assertGreater(actor.pos.x, 2.0)
+        self.assertGreater(actor.pos.y, 4.0)
+
 
 # ----------------------------------------------------------------------------------------------------------------------
 

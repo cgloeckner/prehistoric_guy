@@ -45,14 +45,13 @@ class ControlSystemTest(unittest.TestCase):
         ani_actor = self.ani_ctx.actors.get_by_id(actor.object_id)
 
         phys_actor.on_ladder = self.phys_ctx.create_ladder(2.0, 1.0, 2)
-        ani_actor.frame.action = animations.Action.CLIMB
+        ani_actor.frame.action = animations.Action.HOLD
 
         # jump off ladder attacking
         actor.state.delta.x = 1.0
         actor.state.delta.y = 1.0
         actor.state.action = binding.Action.ATTACK
 
-        print('go')
         self.sys.apply_input(actor)
 
         self.assertIsNone(phys_actor.on_ladder)

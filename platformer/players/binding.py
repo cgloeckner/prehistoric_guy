@@ -55,10 +55,11 @@ class InputState:
             else:
                 self.action = Action.ATTACK
             self.attack_held_ms = -1
+            print(self)
             return
 
     def process_event_movement(self, binding: Keybinding, event: pygame.event.Event) -> None:
-        """Handles input events and sets the movement vector accordinly."""
+        """Handles input events and sets the movement vector accordingly."""
         if event.type == pygame.KEYDOWN:
             if event.key == binding.left_key:
                 self.delta.x -= 1
@@ -68,6 +69,7 @@ class InputState:
                 self.delta.y += 1
             if event.key == binding.down_key:
                 self.delta.y -= 1
+
         elif event.type == pygame.KEYUP:
             if event.key == binding.left_key:
                 self.delta.x += 1
@@ -100,9 +102,12 @@ class InputState:
         move_y = self.delta.y != 0.0
 
         if self.action == Action.ATTACK:
+            self.action = Action.NONE
             return animations.Action.ATTACK
 
         if self.action == Action.THROW:
+            self.action = Action.NONE
+            print('THROWING!')
             return animations.Action.THROW
 
         if move_x and move_y:
@@ -144,7 +149,7 @@ class InputState:
             phys_actor.on_ladder = None
 
         # no jumping while jumping
-        if last_action == next_action == animations.Action.JUMP:
+        if last_action == next_action == animations.Action.JUMP and phys_actor.on_platform is None:
             self.delta.y = 0.0
 
         return next_action
