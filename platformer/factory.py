@@ -63,13 +63,25 @@ class ObjectManager(physics.EventListener, animations.EventListener, characters.
         """Triggered when the actor releases a ladder."""
         pass
 
-    def on_falling(self, actor: physics.Actor) -> None:
+    def on_falling(self, phys_actor: physics.Actor) -> None:
         """Triggered when the actor starts falling."""
-        # FIXME: use characters/falling.py --> set_falling_from
+        actor = self.characters_context.actors.get_by_id(phys_actor.object_id)
+        characters.set_falling_from(actor, phys_actor)
 
     def on_landing(self, phys_actor: physics.Actor) -> None:
         """Triggered when the actor landed on a platform."""
-        # FIXME: use characters/falling.py --> apply_landing and trigger returned animation action
+        actor = self.characters_context.actors.get_by_id(phys_actor.object_id)
+        action, damage = characters.apply_landing(actor, phys_actor)
+        ani_actor = self.animations_context.actors.get_by_id(phys_actor.object_id)
+
+        if damage > 0:
+            if actor.hit_points == 0:
+                self.on_char_died(actor, damage, None)
+            else:
+                self.on_char_damaged(actor, damage, None)
+
+        else:
+            ani_actor.frame.start(action)
 
     def on_collision(self, actor: physics.Actor, platform: physics.Platform) -> None:
         """Triggered when the actor runs into a platform."""
@@ -151,18 +163,16 @@ class ObjectManager(physics.EventListener, animations.EventListener, characters.
 
     def on_char_damaged(self, actor: characters.Actor, damage: int, cause: Optional[characters.Actor]) -> None:
         """Triggered when an actor got damaged."""
-        print(actor, damage, cause)
+        pass
 
     def on_char_died(self, char_actor: characters.Actor, damage: int, cause: Optional[characters.Actor]) -> None:
         """Triggered when an actor died. An optional cause can be provided."""
-        print('died', char_actor, damage, cause)
         ani_actor = self.animations_context.actors.get_by_id(char_actor.object_id)
         ani_actor.frame.start(animations.Action.DIE)
 
         phys_actor = self.physics_context.actors.get_by_id(char_actor.object_id)
         phys_actor.force_x = 0.0
         phys_actor.can_collide = False
-        #self.destroy_character(char_actor, keep_components=True)
 
     # --- Factory methods
 

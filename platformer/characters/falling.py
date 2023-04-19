@@ -1,4 +1,5 @@
 import pygame
+from typing import Tuple
 
 from platformer import physics, animations
 from .context import Actor
@@ -30,17 +31,17 @@ def get_falling_damage(height: float) -> int:
     return int(height / 4.0)
 
 
-def apply_landing(actor: Actor, physics_actor: physics.Actor) -> animations.Action:
+def apply_landing(actor: Actor, physics_actor: physics.Actor) -> Tuple[animations.Action, int]:
     """Apply landing in terms of height and falling damage. A suitable animation action (IDLE or LANDING if it's
-    been a dangerous height) is returned.
+    been a dangerous height) and the damage taken are returned.
     """
     delta_h = get_falling_height(actor, physics_actor.pos)
     if not is_dangerous_height(delta_h):
         # safe height, IDLE is fine
-        return animations.Action.IDLE
+        return (animations.Action.IDLE, 0)
 
     damage = get_falling_damage(delta_h)
     if damage > 0:
         actor.hit_points -= damage
 
-    return animations.Action.LANDING
+    return (animations.Action.LANDING, damage)
