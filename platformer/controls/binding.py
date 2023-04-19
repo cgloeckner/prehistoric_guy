@@ -44,6 +44,7 @@ class Keybinding:
 
         return delta
 
+
 @dataclass
 class InputState:
     """Combines input states.

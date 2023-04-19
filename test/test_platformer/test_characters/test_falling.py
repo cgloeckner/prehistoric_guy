@@ -50,14 +50,14 @@ class FallingTest(unittest.TestCase):
         phys.pos.y -= 0.5
 
         # minor fall
-        result = falling.apply_landing(actor, phys)
+        result, damage = falling.apply_landing(actor, phys)
         self.assertEqual(result, animations.Action.IDLE)
 
         # more intense fall
         phys.pos.y = 4
         falling.set_falling_from(actor, phys)
         phys.pos.y = 2
-        result = falling.apply_landing(actor, phys)
+        result, damage = falling.apply_landing(actor, phys)
         self.assertEqual(result, animations.Action.LANDING)
         self.assertEqual(actor.hit_points, 5)
 
@@ -65,7 +65,7 @@ class FallingTest(unittest.TestCase):
         phys.pos.y = 5
         falling.set_falling_from(actor, phys)
         phys.pos.y = 0
-        result = falling.apply_landing(actor, phys)
+        result, damage = falling.apply_landing(actor, phys)
         self.assertEqual(result, animations.Action.LANDING)
         self.assertEqual(actor.hit_points, 4)
 
@@ -73,6 +73,6 @@ class FallingTest(unittest.TestCase):
         phys.pos.y = 100
         falling.set_falling_from(actor, phys)
         phys.pos.y = 0
-        result = falling.apply_landing(actor, phys)
+        result, damage = falling.apply_landing(actor, phys)
         self.assertEqual(result, animations.Action.LANDING)
         self.assertEqual(actor.hit_points, 0)

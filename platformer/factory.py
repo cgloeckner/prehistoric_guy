@@ -4,7 +4,7 @@ from typing import Optional
 
 from core import constants, resources, objectids
 
-from . import physics, animations, renderer, characters, players
+from . import physics, animations, renderer, characters, controls, interface
 
 
 class ObjectManager(physics.EventListener, animations.EventListener, characters.EventListener):
@@ -21,10 +21,13 @@ class ObjectManager(physics.EventListener, animations.EventListener, characters.
                                           self.renderer_context, cache)
         self.characters_context = characters.Context()
         self.characters = characters.CharacterSystem(self, self.characters_context, self.animations_context)
-        self.controls_context = players.Context()
-        self.controls = players.ControlsSystem(self.controls_context, self.physics_context, self.animations_context)
-        self.huds = players.HudSystem(self.controls_context, self.physics_context, self.characters_context, target,
-                                      cache, self.camera)
+        self.players_context = controls.PlayersContext()
+        self.players = controls.PlayersSystem(self.players_context, self.physics_context, self.animations_context)
+        self.enemies_context = controls.EnemiesContext()
+        self.enemies = controls.EnemiesSystem(self.enemies_context, self.physics_context, self.animations_context,
+                                              self.characters_context)
+        self.huds = interface.HudSystem(self.players_context, self.physics_context, self.characters_context,
+                                        target, cache, self.camera)
 
     def create_random_object(self) -> None:
         # pick random position on random platform
@@ -48,7 +51,7 @@ class ObjectManager(physics.EventListener, animations.EventListener, characters.
 
     def on_grab(self, actor: physics.Actor) -> None:
         """Triggered when the actor grabs a ladder."""
-        player = self.controls_context.actors.get_by_id(actor.object_id)
+        player = self.players_context.actors.get_by_id(actor.object_id)
         if player is not None:
             return
 
@@ -219,9 +222,10 @@ class ObjectManager(physics.EventListener, animations.EventListener, characters.
             self.destroy_actor_by_id(character.object_id)
         self.characters_context.actors.remove(character)
 
-    def create_player(self, character: characters.Actor, **kwargs) -> players.Actor:
+    def create_player(self, character: characters.Actor, keys: controls.Keybinding) -> controls.Player:
         """Create a player for an existing character actor. Returns the player actor."""
-        actor = self.controls_context.create_actor(character.object_id)
+        actor = self.players_context.create_actor(character.object_id)
+        actor.keys = keys
         return actor
 
     def update(self, elapsed_ms: int) -> None:
@@ -230,7 +234,21 @@ class ObjectManager(physics.EventListener, animations.EventListener, characters.
         self.animation.update(elapsed_ms)
         self.renderer.update(elapsed_ms)
         self.characters.update(elapsed_ms)
-        self.controls.update(elapsed_ms)
+        self.players.update(elapsed_ms)
+        self.enemies.update(elapsed_ms)
+
+    def create_enemy(self, sprite_sheet: pygame.Surface, x: float, y: float, max_hit_points: int, num_axes=int) \
+            -> characters.Actor:
+        enemy_char = self.create_character(sprite_sheet, x, y, max_hit_points, num_axes)
+        self.enemies_context.create_actor(enemy_char.object_id)
+
+        return enemy_char
+
+    def destroy_enemy(self, character: characters.Actor, keep_components: bool = False) -> None:
+        enemy = self.enemies_context.actors.get_by_id(character.object_id)
+        if enemy is not None:
+            self.enemies_context.actors.remove()
+        self.destroy_character(character, keep_components)
 
     def draw(self) -> None:
         """Draw scene and HUD."""

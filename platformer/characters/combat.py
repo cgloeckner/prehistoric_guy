@@ -52,6 +52,7 @@ def throw_object(actor: Actor, projectile_speed: float, object_type: int, physic
     # generate new projectile
     physics_proj = projectile_creator(x=pos.x, y=pos.y, from_actor=physics_actor, speed=projectile_speed,
                                       object_type=object_type)
-    physics_proj.move.force.y = PROJECTILE_DEFAULT_FORCE_Y
+    if physics_proj is not None:
+        physics_proj.move.force.y = PROJECTILE_DEFAULT_FORCE_Y
 
     return physics_proj

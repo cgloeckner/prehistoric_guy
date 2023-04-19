@@ -3,7 +3,7 @@ import unittest
 
 from platformer import physics, animations
 
-from platformer.players import binding
+from platformer.controls import binding
 
 
 class InputStateTest(unittest.TestCase):

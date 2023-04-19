@@ -4,7 +4,7 @@ import imgui
 
 from core import constants, resources
 
-from platformer import animations, physics, factory, editor
+from platformer import animations, physics, factory, controls, editor
 
 import state_machine
 
@@ -25,15 +25,17 @@ class GameState(state_machine.State):
         # --- setup object manager with player character ---------------------------------------------------------------
         self.manager = factory.ObjectManager(self.cache, engine.buffer)
         player_char_actor = self.manager.create_character(sprite_sheet=blue_guy, x=2, y=5, max_hit_points=5, num_axes=10)
-        self.manager.create_player(player_char_actor, left_key=pygame.K_a, right_key=pygame.K_d, up_key=pygame.K_w,
-                                   down_key=pygame.K_s, attack_key=pygame.K_SPACE)
+        self.manager.create_player(player_char_actor,
+                                   keys=controls.Keybinding(left_key=pygame.K_a, right_key=pygame.K_d,
+                                                            up_key=pygame.K_w, down_key=pygame.K_s,
+                                                            attack_key=pygame.K_SPACE))
 
         phys_actor = self.manager.physics_context.actors.get_by_id(player_char_actor.object_id)
         #self.manager.camera.follow.append(phys_actor)
 
         # --- create demo scene ---------------------------------------------------------------------------------------
-        self.manager.create_character(sprite_sheet=grey_guy, x=6.5, y=6.5, max_hit_points=2, num_axes=0)
-        self.manager.create_character(sprite_sheet=grey_guy, x=6.5, y=4.5, max_hit_points=2, num_axes=0)
+        self.manager.create_enemy(sprite_sheet=grey_guy, x=6.5, y=6.5, max_hit_points=2, num_axes=0)
+        self.manager.create_enemy(sprite_sheet=grey_guy, x=6.5, y=4.5, max_hit_points=2, num_axes=0)
 
         # horizontal platforms
         self.manager.physics_context.create_platform(x=1, y=1, width=3, height=1)
@@ -73,7 +75,7 @@ class GameState(state_machine.State):
             # FIXME: pygame.display.toggle_fullscreen() does not work correctly when leaving fullscreen
             pass
 
-        self.manager.controls.process_event(event)
+        self.manager.players.process_event(event)
 
     def update(self, elapsed_ms: int) -> None:
         self.editor_ui.update()
@@ -91,50 +93,17 @@ class GameState(state_machine.State):
             self.manager.camera.move_ip(0, -1)
         """
 
-        player_char_actor = self.manager.controls_context.actors[0]
+        player_char_actor = self.manager.players_context.actors[0]
         phys_actor = self.manager.physics_context.actors.get_by_id(player_char_actor.object_id)
         self.manager.camera.set_center(phys_actor.pos, constants.WORLD_SCALE)
 
         self.manager.update(elapsed_ms)
 
         # --- Demo Enemy Ai --------------------------------------------------------------------------------------------
-        # FIXME: enemy.py for further implementations, maybe reuse parts of the player controls code here
-        for enemy in self.manager.characters_context.actors:
-            if self.manager.controls_context.actors.get_by_id(enemy.object_id) is not None:
-                # ignore players
-                continue
-
-            ani_enemy = self.manager.animations_context.actors.get_by_id(enemy.object_id)
-            if ani_enemy.frame.action in [animations.Action.DIE, animations.Action.ATTACK, animations.Action.THROW,
-                                          animations.Action.LANDING]:
-                continue
-
-            phys_enemy = self.manager.physics_context.actors.get_by_id(enemy.object_id)
-            if phys_enemy.on_platform is None:
-                continue
-
-            if enemy.hit_points == 0:
-                continue
-
-            if phys_enemy.on_ladder is not None:
-                # continue climbing down
-                phys_enemy.move.force.y = -1.0
-                ani_enemy.frame.start(animations.Action.CLIMB)
-                continue
-
-            # move around
-            left_bound = phys_enemy.on_platform.pos.x + phys_enemy.on_platform.width * 0.05
-            right_bound = phys_enemy.on_platform.pos.x + phys_enemy.on_platform.width * 0.95
-            if phys_enemy.pos.x < left_bound:
-                phys_enemy.move.face_x = 1.0
-            elif phys_enemy.pos.x > right_bound:
-                phys_enemy.move.face_x = -1.0
-
-            phys_enemy.move.force.x = phys_enemy.move.face_x
-            ani_enemy.frame.start(animations.Action.MOVE)
+        # FIXME: enemies.py for further implementations, maybe reuse parts of the player controls code here
 
         # --- Demo: limit pos to screen --------------------------------------------------------------------------------
-        for player in self.manager.controls_context.actors:
+        for player in self.manager.players_context.actors:
             phys_actor = self.manager.physics_context.actors.get_by_id(player.object_id)
             if phys_actor.pos.y < 0:
                 phys_actor.pos.y += constants.RESOLUTION_Y // constants.WORLD_SCALE

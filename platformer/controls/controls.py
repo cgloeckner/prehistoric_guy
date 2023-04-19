@@ -8,7 +8,7 @@ from . import binding
 
 
 @dataclass
-class Actor:
+class Player:
     object_id: int
 
     keys: binding.Keybinding = field(default_factory=binding.Keybinding)
@@ -25,15 +25,15 @@ class Actor:
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-class Context:
+class PlayersContext:
     def __init__(self):
-        self.actors = objectids.IdList[Actor]()
+        self.actors = objectids.IdList[Player]()
 
         # default key query
         self.query = lambda key: pygame.key.get_pressed()[key]
 
-    def create_actor(self, object_id: int) -> Actor:
-        actor = Actor(object_id=object_id)
+    def create_actor(self, object_id: int) -> Player:
+        actor = Player(object_id=object_id)
         self.actors.append(actor)
         return actor
 
@@ -41,17 +41,18 @@ class Context:
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-class ControlsSystem:
-    def __init__(self, context: Context, physics_context: physics.Context, animations_context: animations.Context):
-        self.context = context
+class PlayersSystem:
+    def __init__(self, players_context: PlayersContext, physics_context: physics.Context,
+                 animations_context: animations.Context):
+        self.players_context = players_context
         self.physics_context = physics_context
         self.animations_context = animations_context
 
     def process_event(self, event: pygame.event.Event) -> None:
-        for actor in self.context.actors:
+        for actor in self.players_context.actors:
             actor.process_event(event)
 
-    def apply_input(self, actor: Actor) -> None:
+    def apply_input(self, actor: Player) -> None:
         phys_actor = self.physics_context.actors.get_by_id(actor.object_id)
         ani_actor = self.animations_context.actors.get_by_id(actor.object_id)
 
@@ -95,6 +96,6 @@ class ControlsSystem:
         ani_actor.frame.start(ani_action)
 
     def update(self, elapsed_ms: int) -> None:
-        for actor in self.context.actors:
-            actor.update(elapsed_ms, self.context.query)
+        for actor in self.players_context.actors:
+            actor.update(elapsed_ms, self.players_context.query)
             self.apply_input(actor)

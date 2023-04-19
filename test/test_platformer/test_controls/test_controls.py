@@ -3,23 +3,23 @@ import unittest
 
 from platformer import physics, animations
 
-from platformer.players import binding, controls
+from platformer.controls import binding, controls
 
 
 class ControlSystemTest(unittest.TestCase):
 
     def setUp(self):
-        self.ctx = controls.Context()
+        self.ctx = controls.PlayersContext()
         # unit test key query
         self.ctx.query = lambda key: key in self.keys
 
         self.phys_ctx = physics.Context()
         self.ani_ctx = animations.Context()
-        self.sys = controls.ControlsSystem(self.ctx, self.phys_ctx, self.ani_ctx)
+        self.sys = controls.PlayersSystem(self.ctx, self.phys_ctx, self.ani_ctx)
 
         self.keys = set()
 
-    def create_actor(self, object_id: int, x: float, y: float) -> controls.Actor:
+    def create_actor(self, object_id: int, x: float, y: float) -> controls.Player:
         actor = self.ctx.create_actor(object_id=object_id)
         self.phys_ctx.create_actor(object_id=object_id, x=x, y=y)
         self.ani_ctx.create_actor(object_id=object_id)

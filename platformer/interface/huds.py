@@ -2,9 +2,7 @@ import pygame
 from enum import IntEnum
 
 from core import constants, resources, ui
-from platformer import physics, characters, renderer
-
-from . import controls
+from platformer import physics, characters, renderer, controls
 
 
 # HUD tileset columns
@@ -14,10 +12,10 @@ class HudType(IntEnum):
 
 
 class HudSystem:
-    def __init__(self, context: controls.Context, physics_context: physics.Context,
+    def __init__(self, players_context: controls.PlayersContext, physics_context: physics.Context,
                  characters_context: characters.Context, target: pygame.Surface, cache: resources.Cache,
                  camera: renderer.Camera):
-        self.context = context
+        self.players_context = players_context
         self.physics_context = physics_context
         self.characters_context = characters_context
         self.camera = camera
@@ -40,12 +38,12 @@ class HudSystem:
         for i in range(actor.num_axes.value):
             self.target.blit(self.tileset, (i * constants.OBJECT_SCALE, constants.OBJECT_SCALE), weapon_clip)
 
-    def draw_throw_progress(self, actor: controls.Actor, screen_pos: pygame.math.Vector2) -> None:
+    def draw_throw_progress(self, actor: controls.Player, screen_pos: pygame.math.Vector2) -> None:
         value = actor.state.get_throwing_progress()
         if value > 0.5:
             ui.progress_bar(self.target, int(screen_pos.x), int(screen_pos.y), 15, 3, value)
 
-    def draw_hud(self, actor: controls.Actor):
+    def draw_hud(self, actor: controls.Player):
         char_actor = self.characters_context.actors.get_by_id(actor.object_id)
         self.draw_icons(char_actor)
 
@@ -58,5 +56,5 @@ class HudSystem:
         self.draw_throw_progress(actor, screen_pos)
 
     def draw(self):
-        for actor in self.context.actors:
+        for actor in self.players_context.actors:
             self.draw_hud(actor)
