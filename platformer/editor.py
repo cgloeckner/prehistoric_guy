@@ -105,9 +105,9 @@ def ladder_ui(ladder: physics.Ladder) -> None:
 
 
 class SceneEditor(object):
-    def __init__(self, screen: pygame.Surface, obj_manager: factory.ObjectManager):
+    def __init__(self, screen: pygame.Surface, factory: factory.Factory):
         self.screen = screen
-        self.obj_manager = obj_manager
+        self.factory = factory
 
         self.hovered_elements = list()
         self.selected = None
@@ -174,8 +174,8 @@ class SceneEditor(object):
             platform_ui(self.selected)
 
         if isinstance(self.selected, physics.Actor):
-            ani_actor = self.obj_manager.animation.get_actor_by_id(self.selected.object_id)
-            render_actor = self.obj_manager.renderer.get_actor_by_id(self.selected.object_id)
+            ani_actor = self.factory.animation.get_actor_by_id(self.selected.object_id)
+            render_actor = self.factory.renderer.get_actor_by_id(self.selected.object_id)
             actor_ui(self.selected, ani_actor, render_actor)
 
         if isinstance(self.selected, physics.Object):
