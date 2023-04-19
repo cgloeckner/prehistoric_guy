@@ -2,7 +2,7 @@ import pygame
 import random
 from typing import Optional
 
-from core import constants, resources
+from core import constants, resources, objectids
 
 from . import physics, animations, renderer, characters, players
 
@@ -10,7 +10,7 @@ from . import physics, animations, renderer, characters, players
 class ObjectManager(physics.EventListener, animations.EventListener, characters.EventListener):
     """Factory for creating game objects. Creation and deletion of objects considers all relevant systems."""
     def __init__(self, cache: resources.Cache, target: pygame.Surface):
-        self.next_obj_id = 0
+        self.id_generator = objectids.object_id_generator()
         self.physics_context = physics.Context()
         self.physics = physics.System(self, self.physics_context)
         self.animations_context = animations.Context()
@@ -33,6 +33,16 @@ class ObjectManager(physics.EventListener, animations.EventListener, characters.
 
         self.physics_context.create_object(x=p.pos.x + x, y=p.pos.y + 0.5,
                                            object_type=random.choice(list(constants.ObjectType)))
+
+    def create_projectile(self, x: float, y: float, from_actor: Optional[physics.Actor], speed: float,
+                          object_type: constants.ObjectType) -> physics.Projectile:
+        object_id = next(self.id_generator)
+        physics_proj = self.physics_context.create_projectile(object_id=object_id, x=x, y=y, from_actor=from_actor,
+                                                              object_type=object_type)
+        physics_proj.move.speed = speed
+        animations_proj = self.animations_context.create_projectile(object_id=object_id)
+
+        return physics_proj
 
     # --- Physics Events ----------------------------------------------------------------------------------------------
 
@@ -114,11 +124,22 @@ class ObjectManager(physics.EventListener, animations.EventListener, characters.
 
     def on_attack(self, ani: animations.Actor) -> None:
         """Triggered when an attack animation finished."""
-        # FIXME: use characters/combat.py --> attack_enemy but trigger on_char_damaged / on_char_died for victim
+        actor = self.characters_context.actors.get_by_id(ani.object_id)
+        if actor is None:
+            return
+
+        victims = characters.query_melee_range(actor, self.characters_context, self.physics_context)
+        for victim in victims:
+            characters.attack_enemy(1, victim)
+            if victim.hit_points == 0:
+                self.on_char_died(victim, 1, actor)
+            else:
+                self.on_char_damaged(victim, 1, actor)
 
     def on_throw(self, ani_actor: animations.Actor) -> None:
         """Triggered when an attack animation finished."""
-        # FIXME: use characters/combat.py --> throw_object
+        actor = self.characters_context.actors.get_by_id(ani_actor.object_id)
+        characters.throw_object(actor, 4.0, constants.ObjectType.WEAPON, self.physics_context, self.create_projectile)
 
     def on_died(self, ani_actor: animations.Actor) -> None:
         """Triggered when a dying animation finished."""
@@ -128,20 +149,24 @@ class ObjectManager(physics.EventListener, animations.EventListener, characters.
 
     def on_char_damaged(self, actor: characters.Actor, damage: int, cause: Optional[characters.Actor]) -> None:
         """Triggered when an actor got damaged."""
-        # FIXME: not implemented
+        print(actor, damage, cause)
 
     def on_char_died(self, char_actor: characters.Actor, damage: int, cause: Optional[characters.Actor]) -> None:
         """Triggered when an actor died. An optional cause can be provided."""
+        print('died', char_actor, damage, cause)
         ani_actor = self.animations_context.actors.get_by_id(char_actor.object_id)
         ani_actor.frame.start(animations.Action.DIE)
-        self.destroy_character(char_actor, keep_components=True)
+
+        phys_actor = self.physics_context.actors.get_by_id(char_actor.object_id)
+        phys_actor.force_x = 0.0
+        phys_actor.can_collide = False
+        #self.destroy_character(char_actor, keep_components=True)
 
     # --- Factory methods
 
     def create_actor(self, sprite_sheet: pygame.Surface, **kwargs) -> int:
         """Create an actor object such as player or enemy characters. Returns the object id."""
-        object_id = self.next_obj_id
-        self.next_obj_id += 1
+        object_id = next(self.id_generator)
 
         kwargs['object_id'] = object_id
         phys_actor = self.physics_context.create_actor(**kwargs)

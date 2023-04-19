@@ -53,6 +53,10 @@ class GameState(state_machine.State):
         self.manager.create_random_object()
         self.manager.physics_context.create_object(x=1, y=1, object_type=constants.ObjectType.FOOD)
 
+        self.manager.physics_context.create_platform(x=-12, y=0, width=15)
+        self.manager.physics_context.create_platform(x=-8, y=1, width=5, height=5)
+        self.manager.physics_context.create_platform(x=-12, y=0, width=3, height=10)
+
         # ladders
         self.manager.physics_context.create_ladder(x=1.5, y=2, height=4)
         self.manager.physics_context.create_ladder(x=8.5, y=1, height=5)
@@ -109,6 +113,9 @@ class GameState(state_machine.State):
             if phys_enemy.on_platform is None:
                 continue
 
+            if enemy.hit_points == 0:
+                continue
+
             if phys_enemy.on_ladder is not None:
                 # continue climbing down
                 phys_enemy.move.force.y = -1.0
@@ -129,7 +136,6 @@ class GameState(state_machine.State):
         # --- Demo: limit pos to screen --------------------------------------------------------------------------------
         for player in self.manager.controls_context.actors:
             phys_actor = self.manager.physics_context.actors.get_by_id(player.object_id)
-            phys_actor.pos.x = max(0.0, min(phys_actor.pos.x, constants.RESOLUTION_X / constants.WORLD_SCALE))
             if phys_actor.pos.y < 0:
                 phys_actor.pos.y += constants.RESOLUTION_Y // constants.WORLD_SCALE
 
