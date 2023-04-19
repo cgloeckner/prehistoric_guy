@@ -79,8 +79,7 @@ class ObjectManager(physics.EventListener, animations.EventListener, characters.
                 char_actor.num_axes += 1
                 # FIXME: on_weapon_collected
 
-        if obj in self.physics_context.actors:
-            self.physics_context.actors.remove(obj)
+        self.physics_context.objects.remove(obj)
         self.create_random_object()
 
     def on_impact_platform(self, proj: physics.Projectile, platform: physics.Platform) -> None:

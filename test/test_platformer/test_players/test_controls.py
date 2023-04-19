@@ -10,9 +10,14 @@ class ControlSystemTest(unittest.TestCase):
 
     def setUp(self):
         self.ctx = controls.Context()
+        # unit test key query
+        self.ctx.query = lambda key: key in self.keys
+
         self.phys_ctx = physics.Context()
         self.ani_ctx = animations.Context()
         self.sys = controls.ControlsSystem(self.ctx, self.phys_ctx, self.ani_ctx)
+
+        self.keys = set()
 
     def create_actor(self, object_id: int, x: float, y: float) -> controls.Actor:
         actor = self.ctx.create_actor(object_id=object_id)
@@ -24,16 +29,13 @@ class ControlSystemTest(unittest.TestCase):
         actor1 = self.create_actor(1, 2.0, 1.0)
         actor2 = self.create_actor(1, 2.0, 1.0)
 
-        # propagate attack and moving right
+        # propagate attack
         event = pygame.event.Event(pygame.KEYDOWN, key=pygame.K_SPACE)
         self.sys.process_event(event)
-        event = pygame.event.Event(pygame.KEYDOWN, key=pygame.K_RIGHT)
         self.sys.process_event(event)
         event = pygame.event.Event(pygame.KEYUP, key=pygame.K_SPACE)
         self.sys.process_event(event)
 
-        self.assertAlmostEqual(actor1.state.delta.x, 1.0)
-        self.assertAlmostEqual(actor2.state.delta.x, 1.0)
         self.assertAlmostEqual(actor1.state.action, binding.Action.ATTACK)
         self.assertAlmostEqual(actor2.state.action, binding.Action.ATTACK)
 
@@ -160,4 +162,17 @@ class ControlSystemTest(unittest.TestCase):
         self.sys.apply_input(actor)
 
         self.assertAlmostEqual(phys_actor.move.force.x, 0.0)
+        self.assertEqual(ani_actor.frame.action, animations.Action.IDLE)
+
+    def test_cannot_jump_down(self):
+        actor = self.create_actor(1, 2.0, 1.0)
+        phys_actor = self.phys_ctx.actors.get_by_id(actor.object_id)
+        ani_actor = self.ani_ctx.actors.get_by_id(actor.object_id)
+
+        actor.state.delta.x = -1.0
+        actor.state.delta.y = -1.0
+        self.sys.apply_input(actor)
+
+        self.assertAlmostEqual(phys_actor.move.force.x, -1.0)
+        self.assertAlmostEqual(phys_actor.move.force.y, 0.0)
         self.assertEqual(ani_actor.frame.action, animations.Action.IDLE)

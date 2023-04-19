@@ -8,8 +8,16 @@ from platformer.players import binding
 
 class InputStateTest(unittest.TestCase):
 
-    def setUp(self):
+    def setUp(self) -> None:
         self.bind = binding.Keybinding()
+
+        self.keys = set()
+
+    def keys_test(self, value):
+        return value in self.keys
+
+    def tearDown(self) -> None:
+        pygame.quit()
 
     def test__reset(self):
         state = binding.InputState()
@@ -31,125 +39,120 @@ class InputStateTest(unittest.TestCase):
 
         # press attack key
         event = pygame.event.Event(pygame.KEYDOWN, key=self.bind.attack_key)
-        state.process_event_action(self.bind, event)
+        state.process_event(self.bind, event)
         self.assertEqual(state.attack_held_ms, 0)
         self.assertEqual(state.action, binding.Action.NONE)
 
         # held key
         event = pygame.event.Event(pygame.KEYDOWN, key=self.bind.attack_key)
-        state.process_event_action(self.bind, event)
+        state.process_event(self.bind, event)
         self.assertEqual(state.attack_held_ms, 0)
 
         state.attack_held_ms += 150
         # release key for short time -> attack
         event = pygame.event.Event(pygame.KEYUP, key=self.bind.attack_key)
-        state.process_event_action(self.bind, event)
+        state.process_event(self.bind, event)
         self.assertEqual(state.attack_held_ms, -1)
         self.assertEqual(state.action, binding.Action.ATTACK)
 
         state.attack_held_ms = binding.THROW_THRESHOLD
         # release key for longer timer -> throw
         event = pygame.event.Event(pygame.KEYUP, key=self.bind.attack_key)
-        state.process_event_action(self.bind, event)
+        state.process_event(self.bind, event)
         self.assertEqual(state.attack_held_ms, -1)
         self.assertEqual(state.action, binding.Action.THROW)
 
         # another key up does hit release attack
         state.reset()
         event = pygame.event.Event(pygame.KEYDOWN, key=self.bind.attack_key)
-        state.process_event_action(self.bind, event)
+        state.process_event(self.bind, event)
         state.attack_held_ms = 13
         event = pygame.event.Event(pygame.KEYUP, key=self.bind.up_key)
-        state.process_event_action(self.bind, event)
+        state.process_event(self.bind, event)
         self.assertEqual(state.attack_held_ms, 13)
 
     def test__process_event_movement(self):
-        state = binding.InputState()
-
-        event = pygame.event.Event(pygame.KEYDOWN, key=self.bind.attack_key)
-        state.process_event_movement(self.bind, event)
-        self.assertEqual(state.delta.x, 0)
-        self.assertEqual(state.delta.y, 0)
+        # press attack key (no effect)
+        self.keys.add(self.bind.attack_key)
+        delta = self.bind.get_movement(self.keys_test)
+        self.assertEqual(delta.x, 0)
+        self.assertEqual(delta.y, 0)
 
         # press left key
-        event = pygame.event.Event(pygame.KEYDOWN, key=self.bind.left_key)
-        state.process_event_movement(self.bind, event)
-        self.assertEqual(state.delta.x, -1)
-        self.assertEqual(state.delta.y, 0)
+        self.keys.add(self.bind.left_key)
+        delta = self.bind.get_movement(self.keys_test)
+        self.assertEqual(delta.x, -1)
+        self.assertEqual(delta.y, 0)
 
         # add right key
-        event = pygame.event.Event(pygame.KEYDOWN, key=self.bind.right_key)
-        state.process_event_movement(self.bind, event)
-        self.assertEqual(state.delta.x, 0)
-        self.assertEqual(state.delta.y, 0)
+        self.keys.add(self.bind.right_key)
+        delta = self.bind.get_movement(self.keys_test)
+        self.assertEqual(delta.x, 0)
+        self.assertEqual(delta.y, 0)
 
         # release left key
-        event = pygame.event.Event(pygame.KEYUP, key=self.bind.left_key)
-        state.process_event_movement(self.bind, event)
-        self.assertEqual(state.delta.x, 1)
-        self.assertEqual(state.delta.y, 0)
+        self.keys.remove(self.bind.left_key)
+        delta = self.bind.get_movement(self.keys_test)
+        self.assertEqual(delta.x, 1)
+        self.assertEqual(delta.y, 0)
 
         # release right key
-        event = pygame.event.Event(pygame.KEYUP, key=self.bind.right_key)
-        state.process_event_movement(self.bind, event)
-        self.assertEqual(state.delta.x, 0)
-        self.assertEqual(state.delta.y, 0)
+        self.keys.remove(self.bind.right_key)
+        delta = self.bind.get_movement(self.keys_test)
+        self.assertEqual(delta.x, 0)
+        self.assertEqual(delta.y, 0)
 
         # press up key
-        event = pygame.event.Event(pygame.KEYDOWN, key=self.bind.up_key)
-        state.process_event_movement(self.bind, event)
-        self.assertEqual(state.delta.x, 0)
-        self.assertEqual(state.delta.y, 1)
+        self.keys.add(self.bind.up_key)
+        delta = self.bind.get_movement(self.keys_test)
+        self.assertEqual(delta.x, 0)
+        self.assertEqual(delta.y, 1)
 
         # add down key
-        event = pygame.event.Event(pygame.KEYDOWN, key=self.bind.down_key)
-        state.process_event_movement(self.bind, event)
-        self.assertEqual(state.delta.x, 0)
-        self.assertEqual(state.delta.y, 0)
+        self.keys.add(self.bind.down_key)
+        delta = self.bind.get_movement(self.keys_test)
+        self.assertEqual(delta.x, 0)
+        self.assertEqual(delta.y, 0)
 
         # release up key
-        event = pygame.event.Event(pygame.KEYUP, key=self.bind.up_key)
-        state.process_event_movement(self.bind, event)
-        self.assertEqual(state.delta.x, 0)
-        self.assertEqual(state.delta.y, -1)
+        self.keys.remove(self.bind.up_key)
+        delta = self.bind.get_movement(self.keys_test)
+        self.assertEqual(delta.x, 0)
+        self.assertEqual(delta.y, -1)
 
         # release down key
-        event = pygame.event.Event(pygame.KEYUP, key=self.bind.down_key)
-        state.process_event_movement(self.bind, event)
-        self.assertEqual(state.delta.x, 0)
-        self.assertEqual(state.delta.y, 0)
+        self.keys.remove(self.bind.down_key)
+        delta = self.bind.get_movement(self.keys_test)
+        self.assertEqual(delta.x, 0)
+        self.assertEqual(delta.y, 0)
 
         # up right
-        event = pygame.event.Event(pygame.KEYDOWN, key=self.bind.up_key)
-        state.process_event_movement(self.bind, event)
-        event = pygame.event.Event(pygame.KEYDOWN, key=self.bind.right_key)
-        state.process_event_movement(self.bind, event)
-        self.assertEqual(state.delta.x, 1)
-        self.assertEqual(state.delta.y, 1)
+        self.keys.add(self.bind.up_key)
+        self.keys.add(self.bind.right_key)
+        delta = self.bind.get_movement(self.keys_test)
+        self.assertEqual(delta.x, 1)
+        self.assertEqual(delta.y, 1)
 
         # down right
-        event = pygame.event.Event(pygame.KEYUP, key=self.bind.up_key)
-        state.process_event_movement(self.bind, event)
-        event = pygame.event.Event(pygame.KEYDOWN, key=self.bind.down_key)
-        state.process_event_movement(self.bind, event)
-        self.assertEqual(state.delta.x, 1)
-        self.assertEqual(state.delta.y, -1)
+        self.keys.remove(self.bind.up_key)
+        self.keys.add(self.bind.down_key)
+        delta = self.bind.get_movement(self.keys_test)
+        self.assertEqual(delta.x, 1)
+        self.assertEqual(delta.y, -1)
 
         # down left
-        event = pygame.event.Event(pygame.KEYUP, key=self.bind.right_key)
-        state.process_event_movement(self.bind, event)
-        event = pygame.event.Event(pygame.KEYDOWN, key=self.bind.left_key)
-        state.process_event_movement(self.bind, event)
-        self.assertEqual(state.delta.x, -1)
-        self.assertEqual(state.delta.y, -1)
+        self.keys.remove(self.bind.right_key)
+        self.keys.add(self.bind.left_key)
+        delta = self.bind.get_movement(self.keys_test)
+        self.assertEqual(delta.x, -1)
+        self.assertEqual(delta.y, -1)
 
         # up left
-        event = pygame.event.Event(pygame.KEYUP, key=self.bind.down_key)
-        state.process_event_movement(self.bind, event)
-        event = pygame.event.Event(pygame.KEYDOWN, key=self.bind.up_key)
-        state.process_event_movement(self.bind, event)
-        self.assertEqual(state.delta.x, -1)
-        self.assertEqual(state.delta.y, 1)
+        self.keys.remove(self.bind.down_key)
+        self.keys.add(self.bind.up_key)
+        delta = self.bind.get_movement(self.keys_test)
+        self.assertEqual(delta.x, -1)
+        self.assertEqual(delta.y, 1)
 
     def test__get_throwing_progress(self):
         state = binding.InputState()
@@ -186,25 +189,25 @@ class InputStateTest(unittest.TestCase):
         state = binding.InputState()
 
         # default: no attack held
-        state.update(15)
+        state.update_action(15)
         self.assertEqual(state.attack_held_ms, -1)
 
         # step attack held a bit
         state.attack_held_ms = 0
-        state.update(15)
+        state.update_action(15)
         self.assertEqual(state.attack_held_ms, 15)
         self.assertEqual(state.action, binding.Action.NONE)
 
         # complete throw threshold without releasing
         state.attack_held_ms = binding.THROW_THRESHOLD - 1
-        state.update(1)
+        state.update_action(1)
         self.assertEqual(state.attack_held_ms, 0)
         self.assertEqual(state.action, binding.Action.THROW)
 
         # exceed threshold
         state.action = binding.Action.NONE
         state.attack_held_ms = binding.THROW_THRESHOLD + 7
-        state.update(15)
+        state.update_action(15)
         self.assertEqual(state.attack_held_ms, 22)
         self.assertEqual(state.action, binding.Action.THROW)
 

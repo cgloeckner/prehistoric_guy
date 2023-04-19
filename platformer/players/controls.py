@@ -15,11 +15,12 @@ class Actor:
     state: binding.InputState = field(default_factory=binding.InputState)
 
     def process_event(self, event: pygame.event.Event) -> None:
-        self.state.process_event_action(self.keys, event)
-        self.state.process_event_movement(self.keys, event)
+        self.state.process_event(self.keys, event)
 
-    def update(self, elapsed_ms: int) -> None:
-        self.state.update(elapsed_ms)
+    def update(self, elapsed_ms: int, query: binding.KeysQuery) -> None:
+        self.state.delta = self.keys.get_movement(query)
+        self.state.update_action(elapsed_ms)
+
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -27,6 +28,9 @@ class Actor:
 class Context:
     def __init__(self):
         self.actors = objectids.IdList[Actor]()
+
+        # default key query
+        self.query = lambda key: pygame.key.get_pressed()[key]
 
     def create_actor(self, object_id: int) -> Actor:
         actor = Actor(object_id=object_id)
@@ -62,10 +66,17 @@ class ControlsSystem:
         if ani_action is None:
             return
 
-        # apply movement vector as force (y-force is only applied if provided and if not falling)
+        # apply movement vector as force
         phys_actor.move.force.x = actor.state.delta.x
+
+        # apply y-force is only applied if applicable
         if actor.state.delta.y != 0.0:
-            phys_actor.move.force.y = actor.state.delta.y
+            applicable = is_on_ladder
+            if not applicable:
+                applicable = actor.state.delta.y > 0.0
+
+            if applicable:
+                phys_actor.move.force.y = actor.state.delta.y
 
         # avoid IDLE/HOLD blending over ATTACK/THROW
         if ani_action in [animations.Action.IDLE, animations.Action.HOLD] and \
@@ -77,6 +88,5 @@ class ControlsSystem:
 
     def update(self, elapsed_ms: int) -> None:
         for actor in self.context.actors:
-            pygame.display.set_caption(str(actor.state))
-            actor.update(elapsed_ms)
+            actor.update(elapsed_ms, self.context.query)
             self.apply_input(actor)

@@ -1,6 +1,6 @@
 import pygame
 from dataclasses import dataclass, field
-from typing import Optional
+from typing import Optional, Callable
 from enum import IntEnum
 
 from core import constants
@@ -17,6 +17,10 @@ class Action(IntEnum):
     THROW = 2
 
 
+# this is either using pygame to query the keys or is mocked during unittest
+KeysQuery = Callable[[int], bool]
+
+
 @dataclass
 class Keybinding:
     left_key: int = pygame.K_LEFT
@@ -25,6 +29,20 @@ class Keybinding:
     down_key: int = pygame.K_DOWN
     attack_key: int = pygame.K_SPACE  # also for throwing
 
+    def get_movement(self, query: KeysQuery) -> pygame.math.Vector2:
+        """Queries the keyboard"""
+        delta = pygame.math.Vector2()
+
+        if query(self.left_key):
+            delta.x -= 1
+        if query(self.right_key):
+            delta.x += 1
+        if query(self.up_key):
+            delta.y += 1
+        if query(self.down_key):
+            delta.y -= 1
+
+        return delta
 
 @dataclass
 class InputState:
@@ -43,7 +61,7 @@ class InputState:
         self.delta = pygame.math.Vector2()
         self.action = Action.NONE
 
-    def process_event_action(self, binding: Keybinding, event: pygame.event.Event) -> None:
+    def process_event(self, binding: Keybinding, event: pygame.event.Event) -> None:
         """Handles inputs events and sets the action accordingly."""
         if event.type == pygame.KEYDOWN and event.key == binding.attack_key:
             self.attack_held_ms = 0
@@ -58,28 +76,6 @@ class InputState:
             print(self)
             return
 
-    def process_event_movement(self, binding: Keybinding, event: pygame.event.Event) -> None:
-        """Handles input events and sets the movement vector accordingly."""
-        if event.type == pygame.KEYDOWN:
-            if event.key == binding.left_key:
-                self.delta.x -= 1
-            if event.key == binding.right_key:
-                self.delta.x += 1
-            if event.key == binding.up_key:
-                self.delta.y += 1
-            if event.key == binding.down_key:
-                self.delta.y -= 1
-
-        elif event.type == pygame.KEYUP:
-            if event.key == binding.left_key:
-                self.delta.x += 1
-            if event.key == binding.right_key:
-                self.delta.x -= 1
-            if event.key == binding.up_key:
-                self.delta.y -= 1
-            if event.key == binding.down_key:
-                self.delta.y += 1
-
     def get_throwing_progress(self) -> float:
         """Returns a float in [0.0; 1.0] that yields the percentage of the keydown-for-throwing duration."""
         if self.attack_held_ms == -1:
@@ -87,7 +83,7 @@ class InputState:
 
         return min(1.0, self.attack_held_ms / THROW_THRESHOLD)
 
-    def update(self, elapsed_ms: int) -> None:
+    def update_action(self, elapsed_ms: int) -> None:
         """Grabs the movement vector and whether it's an attack, throw or none."""
         # count how long the attack key is held
         if self.attack_held_ms >= 0:
@@ -107,7 +103,6 @@ class InputState:
 
         if self.action == Action.THROW:
             self.action = Action.NONE
-            print('THROWING!')
             return animations.Action.THROW
 
         if move_x and move_y:
