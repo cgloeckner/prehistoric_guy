@@ -36,8 +36,8 @@ class PreviewState(state_machine.State, factory.EventListener):
         self.animations_ctx.create_actor(1)
         self.renderer_ctx.create_actor(1, sprite_sheet=generic_guy)
         player = self.players_ctx.create_actor(1)
-        player.keys = controls.Keybinding(left_key=pygame.K_a, right_key=pygame.K_d, up_key=pygame.K_w,
-                                          down_key=pygame.K_s, attack_key=pygame.K_SPACE)
+        player.keys = controls.Keybinding(left_key=pygame.K_LEFT, right_key=pygame.K_RIGHT, up_key=pygame.K_UP,
+                                          down_key=pygame.K_DOWN, attack_key=pygame.K_SPACE)
 
     # ------------------------------------------------------------------------------------------------------------------
 

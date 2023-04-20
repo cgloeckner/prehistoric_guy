@@ -30,7 +30,7 @@ class Context:
         self.translate = t
 
         self.mouse_pos = pygame.math.Vector2()
-        self.mode = EditorMode.CREATE_PLATFORM
+        self.mode = EditorMode.SELECT
         self.snap_enabled = True
 
         self.preview_platform: Optional[physics.Platform] = None
@@ -43,6 +43,10 @@ class Context:
         self.hovered_platforms: List[physics.Platform] = list()
         self.hovered_ladders: List[physics.Ladder] = list()
         self.hovered_objects: List[physics.Object] = list()
+
+        self.selected_platform: Optional[physics.Platform] = None
+        self.selected_ladder: Optional[physics.Ladder] = None
+        self.selected_object: Optional[physics.Object] = None
 
         self.reset()
 
@@ -113,6 +117,21 @@ class Context:
                                    y=self.preview_object.pos.y,
                                    object_type=self.preview_object.object_type)
 
+        elif self.mode == EditorMode.SELECT:
+            self.selected_platform = None
+            self.selected_ladder = None
+            self.selected_object = None
+
+            # select hovered element (priority: object)
+            if len(self.hovered_objects) > 0:
+                self.selected_object = self.hovered_objects[0]
+
+            elif len(self.hovered_ladders) > 0:
+                self.selected_ladder = self.hovered_ladders[0]
+
+            elif len(self.hovered_platforms) > 0:
+                self.selected_platform = self.hovered_platforms[0]
+
     def on_right_click(self, event: pygame.event.Event) -> None:
         """Cycle editor mode."""
         new_value = (self.mode + 1) % len(EditorMode.__members__)
@@ -131,26 +150,35 @@ class Context:
             new_value = (self.preview_obj_type + event.y) % len(constants.ObjectType.__members__)
             self.preview_obj_type = constants.ObjectType(new_value)
 
-    def platform_tooltip(self, platform: physics.Platform):
+    def platform_tooltip(self, platform: physics.Platform) -> None:
         """Show platform information as tooltip."""
         with imgui.begin_tooltip():
             imgui.text(self.translate.editor.platform)
             imgui.text(f'{self.translate.editor.position}: {platform.pos}')
             imgui.text(f'{self.translate.editor.width}: {platform.width}')
 
-    def ladder_tooltip(self, ladder: physics.Ladder):
+    def ladder_tooltip(self, ladder: physics.Ladder) -> None:
         """Show ladder information as tooltip."""
         with imgui.begin_tooltip():
             imgui.text(self.translate.editor.ladder)
             imgui.text(f'{self.translate.editor.position}: {ladder.pos}')
             imgui.text(f'{self.translate.editor.height}: {ladder.height}')
 
-    def object_tooltip(self, obj: physics.Object):
+    def object_tooltip(self, obj: physics.Object) -> None:
         """Show object information as tooltip."""
         with imgui.begin_tooltip():
             imgui.text(self.translate.editor.object)
             imgui.text(f'{self.translate.editor.position}: {obj.pos}')
             imgui.text(f'{self.translate.editor.type}: {getattr(self.translate.editor, obj.object_type.name)}')
+
+    def platform_editor(self, platform: physics.Platform) -> None:
+        pass
+
+    def ladder_editor(self, ladder: physics.Ladder) -> None:
+        pass
+
+    def object_editor(self, obj: physics.Object) -> None:
+        pass
 
     def update_mouse(self, elapsed_ms: int) -> None:
         """Update mouse-related stuff."""
@@ -175,7 +203,20 @@ class Context:
             elif len(self.hovered_ladders) > 0:
                 self.ladder_tooltip(self.hovered_ladders[0])
 
+            elif self.selected_object is not None:
+                self.object_editor(self.selected_object)
+
+            elif self.selected_ladder is not None:
+                self.ladder_editor(self.selected_ladder)
+
+            elif self.selected_platform is not None:
+                self.platform_editor(self.selected_platform)
+
         else:
+            self.selected_platform = None
+            self.selected_ladder = None
+            self.selected_object = None
+
             self.hovered_platforms = list()
             self.hovered_ladders = list()
             self.hovered_objects = list()

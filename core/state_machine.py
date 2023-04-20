@@ -24,6 +24,7 @@ class Engine(object):
         self.clock = pygame.time.Clock()
 
         self.running = False
+        self.is_active = True
         self.fill_color = 'black'
         self.max_fps = 60
         self.num_fps = 0
@@ -35,6 +36,9 @@ class Engine(object):
     def push(self, state) -> None:
         """Adds a state to the queue. The latest state is handled first (LIFO).
         """
+        if len(self.queue) > 0:
+            self.queue[-1].sleep()
+
         self.queue.append(state)
 
     def pop(self) -> None:
@@ -42,6 +46,9 @@ class Engine(object):
         This may throw an IndexError if the queue is empty.
         """
         self.queue.pop()
+
+        if len(self.queue) > 0:
+            self.queue[-1].reinit()
 
     def run(self) -> None:
         """Runs the latest state until the app is shutdown by the user input or no state is left.
@@ -85,6 +92,14 @@ class State(ABC):
 
     @abstractmethod
     def process_event(self, event: pygame.event.Event) -> None:
+        pass
+
+    def sleep(self) -> None:
+        """Called when the state is pushed to the stack in favor of another state."""
+        pass
+
+    def reinit(self) -> None:
+        """Called when the state back to the stack's top."""
         pass
 
     @abstractmethod

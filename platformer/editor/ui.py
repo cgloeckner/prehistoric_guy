@@ -23,6 +23,19 @@ class EditorState(state_machine.State):
                                           self.sprite_context, self.cache)
 
         self.font = self.cache.get_font()
+        #self.reinit()
+
+    def __del__(self):
+        #self.sleep()
+        pass
+
+    def reinit(self) -> None:
+        #pygame.event.set_grab(True)
+        pass
+
+    def sleep(self) -> None:
+        #pygame.event.set_grab(False)
+        pass
 
     # ------------------------------------------------------------------------------------------------------------------
 
@@ -285,7 +298,3 @@ class EditorState(state_machine.State):
         """Draw scene and things the like."""
         self.renderer.draw()
         self.context.draw(self.renderer)
-
-        # draw FPS
-        fps_surface = self.font.render(f'FPS: {int(self.engine.num_fps):02d}', False, 'white')
-        self.engine.buffer.blit(fps_surface, (0, self.engine.screen_size[1] - fps_surface.get_height()))

@@ -1,0 +1,35 @@
+<?xml version="1.0" ?>
+<level>
+	<platform x="0.0" y="0.0" width="20"/>
+	<platform x="2.0" y="1.0" width="1"/>
+	<platform x="8.0" y="1.0" width="1"/>
+	<platform x="14.0" y="1.0" width="1"/>
+	<platform x="10.0" y="2.0" width="4"/>
+	<platform x="1.0" y="2.0" width="1"/>
+	<platform x="0.0" y="3.0" width="1"/>
+	<platform x="2.0" y="4.0" width="4"/>
+	<platform x="7.0" y="4.0" width="1"/>
+	<platform x="8.0" y="5.0" width="1"/>
+	<platform x="0.0" y="6.0" width="4"/>
+	<platform x="0.0" y="6.0" width="4"/>
+	<platform x="7.0" y="6.0" width="4"/>
+	<platform x="10.0" y="7.0" width="4"/>
+	<platform x="1.0" y="7.0" width="5"/>
+	<platform x="-1.0" y="8.0" width="5"/>
+	<platform x="5.0" y="9.0" width="4"/>
+	<platform x="2.0" y="9.0" width="1"/>
+	<platform x="10.0" y="9.0" width="1"/>
+	<platform x="3.0" y="10.0" width="1"/>
+	<platform x="12.0" y="10.0" width="1"/>
+	<platform x="13.0" y="11.0" width="4"/>
+	<platform x="6.0" y="11.0" width="4"/>
+	<platform x="4.0" y="11.0" width="1"/>
+	<platform x="5.0" y="12.0" width="1"/>
+	<ladder x="4.0" y="0.0" height="4"/>
+	<ladder x="8.0" y="6.0" height="3"/>
+	<ladder x="10.0" y="2.0" height="4"/>
+	<ladder x="13.0" y="0.0" height="2"/>
+	<ladder x="14.0" y="7.0" height="4"/>
+	<ladder x="6.0" y="9.0" height="2"/>
+	<ladder x="2.0" y="4.0" height="2"/>
+</level>
