@@ -66,10 +66,10 @@ class GameState(state_machine.State, factory.EventListener):
         self.factory.ctx.physics.create_ladder(x=8.5, y=1, height=5)
         self.factory.ctx.physics.create_ladder(x=2.5, y=6, height=5)
 
-        self.editor_ui = editor.SceneEditor(engine.buffer, self.factory)
+        #self.editor_ui = editor.SceneEditor(engine.buffer, self.factory)
 
-        s = level.Scene(self.factory.ctx.physics)
-        s.to_file('data/level01.xml')
+        #s = level.Scene(self.factory.ctx.physics)
+        #s.to_file('data/level01.xml')
 
     # ------------------------------------------------------------------------------------------------------------------
     # --- physics events ---
@@ -216,7 +216,7 @@ class GameState(state_machine.State, factory.EventListener):
         self.factory.players.process_event(event)
 
     def update(self, elapsed_ms: int) -> None:
-        self.editor_ui.update()
+        #self.editor_ui.update()
 
         # --- Demo Camera movement -------------------------------------------------------------------------------------
         player_char_actor = self.factory.ctx.players.actors[0]
@@ -240,6 +240,6 @@ class GameState(state_machine.State, factory.EventListener):
 
         # draw imgui UI
         imgui.new_frame()
-        self.editor_ui.draw()
+        #self.editor_ui.draw()
         self.engine.wrapper.buffer.blit(self.engine.buffer, (0, 0))
         self.engine.wrapper.render()

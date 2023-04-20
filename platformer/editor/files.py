@@ -11,16 +11,17 @@ from platformer import physics
 
 @dataclass
 class FileStatus:
-    filename: Optional[str] = None
+    filename: str = ''
     unsaved_changes: bool = False
 
     def get_filename(self) -> str:
-        out = '*' if self.unsaved_changes else ''
-        if self.filename is None:
-            out += 'untitled'
-        else:
-            out += self.filename
-        return out
+        if self.filename == '':
+            return 'untitled'
+        return self.filename
+
+    def __str__(self) -> str:
+        suffix = ' [UNSAVED]' if self.unsaved_changes else ''
+        return self.get_filename() + suffix
 
 
 def to_xml(ctx: physics.Context) -> et.Element:

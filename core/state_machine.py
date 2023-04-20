@@ -14,8 +14,9 @@ class Engine(object):
 
         self.paths = paths.DataPath()
 
-        self.screen = pygame.display.set_mode((screen_width, screen_height), OpenGlWrapper.get_display_flags())
-        self.buffer = pygame.Surface((screen_width, screen_height))
+        self.screen_size = (screen_width, screen_height)
+        self.screen = pygame.display.set_mode(self.screen_size, OpenGlWrapper.get_display_flags())
+        self.buffer = pygame.Surface(self.screen_size)
         self.wrapper = OpenGlWrapper(self.screen)
         self.clock = pygame.time.Clock()
 
@@ -54,7 +55,6 @@ class Engine(object):
 
             # handle all events
             for event in pygame.event.get():
-                self.wrapper.process_event(event)
                 state.process_event(event)
 
             # update and draw
