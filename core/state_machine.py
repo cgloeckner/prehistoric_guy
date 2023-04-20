@@ -1,6 +1,7 @@
 import pygame
 from abc import abstractmethod, ABC
 
+from core import paths
 from core.imgui_wrapper import OpenGlWrapper
 
 
@@ -10,6 +11,8 @@ class Engine(object):
         All 2d drawing options are done with the buffer. Later the buffer content is rendered to screen using OpenGL.
         """
         pygame.init()
+
+        self.paths = paths.DataPath()
 
         self.screen = pygame.display.set_mode((screen_width, screen_height), OpenGlWrapper.get_display_flags())
         self.buffer = pygame.Surface((screen_width, screen_height))

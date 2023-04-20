@@ -11,7 +11,7 @@ from platformer import physics
 
 @dataclass
 class FileStatus:
-    filename: Optional[pathlib.Path] = None
+    filename: Optional[str] = None
     unsaved_changes: bool = False
 
     def get_filename(self) -> str:
@@ -19,7 +19,7 @@ class FileStatus:
         if self.filename is None:
             out += 'untitled'
         else:
-            out += self.filename.name
+            out += self.filename
         return out
 
 

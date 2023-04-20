@@ -1,6 +1,5 @@
 import pygame
 import imgui
-import pathlib
 
 from core import state_machine, resources
 from platformer import physics, animations, renderer
@@ -26,7 +25,7 @@ class EditorState(state_machine.State):
                                           self.sprite_context, self.cache)
 
         self.file_status = files.FileStatus()
-        self.file_status.filename = pathlib.Path('../data/levels/001.xml')
+        self.file_status.filename = '001'
 
     def process_event(self, event: pygame.event.Event) -> None:
         if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
@@ -41,7 +40,12 @@ class EditorState(state_machine.State):
         pass
 
     def on_level_save(self) -> None:
-        pass
+        if self.file_status.filename is None:
+            self.on_level_save_as()
+            return
+
+        full_path = self.engine.paths.levels(self.file_status.filename)
+        print(full_path)
 
     def on_level_save_as(self) -> None:
         pass

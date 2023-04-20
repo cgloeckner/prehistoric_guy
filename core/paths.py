@@ -2,8 +2,8 @@ import pathlib
 
 
 class DataPath(object):
-    def __init__(self, root: pathlib.Path):
-        self.root = root = root
+    def __init__(self, root: pathlib.Path = pathlib.Path.cwd()):
+        self.root = root = root / 'data'
         self._ensure(self.levels())
 
     @staticmethod
