@@ -1,9 +1,10 @@
 import pygame
 import pathlib
+import imgui
 from typing import List, Optional
 from enum import IntEnum, auto
 
-from core import paths, shapes, constants
+from core import paths, shapes, constants, translate
 from platformer import physics, renderer
 
 from . import files
@@ -20,12 +21,13 @@ class EditorMode(IntEnum):
 
 
 class Context:
-    def __init__(self, width: int, height: int, p: paths.DataPath):
+    def __init__(self, width: int, height: int, p: paths.DataPath, t: translate.Match):
         self.new_filename = ''
         self.file_status = files.FileStatus()
         self.ctx = physics.Context()
         self.cam = renderer.Camera(width, height)
         self.paths = p
+        self.translate = t
 
         self.mouse_pos = pygame.math.Vector2()
         self.mode = EditorMode.CREATE_PLATFORM
@@ -121,6 +123,24 @@ class Context:
             new_value = (self.preview_obj_type + event.y) % len(constants.ObjectType.__members__)
             self.preview_obj_type = constants.ObjectType(new_value)
 
+    def platform_tooltip(self, platform: physics.Platform):
+        with imgui.begin_tooltip():
+            imgui.text(self.translate.editor.platform)
+            imgui.text(f'{self.translate.editor.position}: {platform.pos}')
+            imgui.text(f'{self.translate.editor.width}: {platform.width}')
+
+    def ladder_tooltip(self, ladder: physics.Ladder):
+        with imgui.begin_tooltip():
+            imgui.text(self.translate.editor.ladder)
+            imgui.text(f'{self.translate.editor.position}: {ladder.pos}')
+            imgui.text(f'{self.translate.editor.height}: {ladder.height}')
+
+    def object_tooltip(self, obj: physics.Object):
+        with imgui.begin_tooltip():
+            imgui.text(self.translate.editor.object)
+            imgui.text(f'{self.translate.editor.position}: {obj.pos}')
+            imgui.text(f'{self.translate.editor.type}: {getattr(self.translate.editor, obj.object_type.name)}')
+
     def update_mouse(self, elapsed_ms: int) -> None:
         circ = shapes.Circ(*self.mouse_pos, MOUSE_SELECT_RADIUS)
 
@@ -132,6 +152,16 @@ class Context:
             self.preview_platform = None
             self.preview_ladder = None
             self.preview_object = None
+
+            # show next best tooltip (priority: objects)
+            if len(self.hovered_objects) > 0:
+                self.object_tooltip(self.hovered_objects[0])
+
+            elif len(self.hovered_platforms) > 0:
+                self.platform_tooltip(self.hovered_platforms[0])
+
+            elif len(self.hovered_ladders) > 0:
+                self.ladder_tooltip(self.hovered_ladders[0])
 
         else:
             self.hovered_platforms = list()
@@ -157,6 +187,8 @@ class Context:
                     self.preview_platform.pos = pos.copy()
                     self.preview_platform.width = self.preview_terrain_size
 
+                self.platform_tooltip(self.preview_platform)
+
             elif self.mode == EditorMode.CREATE_LADDER:
                 self.preview_platform = None
                 self.preview_object = None
@@ -167,6 +199,8 @@ class Context:
                     self.preview_ladder.pos = pos.copy()
                     self.preview_ladder.height = self.preview_terrain_size
 
+                self.ladder_tooltip(self.preview_ladder)
+
             elif self.mode == EditorMode.CREATE_OBJECT:
                 self.preview_platform = None
                 self.preview_ladder = None
@@ -176,6 +210,8 @@ class Context:
                 else:
                     self.preview_object.pos = pos.copy()
                     self.preview_object.object_type = self.preview_obj_type
+
+                self.object_tooltip(self.preview_object)
 
     def draw(self, render_api: renderer.Renderer) -> None:
         # redraw hovered objects

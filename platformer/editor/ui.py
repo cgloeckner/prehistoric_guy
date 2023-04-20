@@ -12,7 +12,7 @@ class EditorState(state_machine.State):
 
     def __init__(self, engine: state_machine.Engine):
         super().__init__(engine)
-        self.context = context.Context(*engine.buffer.get_size(), engine.paths)
+        self.context = context.Context(*engine.buffer.get_size(), engine.paths, engine.translate)
 
         self.engine.translate.load_from_file(self.engine.paths.language('en'))
 
@@ -66,14 +66,6 @@ class EditorState(state_machine.State):
                 imgui.same_line(200)
                 if imgui.menu_item(f'{ui.editor.filename}: {self.context.file_status}')[0]:
                     menu_action = 'open'
-
-        with imgui.begin(ui.editor.status):
-            # camera position
-            imgui.text(f'{ui.editor.cam} {self.context.cam.topleft}')
-
-            # mouse position
-            mouse_pos_str = f'[{self.context.mouse_pos.x:.2f}, {self.context.mouse_pos.y:.2f}]'
-            imgui.text(f'{ui.editor.mouse} {mouse_pos_str}')
 
         # NOTE: popups need to be opened AFTER the main menu
         if menu_action == 'open':
