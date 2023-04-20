@@ -1,9 +1,10 @@
 import unittest
 import tempfile
+import pathlib
 
 from core import constants
 from platformer import physics
-from platformer.editor import io
+from platformer.editor import files
 
 
 class LevelTest(unittest.TestCase):
@@ -15,8 +16,8 @@ class LevelTest(unittest.TestCase):
         ctx.create_ladder(x=3.25, y=0.5, height=4)
         ctx.create_object(x=3.5, y=5.5, object_type=constants.ObjectType.FOOD)
 
-        root = io.to_xml(ctx)
-        other = io.from_xml(root)
+        root = files.to_xml(ctx)
+        other = files.from_xml(root)
 
         self.assertEqual(len(other.platforms), 2)
         self.assertEqual(other.platforms[0].pos.x, 6.5)
@@ -42,12 +43,12 @@ class LevelTest(unittest.TestCase):
         ctx.create_ladder(x=3.25, y=0.5, height=4)
         ctx.create_object(x=3.5, y=5.5, object_type=constants.ObjectType.FOOD)
 
-        root = io.to_xml(ctx)
+        root = files.to_xml(ctx)
         with tempfile.NamedTemporaryFile('w') as file:
-            io.to_file(root, file.name)
-            other = io.from_file(file.name)
+            files.to_file(root, pathlib.Path(file.name))
+            other = files.from_file(pathlib.Path(file.name))
 
-        other = io.from_xml(other)
+        other = files.from_xml(other)
 
         self.assertEqual(len(other.platforms), 2)
         self.assertEqual(other.platforms[0].pos.x, 6.5)

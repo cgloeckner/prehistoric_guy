@@ -1,10 +1,26 @@
 import pathlib
 import xml.dom.minidom
 import xml.etree.ElementTree as et
+from dataclasses import dataclass
+from typing import Optional
 
 from core import constants
 
 from platformer import physics
+
+
+@dataclass
+class FileStatus:
+    filename: Optional[pathlib.Path] = None
+    unsaved_changes: bool = False
+
+    def get_filename(self) -> str:
+        out = '*' if self.unsaved_changes else ''
+        if self.filename is None:
+            out += 'untitled'
+        else:
+            out += self.filename.name
+        return out
 
 
 def to_xml(ctx: physics.Context) -> et.Element:

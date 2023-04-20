@@ -1,8 +1,11 @@
 import pygame
 import imgui
+import pathlib
 
 from core import state_machine, resources
 from platformer import physics, animations, renderer
+
+from . import files
 
 
 MOUSE_SELECT_RADIUS: float = 0.2
@@ -21,6 +24,9 @@ class EditorState(state_machine.State):
 
         self.renderer = renderer.Renderer(self.camera, engine.buffer, self.physics_context, self.animations_context,
                                           self.sprite_context, self.cache)
+
+        self.file_status = files.FileStatus()
+        self.file_status.filename = pathlib.Path('../data/levels/001.xml')
 
     def process_event(self, event: pygame.event.Event) -> None:
         if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
@@ -50,6 +56,8 @@ class EditorState(state_machine.State):
         self.renderer.update(elapsed_ms)
 
     def main_menu(self):
+        pygame.display.set_caption(f'Level Editor - {self.file_status.get_filename()}')
+
         with imgui.begin_main_menu_bar() as main_menu_bar:
             if main_menu_bar.opened:
                 with imgui.begin_menu('File') as file_menu:
