@@ -1,7 +1,9 @@
 import pygame
+import imgui
+import pathlib
 from abc import abstractmethod, ABC
 
-from core import paths
+from core import paths, translate
 from core.imgui_wrapper import OpenGlWrapper
 
 
@@ -12,7 +14,8 @@ class Engine(object):
         """
         pygame.init()
 
-        self.paths = paths.DataPath()
+        self.paths = paths.DataPath(pathlib.Path.cwd() / 'data')
+        self.translate = translate.Match()
 
         self.screen_size = (screen_width, screen_height)
         self.screen = pygame.display.set_mode(self.screen_size, OpenGlWrapper.get_display_flags())
@@ -55,12 +58,20 @@ class Engine(object):
 
             # handle all events
             for event in pygame.event.get():
+                self.wrapper.process_event(event)
                 state.process_event(event)
 
-            # update and draw
+            # update
             state.update(elapsed)
+
+            # draw state
             self.buffer.fill(self.fill_color)
+            imgui.new_frame()
             state.draw()
+
+            # render onto OpenGL window
+            self.wrapper.buffer.blit(self.buffer, (0, 0))
+            self.wrapper.render()
             pygame.display.flip()
 
             # limit fps

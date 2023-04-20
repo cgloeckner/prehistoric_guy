@@ -1,5 +1,4 @@
 import pygame
-from typing import List
 from dataclasses import dataclass
 from enum import IntEnum
 
@@ -10,6 +9,10 @@ from . import base, shapes
 
 
 NUM_FRAMES_PER_TILE: int = 3
+
+# used by editor
+MASK_SETCOLOR = pygame.Color(255, 215, 0, 80)
+MASK_UNSETCOLOR = pygame.Color(0, 0, 0, 0)
 
 
 class TileOffset(IntEnum):
@@ -125,7 +128,12 @@ class ImageRenderer(shapes.ShapeRenderer):
 
         return clip_rect
 
-    def draw_platform(self, platform: physics.Platform) -> None:
+    def draw_platform(self, platform: physics.Platform, use_mask: bool = False) -> None:
+        src = self.tiles
+        if use_mask:
+            super().draw_platform(platform)
+            src = pygame.mask.from_surface(src).to_surface(setcolor=MASK_SETCOLOR, unsetcolor=MASK_UNSETCOLOR)
+
         pos = self.get_platform_rect(platform)
         pos.h *= -1
         clip = self.get_platform_clip(tileset_col=0)
@@ -137,7 +145,7 @@ class ImageRenderer(shapes.ShapeRenderer):
             pos_tmp.x = pos.x
             for x in range(platform.width):
                 if self.camera.rect_is_visible(pos_tmp):
-                    self.target.blit(self.tiles, pos_tmp, clip.tex_clip_rect)
+                    self.target.blit(src, pos_tmp, clip.tex_clip_rect)
                 pos_tmp.x += constants.WORLD_SCALE
             pos_tmp.y -= constants.WORLD_SCALE
 
@@ -146,46 +154,60 @@ class ImageRenderer(shapes.ShapeRenderer):
         pos_tmp.y -= constants.WORLD_SCALE + platform.height * constants.WORLD_SCALE
         for x in range(platform.width):
             if self.camera.rect_is_visible(pos_tmp):
-                self.target.blit(self.tiles, pos_tmp, clip.top_clip_rect)
+                self.target.blit(src, pos_tmp, clip.top_clip_rect)
             pos_tmp.x += constants.WORLD_SCALE
 
         # draw edges
         if self.camera.rect_is_visible(pos_tmp):
-            self.target.blit(self.tiles, pos_tmp, clip.right_clip_rect)
+            self.target.blit(src, pos_tmp, clip.right_clip_rect)
         pos_tmp.x = pos.x - constants.WORLD_SCALE
         if self.camera.rect_is_visible(pos_tmp):
-            self.target.blit(self.tiles, pos_tmp, clip.left_clip_rect)
+            self.target.blit(src, pos_tmp, clip.left_clip_rect)
 
-    def draw_ladder(self, ladder: physics.Ladder) -> None:
+    def draw_ladder(self, ladder: physics.Ladder, use_mask: bool = False) -> None:
+        src = self.tiles
+        if use_mask:
+            super().draw_ladder(ladder)
+            src = pygame.mask.from_surface(src).to_surface(setcolor=MASK_SETCOLOR, unsetcolor=MASK_UNSETCOLOR)
+
         pos = self.get_ladder_rect(ladder)
         clip = self.get_ladder_clip(tileset_col=0)
 
         # draw upper part of the ladder
         pos.y -= constants.WORLD_SCALE
         if self.camera.rect_is_visible(pos):
-            self.target.blit(self.tiles, pos, clip.top_clip_rect)
+            self.target.blit(src, pos, clip.top_clip_rect)
         pos.y += constants.WORLD_SCALE
 
         # draw ladder elements
         for i in range(ladder.height):
             if self.camera.rect_is_visible(pos):
-                self.target.blit(self.tiles, pos, clip.mid_clip_rect)
+                self.target.blit(src, pos, clip.mid_clip_rect)
             pos.y += constants.WORLD_SCALE
 
         # draw lower part of the ladder:
         if self.camera.rect_is_visible(pos):
-            self.target.blit(self.tiles, pos, clip.bottom_clip_rect)
+            self.target.blit(src, pos, clip.bottom_clip_rect)
 
-    def draw_object(self, obj: physics.Object) -> None:
+    def draw_object(self, obj: physics.Object, use_mask: bool = False) -> None:
+        src = self.objects
+        if use_mask:
+            super().draw_object(obj)
+            src = pygame.mask.from_surface(src).to_surface(setcolor=MASK_SETCOLOR, unsetcolor=MASK_UNSETCOLOR)
+
         pos = self.get_object_rect(obj)
         clip = self.get_object_clip(object_type=obj.object_type, variation_col=0)
 
         if self.camera.rect_is_visible(pos):
-            self.target.blit(self.objects, pos, clip)
+            self.target.blit(src, pos, clip)
 
-    def draw_actor(self, actor: physics.Actor) -> None:
+    def draw_actor(self, actor: physics.Actor, use_mask: bool = False) -> None:
         sprite_actor = self.sprite_context.actors.get_by_id(actor.object_id)
         ani_actor = self.ani_context.actors.get_by_id(actor.object_id)
+
+        src = sprite_actor.sprite_sheet
+        if use_mask:
+            src = pygame.mask.from_surface(src).to_surface(setcolor=MASK_SETCOLOR, unsetcolor=MASK_UNSETCOLOR)
 
         pos = self.get_actor_rect(actor)
         clip = self.get_actor_clip(face_x=actor.move.face_x, frame_id=ani_actor.frame.frame_id,
@@ -195,9 +217,13 @@ class ImageRenderer(shapes.ShapeRenderer):
         pos.y += ani_actor.oscillate.delta_y
 
         if self.camera.rect_is_visible(pos):
-            self.target.blit(sprite_actor.sprite_sheet, pos, clip)
+            self.target.blit(src, pos, clip)
 
-    def draw_projectile(self, proj: physics.Projectile) -> None:
+    def draw_projectile(self, proj: physics.Projectile, use_mask: bool = False) -> None:
+        src = self.objects
+        if use_mask:
+            src = pygame.mask.from_surface(src).to_surface(setcolor=MASK_SETCOLOR, unsetcolor=MASK_UNSETCOLOR)
+
         # FIXME: allow for spinning animation
         """
         angle = 2 * math.pi * proj.fly_ms / 360
@@ -208,7 +234,7 @@ class ImageRenderer(shapes.ShapeRenderer):
         pos = self.get_projectile_rect(proj)
         clip = self.get_projectile_clip(object_type=proj.object_type, variation_col=0)
         if self.camera.rect_is_visible(pos):
-            self.target.blit(self.objects, pos, clip)
+            self.target.blit(src, pos, clip)
 
     def update(self, elapsed_ms: int) -> None:
         self.physics_context.platforms.sort(key=lambda plat: plat.pos.y)

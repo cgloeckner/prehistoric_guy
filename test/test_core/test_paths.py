@@ -12,11 +12,16 @@ class DataPathTest(unittest.TestCase):
             path = pathlib.Path(tmpdir_name)
             d = paths.DataPath(path)
 
-            lvl_path = d.levels()
-            self.assertEqual(path / 'levels', lvl_path)
+            lvl_path = d.level()
             self.assertTrue(lvl_path.exists())
             self.assertTrue(lvl_path.is_dir())
 
-            lvl_file = d.levels('foo')
-            self.assertEqual(path / 'levels' / 'foo.xml', lvl_file)
-            self.assertFalse(lvl_file.exists())
+            lvl_file = d.level('foo')
+            self.assertEqual(lvl_file.suffix, '.xml')
+
+            lang_path = d.language()
+            self.assertTrue(lang_path.exists())
+            self.assertTrue(lang_path.is_dir())
+
+            lang_file = d.language('bar')
+            self.assertEqual(lang_file.suffix, '.ini')
