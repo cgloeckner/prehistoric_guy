@@ -6,7 +6,7 @@ from typing import Optional
 from core import constants, resources, state_machine
 
 from platformer import animations, characters
-from platformer import editor, factory
+from platformer import factory
 from platformer import controls, physics
 
 

@@ -1,11 +1,12 @@
 import pygame
 import imgui
+import pathlib
 from typing import List
 
 from core import state_machine, resources, paths, shapes
 from platformer import physics, animations, renderer
 
-from . import files
+from . import files, preview
 
 
 MOUSE_SELECT_RADIUS: float = 0.2
@@ -37,6 +38,8 @@ class Context:
         self.selected = LevelSelection()
         self.hovered = LevelSelection()
 
+        self.reset()
+
     def reset(self):
         self.file_status.filename = ''
         self.file_status.unsaved_changes = True
@@ -45,27 +48,28 @@ class Context:
         self.ctx.platforms.clear()
         self.ctx.ladders.clear()
         self.ctx.objects.clear()
+        self.ctx.create_platform(x=0, y=0, width=10)
 
         # reset camera
-        self.cam.topleft = pygame.math.Vector2()
+        self.cam.topleft = pygame.math.Vector2(-1, -1)
 
     def load(self):
         self.file_status.unsaved_changes = False
-        full_path = self.paths.level(self.file_status.filename)
+        full_path = self.get_full_levelname()
         ctx = files.from_xml(files.from_file(full_path))
 
-        # replace platforms, ladders and objects
-        self.ctx.platforms = ctx.platforms
-        self.ctx.ladders = ctx.ladders
-        self.ctx.objects = ctx.objects
+        files.apply_context(self.ctx, ctx)
 
         # reset camera
         self.cam.topleft = pygame.math.Vector2()
 
     def save(self):
         self.file_status.unsaved_changes = False
-        full_path = self.paths.level(self.file_status.filename)
+        full_path = self.get_full_levelname()
         files.to_file(files.to_xml(self.ctx), full_path)
+
+    def get_full_levelname(self) -> pathlib.Path:
+        return self.paths.level(self.file_status.filename)
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -96,11 +100,6 @@ class EditorState(state_machine.State):
         return self.renderer.to_world_coord(pos)
 
     def process_event(self, event: pygame.event.Event) -> None:
-        # self.engine.wrapper.io.want_capture_keyboard
-        # self.engine.wrapper.io.want_capture_mouse
-
-        #self.engine.wrapper.process_event(event)
-
         if event.type == pygame.QUIT:
             self.engine.pop()
 
@@ -120,7 +119,8 @@ class EditorState(state_machine.State):
         self.engine.pop()
 
     def on_level_run(self) -> None:
-        print('NYI')
+        player_pos = pygame.math.Vector2(5, 5)
+        self.engine.push(preview.PreviewState(self.engine, self.context.ctx, player_pos))
 
     def main_menu(self) -> None:
         ui = self.engine.translate
@@ -145,27 +145,18 @@ class EditorState(state_machine.State):
                 if imgui.menu_item(ui.editor.run)[0]:
                     self.on_level_run()
 
-                imgui.same_line(150)
-                if imgui.menu_item(f'{ui.editor.cam} {self.context.cam.topleft}')[0]:
-                    self.context.cam.topleft = pygame.math.Vector2()
-                if imgui.is_item_hovered():
-                    with imgui.begin_tooltip():
-                        imgui.text(ui.editor.cam_reset)
-
-                mouse_pos = self.get_mouse_pos()
-                mouse_pos_str = f'[{mouse_pos.x:.2f}, {mouse_pos.y:.2f}]'
-
-                imgui.same_line(250)
-                imgui.text(f'{ui.editor.mouse} {mouse_pos_str}')
-                imgui.same_line(400)
-
-                if imgui.menu_item(f'{ui.editor.filename} {self.context.file_status}')[0]:
+                imgui.same_line(200)
+                if imgui.menu_item(f'{ui.editor.filename}: {self.context.file_status}')[0]:
                     menu_action = 'open'
 
-                if imgui.is_item_hovered():
-                    with imgui.begin_tooltip():
-                        imgui.text(ui.editor.open)
+        with imgui.begin(ui.editor.status):
+            # camera position
+            imgui.text(f'{ui.editor.cam} {self.context.cam.topleft}')
 
+            # mouse position
+            mouse_pos = self.get_mouse_pos()
+            mouse_pos_str = f'[{mouse_pos.x:.2f}, {mouse_pos.y:.2f}]'
+            imgui.text(f'{ui.editor.mouse} {mouse_pos_str}')
 
         # NOTE: popups need to be opened AFTER the main menu
         if menu_action == 'open':

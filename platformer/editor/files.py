@@ -2,7 +2,6 @@ import pathlib
 import xml.dom.minidom
 import xml.etree.ElementTree as et
 from dataclasses import dataclass
-from typing import Optional
 
 from core import constants
 
@@ -22,6 +21,13 @@ class FileStatus:
     def __str__(self) -> str:
         suffix = ' [UNSAVED]' if self.unsaved_changes else ''
         return self.get_filename() + suffix
+
+
+def apply_context(target: physics.Context, tmp: physics.Context):
+    # replace platforms, ladders and objects
+    target.platforms = tmp.platforms
+    target.ladders = tmp.ladders
+    target.objects = tmp.objects
 
 
 def to_xml(ctx: physics.Context) -> et.Element:
