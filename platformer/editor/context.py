@@ -14,7 +14,7 @@ MOUSE_SELECT_RADIUS: float = 0.2
 
 
 class EditorMode(IntEnum):
-    SELECT = auto()
+    SELECT = 0
     CREATE_PLATFORM = auto()
     CREATE_LADDER = auto()
     CREATE_OBJECT = auto()
@@ -47,6 +47,7 @@ class Context:
         self.reset()
 
     def reset(self):
+        """Resets the level to a blank one."""
         self.file_status.filename = ''
         self.file_status.unsaved_changes = True
 
@@ -54,12 +55,12 @@ class Context:
         self.ctx.platforms.clear()
         self.ctx.ladders.clear()
         self.ctx.objects.clear()
-        self.ctx.create_platform(x=0, y=0, width=10)
 
         # reset camera
-        self.cam.topleft = pygame.math.Vector2(-1, -1)
+        self.cam.topleft = pygame.math.Vector2(0, 0)
 
     def load(self):
+        """Loads the level from file."""
         self.file_status.unsaved_changes = False
         full_path = self.get_full_level_name()
         ctx = files.from_xml(files.from_file(full_path))
@@ -70,14 +71,17 @@ class Context:
         self.cam.topleft = pygame.math.Vector2(-1, -1)
 
     def save(self):
+        """Saves the level to file."""
         self.file_status.unsaved_changes = False
         full_path = self.get_full_level_name()
         files.to_file(files.to_xml(self.ctx), full_path)
 
     def get_full_level_name(self) -> pathlib.Path:
+        """Returns the level's full filename."""
         return self.paths.level(self.file_status.filename)
 
     def mouse_over_platform(self, platform: physics.Platform) -> bool:
+        """"Tests whether the mouse position is at the given platform."""
         if platform.contains_point(self.mouse_pos):
             return True
 
@@ -92,10 +96,8 @@ class Context:
         else:
             return invert
 
-    def on_click(self, event: pygame.event.Event) -> None:
-        if event.button != 1:
-            return
-
+    def on_left_click(self, event: pygame.event.Event) -> None:
+        """Place previewed element."""
         if self.mode == EditorMode.CREATE_PLATFORM and self.preview_platform is not None:
             self.ctx.create_platform(x=self.preview_platform.pos.x,
                                      y=self.preview_platform.pos.y,
@@ -111,7 +113,13 @@ class Context:
                                    y=self.preview_object.pos.y,
                                    object_type=self.preview_object.object_type)
 
+    def on_right_click(self, event: pygame.event.Event) -> None:
+        """Cycle editor mode."""
+        new_value = (self.mode + 1) % len(EditorMode.__members__)
+        self.mode = EditorMode(new_value)
+
     def on_wheel(self, event: pygame.event.Event) -> None:
+        """Modify platform width / ladder height / object type."""
         if self.mode in [EditorMode.CREATE_PLATFORM, EditorMode.CREATE_LADDER]:
             # change platform width / ladder height (>= 1)
             self.preview_terrain_size += event.y
@@ -124,24 +132,28 @@ class Context:
             self.preview_obj_type = constants.ObjectType(new_value)
 
     def platform_tooltip(self, platform: physics.Platform):
+        """Show platform information as tooltip."""
         with imgui.begin_tooltip():
             imgui.text(self.translate.editor.platform)
             imgui.text(f'{self.translate.editor.position}: {platform.pos}')
             imgui.text(f'{self.translate.editor.width}: {platform.width}')
 
     def ladder_tooltip(self, ladder: physics.Ladder):
+        """Show ladder information as tooltip."""
         with imgui.begin_tooltip():
             imgui.text(self.translate.editor.ladder)
             imgui.text(f'{self.translate.editor.position}: {ladder.pos}')
             imgui.text(f'{self.translate.editor.height}: {ladder.height}')
 
     def object_tooltip(self, obj: physics.Object):
+        """Show object information as tooltip."""
         with imgui.begin_tooltip():
             imgui.text(self.translate.editor.object)
             imgui.text(f'{self.translate.editor.position}: {obj.pos}')
             imgui.text(f'{self.translate.editor.type}: {getattr(self.translate.editor, obj.object_type.name)}')
 
     def update_mouse(self, elapsed_ms: int) -> None:
+        """Update mouse-related stuff."""
         circ = shapes.Circ(*self.mouse_pos, MOUSE_SELECT_RADIUS)
 
         if self.mode == EditorMode.SELECT:
@@ -214,6 +226,7 @@ class Context:
                 self.object_tooltip(self.preview_object)
 
     def draw(self, render_api: renderer.Renderer) -> None:
+        """Draw additional things ontop."""
         # redraw hovered objects
         for platform in self.hovered_platforms:
             render_api.draw_platform(platform, use_mask=True)

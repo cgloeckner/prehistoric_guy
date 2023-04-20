@@ -27,6 +27,7 @@ class EditorState(state_machine.State):
     # ------------------------------------------------------------------------------------------------------------------
 
     def main_menu(self) -> None:
+        """Handles the main menu with click events."""
         ui = self.engine.translate
         menu_action = ''
 
@@ -64,7 +65,7 @@ class EditorState(state_machine.State):
                             self.on_level_run()
 
                 imgui.same_line(200)
-                if imgui.menu_item(f'{ui.editor.filename}: {self.context.file_status}')[0]:
+                if imgui.menu_item(str(self.context.file_status))[0]:
                     menu_action = 'open'
 
         # NOTE: popups need to be opened AFTER the main menu
@@ -104,7 +105,8 @@ class EditorState(state_machine.State):
 
     # ------------------------------------------------------------------------------------------------------------------
 
-    def setup_popup(self) -> None:
+    def setup_large_popup(self) -> None:
+        """Setup a large popup to be centered."""
         max_width, max_height = self.engine.screen_size
         w = max(400, max_width * 0.8)
         h = max(300, max_height * 0.8)
@@ -112,12 +114,13 @@ class EditorState(state_machine.State):
         imgui.set_next_window_position(max_width // 2 - w // 2, max_height // 2 - h // 2)
 
     def popups(self):
+        """Handles all popups with click events."""
         ui = self.engine.translate
         level_files = self.get_level_files()
 
         next_popup = ''
 
-        self.setup_popup()
+        self.setup_large_popup()
         with imgui.begin_popup_modal(ui.editor.load) as open_popup:
             if open_popup.opened:
                 imgui.text(ui.editor.select_level)
@@ -141,7 +144,7 @@ class EditorState(state_machine.State):
         if next_popup != '':
             imgui.open_popup(next_popup)
 
-        self.setup_popup()
+        self.setup_large_popup()
         with imgui.begin_popup_modal(ui.editor.save) as open_popup:
             if open_popup.opened:
                 imgui.text(ui.editor.filename)
@@ -214,10 +217,12 @@ class EditorState(state_machine.State):
     # ------------------------------------------------------------------------------------------------------------------
 
     def get_level_files(self) -> List[str]:
+        """Returns a list of all level files."""
         path = self.engine.paths.level()
         return sorted([file.stem for file in path.glob('*.xml') if file.is_file()])
 
     def process_event(self, event: pygame.event.Event) -> None:
+        """Handles pygame events."""
         if event.type == pygame.QUIT:
             self.engine.pop()
 
@@ -225,25 +230,30 @@ class EditorState(state_machine.State):
             if event.type == pygame.MOUSEWHEEL:
                 self.context.on_wheel(event)
             elif event.type == pygame.MOUSEBUTTONDOWN:
-                self.context.on_click(event)
+                if event.button == 1:
+                    self.context.on_left_click(event)
+                elif event.button == 3:
+                    self.context.on_right_click(event)
 
     def on_level_new(self) -> None:
+        """Callback for creating a new level."""
         self.context.reset()
 
     def on_level_load(self) -> None:
+        """Callback for loading a level."""
         self.context.load()
 
     def on_level_save(self) -> None:
+        """Callback for saving a level."""
         self.context.save()
 
-    def on_level_quit(self) -> None:
-        self.engine.pop()
-
     def on_level_run(self) -> None:
+        """Callback for preview running a level."""
         player_pos = pygame.math.Vector2(5, 5)
         self.engine.push(preview.PreviewState(self.engine, self.context.ctx, player_pos))
 
     def update_cam_move(self, elapsed_ms: int) -> None:
+        """Handles the camera movement."""
         keys = pygame.key.get_pressed()
         if keys[pygame.K_LEFT]:
             self.context.cam.topleft.x -= 0.01 * elapsed_ms
@@ -255,6 +265,7 @@ class EditorState(state_machine.State):
             self.context.cam.topleft.y -= 0.01 * elapsed_ms
 
     def update(self, elapsed_ms: int) -> None:
+        """Update various things."""
         self.renderer.update(elapsed_ms)
 
         if not self.engine.wrapper.io.want_capture_keyboard:
@@ -271,6 +282,7 @@ class EditorState(state_machine.State):
         self.popups()
 
     def draw(self) -> None:
+        """Draw scene and things the like."""
         self.renderer.draw()
         self.context.draw(self.renderer)
 
