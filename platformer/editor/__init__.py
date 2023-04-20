@@ -1,1 +1,1 @@
-from .editor import EditorState
+from .ui import EditorState

@@ -1,85 +1,21 @@
 import pygame
 import imgui
-import pathlib
 from typing import List
 
-from core import state_machine, resources, paths, shapes
+from core import state_machine, resources, shapes
 from platformer import physics, animations, renderer
 
-from . import files, preview
+from . import preview, context
 
 
 MOUSE_SELECT_RADIUS: float = 0.2
-
-
-class LevelSelection:
-    def __init__(self):
-        self.platforms: List[physics.Platform] = list()
-        self.ladders: List[physics.Ladder] = list()
-        self.objects: List[physics.Object] = list()
-
-    def clear(self) -> None:
-        self.platforms.clear()
-        self.ladders.clear()
-        self.objects.clear()
-
-
-# ----------------------------------------------------------------------------------------------------------------------
-
-
-class Context:
-    def __init__(self, width: int, height: int, p: paths.DataPath):
-        self.new_filename = ''
-        self.file_status = files.FileStatus()
-        self.ctx = physics.Context()
-        self.cam = renderer.Camera(width, height)
-        self.paths = p
-
-        self.selected = LevelSelection()
-        self.hovered = LevelSelection()
-
-        self.reset()
-
-    def reset(self):
-        self.file_status.filename = ''
-        self.file_status.unsaved_changes = True
-
-        # replace platforms, ladders and objects
-        self.ctx.platforms.clear()
-        self.ctx.ladders.clear()
-        self.ctx.objects.clear()
-        self.ctx.create_platform(x=0, y=0, width=10)
-
-        # reset camera
-        self.cam.topleft = pygame.math.Vector2(-1, -1)
-
-    def load(self):
-        self.file_status.unsaved_changes = False
-        full_path = self.get_full_levelname()
-        ctx = files.from_xml(files.from_file(full_path))
-
-        files.apply_context(self.ctx, ctx)
-
-        # reset camera
-        self.cam.topleft = pygame.math.Vector2()
-
-    def save(self):
-        self.file_status.unsaved_changes = False
-        full_path = self.get_full_levelname()
-        files.to_file(files.to_xml(self.ctx), full_path)
-
-    def get_full_levelname(self) -> pathlib.Path:
-        return self.paths.level(self.file_status.filename)
-
-
-# ----------------------------------------------------------------------------------------------------------------------
 
 
 class EditorState(state_machine.State):
 
     def __init__(self, engine: state_machine.Engine):
         super().__init__(engine)
-        self.context = Context(*engine.buffer.get_size(), engine.paths)
+        self.context = context.Context(*engine.buffer.get_size(), engine.paths)
 
         self.engine.translate.load_from_file(self.engine.paths.language('en'))
 
@@ -113,14 +49,13 @@ class EditorState(state_machine.State):
         self.context.save()
 
     def on_level_quit(self) -> None:
-        if self.context.file_status.unsaved_changes:
-            print('FIXME: warning popup')
-
         self.engine.pop()
 
     def on_level_run(self) -> None:
         player_pos = pygame.math.Vector2(5, 5)
         self.engine.push(preview.PreviewState(self.engine, self.context.ctx, player_pos))
+
+    # ------------------------------------------------------------------------------------------------------------------
 
     def main_menu(self) -> None:
         ui = self.engine.translate
@@ -132,7 +67,7 @@ class EditorState(state_machine.State):
                     if file_menu.opened:
                         if imgui.menu_item(ui.editor.new)[0]:
                             self.on_level_new()
-                        if imgui.menu_item(ui.editor.open)[0]:
+                        if imgui.menu_item(ui.editor.load)[0]:
                             menu_action = 'open'
                         imgui.new_line()
                         if imgui.menu_item(ui.editor.save)[0]:
@@ -140,10 +75,12 @@ class EditorState(state_machine.State):
                         if imgui.menu_item(ui.editor.save_as)[0]:
                             menu_action = 'save-as'
                         imgui.new_line()
-                        if imgui.menu_item(ui.editor.quit)[0]:
-                            self.on_level_quit()
-                if imgui.menu_item(ui.editor.run)[0]:
-                    self.on_level_run()
+                        if imgui.menu_item(ui.editor.quit + ' (ESC)')[0]:
+                            menu_action = 'quit'
+                with imgui.begin_menu(ui.editor.tools) as tools_menu:
+                    if tools_menu.opened:
+                        if imgui.menu_item(ui.editor.run + ' (F5)')[0]:
+                            self.on_level_run()
 
                 imgui.same_line(200)
                 if imgui.menu_item(f'{ui.editor.filename}: {self.context.file_status}')[0]:
@@ -160,7 +97,7 @@ class EditorState(state_machine.State):
 
         # NOTE: popups need to be opened AFTER the main menu
         if menu_action == 'open':
-            imgui.open_popup(ui.editor.open)
+            imgui.open_popup(ui.editor.load)
 
         elif menu_action == 'save':
             if self.context.file_status.filename == '':
@@ -173,6 +110,28 @@ class EditorState(state_machine.State):
             self.context.new_filename = self.context.file_status.get_filename()
             imgui.open_popup(ui.editor.save)
 
+        elif menu_action == 'quit':
+            ui = self.engine.translate
+
+            if self.context.file_status.unsaved_changes:
+                imgui.open_popup(ui.editor.discard)
+            else:
+                imgui.open_popup(ui.editor.leave)
+
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_F5]:
+            self.on_level_run()
+
+        if keys[pygame.K_ESCAPE]:
+            ui = self.engine.translate
+
+            if self.context.file_status.unsaved_changes:
+                imgui.open_popup(ui.editor.discard)
+            else:
+                imgui.open_popup(ui.editor.leave)
+
+    # ------------------------------------------------------------------------------------------------------------------
+
     def setup_popup(self) -> None:
         max_width, max_height = self.engine.screen_size
         w = max(400, max_width * 0.8)
@@ -180,12 +139,14 @@ class EditorState(state_machine.State):
         imgui.set_next_window_size(w, h)
         imgui.set_next_window_position(max_width // 2 - w // 2, max_height // 2 - h // 2)
 
-    def load_popup(self):
+    def popups(self):
         ui = self.engine.translate
-
         level_files = self.get_level_files()
+
+        next_popup = ''
+
         self.setup_popup()
-        with imgui.begin_popup_modal(ui.editor.open) as open_popup:
+        with imgui.begin_popup_modal(ui.editor.load) as open_popup:
             if open_popup.opened:
                 imgui.text(ui.editor.select_level)
                 imgui.same_line(400)
@@ -197,13 +158,17 @@ class EditorState(state_machine.State):
                 for index, filename in enumerate(level_files):
                     if imgui.selectable(filename)[1]:
                         self.context.file_status.filename = filename
-                        self.on_level_load()
+
+                        if self.context.file_status.unsaved_changes:
+                            next_popup = ui.editor.discard_load
+                        else:
+                            self.on_level_load()
+
                     imgui.next_column()
 
-    def save_popup(self):
-        ui = self.engine.translate
+        if next_popup != '':
+            imgui.open_popup(next_popup)
 
-        level_files = self.get_level_files()
         self.setup_popup()
         with imgui.begin_popup_modal(ui.editor.save) as open_popup:
             if open_popup.opened:
@@ -233,6 +198,49 @@ class EditorState(state_machine.State):
                         self.on_level_save()
                     imgui.next_column()
 
+        max_width, max_height = self.engine.screen_size
+        w = 200
+        h = 100
+
+        imgui.set_next_window_size(w, h)
+        imgui.set_next_window_position(max_width // 2 - w // 2, max_height // 2 - h // 2)
+        with imgui.begin_popup_modal(ui.editor.discard) as discard_popup:
+            if discard_popup.opened:
+                imgui.text_wrapped(ui.editor.discard_message)
+                if imgui.button(ui.editor.discard):
+                    self.engine.pop()
+
+                imgui.same_line()
+                if imgui.button(ui.editor.cancel):
+                    imgui.close_current_popup()
+
+        imgui.set_next_window_size(w, h)
+        imgui.set_next_window_position(max_width // 2 - w // 2, max_height // 2 - h // 2)
+        with imgui.begin_popup_modal(ui.editor.leave) as leave_popup:
+            if leave_popup.opened:
+                imgui.text_wrapped(ui.editor.leave_message)
+                if imgui.button(ui.editor.leave):
+                    self.engine.pop()
+
+                imgui.same_line()
+                if imgui.button(ui.editor.cancel):
+                    imgui.close_current_popup()
+
+        imgui.set_next_window_size(w, h)
+        imgui.set_next_window_position(max_width // 2 - w // 2, max_height // 2 - h // 2)
+        with imgui.begin_popup_modal(ui.editor.discard_load) as leave_popup:
+            if leave_popup.opened:
+                imgui.text_wrapped(ui.editor.discard_message)
+                if imgui.button(ui.editor.load):
+                    self.on_level_load()
+                    imgui.close_current_popup()
+
+                imgui.same_line()
+                if imgui.button(ui.editor.cancel):
+                    imgui.close_current_popup()
+
+    # ------------------------------------------------------------------------------------------------------------------
+
     def update_cam_move(self, elapsed_ms: int) -> None:
         keys = pygame.key.get_pressed()
         if keys[pygame.K_LEFT]:
@@ -259,6 +267,7 @@ class EditorState(state_machine.State):
         self.context.hovered.objects = [obj for obj in src.objects if obj.get_circ().collidecirc(circ)]
 
     def update(self, elapsed_ms: int) -> None:
+        self.context.update(elapsed_ms)
         self.renderer.update(elapsed_ms)
 
         if not self.engine.wrapper.io.want_capture_keyboard:
@@ -266,6 +275,10 @@ class EditorState(state_machine.State):
 
         if not self.engine.wrapper.io.want_capture_mouse:
             self.update_mouse_hover()
+
+        # handle imgui
+        self.main_menu()
+        self.popups()
 
     def draw(self) -> None:
         self.renderer.draw()
@@ -278,101 +291,6 @@ class EditorState(state_machine.State):
         for obj in self.context.hovered.objects:
             self.renderer.draw_object(obj, use_mask=True)
 
-        # draw imgui
-        self.main_menu()
-        self.load_popup()
-        self.save_popup()
-
         # draw FPS
         fps_surface = self.font.render(f'FPS: {int(self.engine.num_fps):02d}', False, 'white')
         self.engine.buffer.blit(fps_surface, (0, self.engine.screen_size[1] - fps_surface.get_height()))
-
-
-
-"""
-class SceneEditor(object):
-    def __init__(self, screen: pygame.Surface, factory_: factory.Factory):
-        self.screen = screen
-        self.factory = factory_
-
-        self.hovered_platforms: List[physics.Platform] = list()
-        self.selected_platform: Optional[physics.Platform] = None
-
-    def update(self) -> None:
-        pos = pygame.math.Vector2(*pygame.mouse.get_pos())
-        pos = self.factory.renderer.to_world_coord(pos)
-
-        all_platforms = self.factory.ctx.physics.platforms
-        self.hovered_platforms = [platform for platform in all_platforms if platform.contains_point(pos)]
-
-        print(self.hovered_platforms)
-
-    def draw(self) -> None:
-        #if isinstance(self.selected, physics.Platform):
-        #    platform_ui(self.selected)
-
-        #if isinstance(self.selected, physics.Actor):
-        #    ani_actor = self.factory.animation.get_actor_by_id(self.selected.object_id)
-        #    render_actor = self.factory.renderer.get_actor_by_id(self.selected.object_id)
-        #    actor_ui(self.selected, ani_actor, render_actor)
-
-        #if isinstance(self.selected, physics.Object):
-        #    object_ui(self.selected)
-
-        #if isinstance(self.selected, physics.Ladder):
-        #    ladder_ui(self.selected)
-        pass
-
-    # FIXME: find a way to access coord transform
-    #def get_mouse_world_pos(self) -> pygame.math.Vector2:
-    #    # transform screen coordinates to game coordinates
-    #    return self.obj_manager.camera.to_world_coord(*pygame.mouse.get_pos())
-
-    def get_hovered(self) -> List:
-        return []
-
-        # FIXME: implement get_mouse_world_pos
-        #pos = self.get_mouse_world_pos()
-        #circ1 = shapes.Circ(*pos, MOUSE_SELECT_RADIUS)
-
-        # collect all hoverable objects
-        #hovered = list()
-        #for platform in self.obj_manager.physics_context.platforms:
-        #    line = platform.get_line()
-        #    if platform.contains_point(pos) or circ1.collideline(line):
-        #        hovered.append(platform)
-
-        #for actor in self.obj_manager.physics_context.actors:
-        #    circ2 = actor.get_circ()
-        #    if circ1.collidecirc(circ2):
-        #        hovered.append(actor)
-
-        #for obj in self.obj_manager.physics_context.objects:
-        #    circ2 = obj.get_circ()
-        #    if circ1.collidecirc(circ2):
-        #        hovered.append(obj)
-
-        #for ladder in self.obj_manager.physics_context.ladders:
-        #    if ladder.is_in_reach_of(pos):
-        #        hovered.append(ladder)
-
-        #return hovered
-
-    def update_hover(self) -> None:
-
-        if self.selected is not None:
-            # do not alter element hovering (coloring)
-            return
-
-        # update coloring for hovered elements
-        #for elem in self.hovered_elements:
-        #    elem.hsl = None
-        #self.hovered_elements = self.get_hovered()
-        #for elem in self.hovered_elements:
-        #    print(elem)
-
-        # select first hovered element on click
-        left_click = pygame.mouse.get_pressed()[0]
-        if left_click and self.selected is None and len(self.hovered_elements) > 0:
-            self.selected = self.hovered_elements[0]
-"""

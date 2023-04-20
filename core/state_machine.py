@@ -62,11 +62,11 @@ class Engine(object):
                 state.process_event(event)
 
             # update
+            imgui.new_frame()
             state.update(elapsed)
 
             # draw state
             self.buffer.fill(self.fill_color)
-            imgui.new_frame()
             state.draw()
 
             # render onto OpenGL window

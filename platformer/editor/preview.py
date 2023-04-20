@@ -3,9 +3,7 @@ from typing import Optional
 
 from core import constants, resources, state_machine
 
-from platformer import animations, characters
-from platformer import factory
-from platformer import controls, physics
+from platformer import physics, animations, renderer, characters, controls, factory
 
 from . import files
 
@@ -16,19 +14,30 @@ class PreviewState(state_machine.State, factory.EventListener):
         self.cache = resources.Cache()
         self.font = self.cache.get_font()
 
+        # create minimal systems
+        self.physics_ctx = physics.Context()
+        self.animations_ctx = animations.Context()
+        self.renderer_ctx = renderer.Context()
+        self.players_ctx = controls.PlayersContext()
+
+        self.physics = physics.System(self, self.physics_ctx)
+        self.animations = animations.AnimationSystem(self, self.animations_ctx, self.physics_ctx)
+        self.camera = renderer.Camera(*engine.buffer.get_size())
+        self.renderer = renderer.Renderer(self.camera, engine.buffer, self.physics_ctx, self.animations_ctx,
+                                          self.renderer_ctx, self.cache)
+        self.players = controls.PlayersSystem(self.players_ctx, self.physics_ctx, self.animations_ctx)
+
+        # load level
+        files.apply_context(self.physics_ctx, src)
+
+        # create player
         generic_guy = self.cache.get_sprite_sheet('guy')
-        blue_guy = self.cache.get_hsl_transformed(generic_guy, resources.HslTransform(hue=216),
-                                                  constants.SPRITE_CLOTHES_COLORS)
-
-        self.factory = factory.Factory(self, self.cache, engine.buffer)
-        player_char_actor = self.factory.create_character(sprite_sheet=blue_guy, x=pos.x, y=pos.y, max_hit_points=5,
-                                                          num_axes=10)
-        self.factory.create_player(player_char_actor,
-                                   keys=controls.Keybinding(left_key=pygame.K_a, right_key=pygame.K_d,
-                                                            up_key=pygame.K_w, down_key=pygame.K_s,
-                                                            attack_key=pygame.K_SPACE))
-
-        files.apply_context(self.factory.ctx.physics, src)
+        self.physics_ctx.create_actor(1, x=pos.x, y=pos.y)
+        self.animations_ctx.create_actor(1)
+        self.renderer_ctx.create_actor(1, sprite_sheet=generic_guy)
+        player = self.players_ctx.create_actor(1)
+        player.keys = controls.Keybinding(left_key=pygame.K_a, right_key=pygame.K_d, up_key=pygame.K_w,
+                                          down_key=pygame.K_s, attack_key=pygame.K_SPACE)
 
     # ------------------------------------------------------------------------------------------------------------------
 
@@ -84,17 +93,20 @@ class PreviewState(state_machine.State, factory.EventListener):
         if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
             self.engine.pop()
 
-        self.factory.players.process_event(event)
+        self.players.process_event(event)
 
     def update(self, elapsed_ms: int) -> None:
-        player_char_actor = self.factory.ctx.players.actors[0]
-        phys_actor = self.factory.ctx.physics.actors.get_by_id(player_char_actor.object_id)
-        self.factory.camera.set_center(phys_actor.pos, constants.WORLD_SCALE)
+        # let camera follow player
+        phys_actor = self.physics_ctx.actors.get_by_id(1)
+        self.camera.set_center(phys_actor.pos, constants.WORLD_SCALE)
 
-        self.factory.update(elapsed_ms)
+        self.physics.update(elapsed_ms)
+        self.animations.update(elapsed_ms)
+        self.renderer.update(elapsed_ms)
+        self.players.update(elapsed_ms)
 
     def draw(self) -> None:
-        self.factory.draw()
+        self.renderer.draw()
 
         # draw FPS
         fps_surface = self.font.render(f'FPS: {int(self.engine.num_fps):02d}', False, 'white')
