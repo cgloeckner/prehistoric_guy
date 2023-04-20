@@ -2,13 +2,10 @@ import pygame
 import imgui
 from typing import List
 
-from core import state_machine, resources, shapes
-from platformer import physics, animations, renderer
+from core import state_machine, resources
+from platformer import animations, renderer
 
 from . import preview, context
-
-
-MOUSE_SELECT_RADIUS: float = 0.2
 
 
 class EditorState(state_machine.State):
@@ -27,34 +24,6 @@ class EditorState(state_machine.State):
 
         self.font = self.cache.get_font()
 
-    def get_level_files(self) -> List[str]:
-        path = self.engine.paths.level()
-        return sorted([file.stem for file in path.glob('*.xml') if file.is_file()])
-
-    def get_mouse_pos(self) -> pygame.math.Vector2:
-        pos = pygame.math.Vector2(pygame.mouse.get_pos())
-        return self.renderer.to_world_coord(pos)
-
-    def process_event(self, event: pygame.event.Event) -> None:
-        if event.type == pygame.QUIT:
-            self.engine.pop()
-
-    def on_level_new(self) -> None:
-        self.context.reset()
-
-    def on_level_load(self) -> None:
-        self.context.load()
-
-    def on_level_save(self) -> None:
-        self.context.save()
-
-    def on_level_quit(self) -> None:
-        self.engine.pop()
-
-    def on_level_run(self) -> None:
-        player_pos = pygame.math.Vector2(5, 5)
-        self.engine.push(preview.PreviewState(self.engine, self.context.ctx, player_pos))
-
     # ------------------------------------------------------------------------------------------------------------------
 
     def main_menu(self) -> None:
@@ -63,6 +32,7 @@ class EditorState(state_machine.State):
 
         with imgui.begin_main_menu_bar() as main_menu_bar:
             if main_menu_bar.opened:
+                # level: new, open, save, save-as, quit
                 with imgui.begin_menu(ui.editor.level) as file_menu:
                     if file_menu.opened:
                         if imgui.menu_item(ui.editor.new)[0]:
@@ -77,8 +47,19 @@ class EditorState(state_machine.State):
                         imgui.new_line()
                         if imgui.menu_item(ui.editor.quit + ' (ESC)')[0]:
                             menu_action = 'quit'
+
+                # tool menu: mode, snap, run
                 with imgui.begin_menu(ui.editor.tools) as tools_menu:
                     if tools_menu.opened:
+                        with imgui.begin_menu(ui.editor.mode) as mode_menu:
+                            if mode_menu.opened:
+                                for value in context.EditorMode:
+                                    if imgui.radio_button(getattr(ui.editor, value.name.lower()),
+                                                          self.context.mode == value):
+                                        self.context.mode = value
+
+                        _, self.context.snap_enabled = imgui.checkbox(ui.editor.snap, self.context.snap_enabled)
+
                         if imgui.menu_item(ui.editor.run + ' (F5)')[0]:
                             self.on_level_run()
 
@@ -91,8 +72,7 @@ class EditorState(state_machine.State):
             imgui.text(f'{ui.editor.cam} {self.context.cam.topleft}')
 
             # mouse position
-            mouse_pos = self.get_mouse_pos()
-            mouse_pos_str = f'[{mouse_pos.x:.2f}, {mouse_pos.y:.2f}]'
+            mouse_pos_str = f'[{self.context.mouse_pos.x:.2f}, {self.context.mouse_pos.y:.2f}]'
             imgui.text(f'{ui.editor.mouse} {mouse_pos_str}')
 
         # NOTE: popups need to be opened AFTER the main menu
@@ -241,6 +221,36 @@ class EditorState(state_machine.State):
 
     # ------------------------------------------------------------------------------------------------------------------
 
+    def get_level_files(self) -> List[str]:
+        path = self.engine.paths.level()
+        return sorted([file.stem for file in path.glob('*.xml') if file.is_file()])
+
+    def process_event(self, event: pygame.event.Event) -> None:
+        if event.type == pygame.QUIT:
+            self.engine.pop()
+
+        if not self.engine.wrapper.io.want_capture_mouse:
+            if event.type == pygame.MOUSEWHEEL:
+                self.context.on_wheel(event)
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                self.context.on_click(event)
+
+    def on_level_new(self) -> None:
+        self.context.reset()
+
+    def on_level_load(self) -> None:
+        self.context.load()
+
+    def on_level_save(self) -> None:
+        self.context.save()
+
+    def on_level_quit(self) -> None:
+        self.engine.pop()
+
+    def on_level_run(self) -> None:
+        player_pos = pygame.math.Vector2(5, 5)
+        self.engine.push(preview.PreviewState(self.engine, self.context.ctx, player_pos))
+
     def update_cam_move(self, elapsed_ms: int) -> None:
         keys = pygame.key.get_pressed()
         if keys[pygame.K_LEFT]:
@@ -252,29 +262,17 @@ class EditorState(state_machine.State):
         if keys[pygame.K_DOWN]:
             self.context.cam.topleft.y -= 0.01 * elapsed_ms
 
-    def update_mouse_hover(self):
-        pos = self.get_mouse_pos()
-
-        self.context.hovered.clear()
-        src = self.context.ctx
-        circ = shapes.Circ(*pos, MOUSE_SELECT_RADIUS)
-
-        def mouse_over_platform(platform: physics.Platform) -> bool:
-            return platform.contains_point(pos) or circ.collideline(platform.get_line())
-
-        self.context.hovered.platforms = [platform for platform in src.platforms if mouse_over_platform(platform)]
-        self.context.hovered.ladders = [ladder for ladder in src.ladders if ladder.is_in_reach_of(pos)]
-        self.context.hovered.objects = [obj for obj in src.objects if obj.get_circ().collidecirc(circ)]
-
     def update(self, elapsed_ms: int) -> None:
-        self.context.update(elapsed_ms)
         self.renderer.update(elapsed_ms)
 
         if not self.engine.wrapper.io.want_capture_keyboard:
             self.update_cam_move(elapsed_ms)
 
         if not self.engine.wrapper.io.want_capture_mouse:
-            self.update_mouse_hover()
+            pos = pygame.math.Vector2(pygame.mouse.get_pos())
+            self.context.mouse_pos = self.renderer.to_world_coord(pos)
+
+            self.context.update_mouse(elapsed_ms)
 
         # handle imgui
         self.main_menu()
@@ -282,14 +280,7 @@ class EditorState(state_machine.State):
 
     def draw(self) -> None:
         self.renderer.draw()
-
-        # redraw hovered objects
-        for platform in self.context.hovered.platforms:
-            self.renderer.draw_platform(platform, use_mask=True)
-        for ladder in self.context.hovered.ladders:
-            self.renderer.draw_ladder(ladder, use_mask=True)
-        for obj in self.context.hovered.objects:
-            self.renderer.draw_object(obj, use_mask=True)
+        self.context.draw(self.renderer)
 
         # draw FPS
         fps_surface = self.font.render(f'FPS: {int(self.engine.num_fps):02d}', False, 'white')
