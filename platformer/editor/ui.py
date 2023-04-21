@@ -2,7 +2,7 @@ import pygame
 import imgui
 from typing import List
 
-from core import state_machine, resources
+from core import constants, state_machine, resources
 from platformer import animations, renderer
 
 from . import preview, context
@@ -120,11 +120,11 @@ class EditorState(state_machine.State):
 
     def setup_large_popup(self) -> None:
         """Setup a large popup to be centered."""
-        max_width, max_height = self.engine.screen_size
-        w = max(400, max_width * 0.8)
-        h = max(300, max_height * 0.8)
+        max_width, max_height = self.engine.get_opengl_size()
+        w = max(constants.RESOLUTION_X, max_width * 0.8)
+        h = max(constants.RESOLUTION_Y, max_height * 0.8)
         imgui.set_next_window_size(w, h)
-        imgui.set_next_window_position(max_width // 2 - w // 2, max_height // 2 - h // 2)
+        #imgui.set_next_window_position(max_width // 2 - w // 2, max_height // 2 - h // 2)
 
     def popups(self):
         """Handles all popups with click events."""
@@ -186,7 +186,7 @@ class EditorState(state_machine.State):
                         self.on_level_save()
                     imgui.next_column()
 
-        max_width, max_height = self.engine.screen_size
+        max_width, max_height = self.engine.get_opengl_size()
         w = 200
         h = 100
 

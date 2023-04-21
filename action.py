@@ -235,11 +235,6 @@ class GameState(state_machine.State, factory.EventListener):
         self.factory.draw()
 
         # draw FPS
+        size = self.engine.get_pygame_size()
         fps_surface = self.font.render(f'FPS: {int(self.engine.num_fps):02d}', False, 'white')
-        self.engine.buffer.blit(fps_surface, (0, constants.RESOLUTION_Y - fps_surface.get_height()))
-
-        # draw imgui UI
-        imgui.new_frame()
-        #self.editor_ui.draw()
-        self.engine.wrapper.buffer.blit(self.engine.buffer, (0, 0))
-        self.engine.wrapper.render()
+        self.engine.buffer.blit(fps_surface, (0, size[1] - fps_surface.get_height()))

@@ -7,6 +7,7 @@ Based on
 """
 
 import pygame
+from typing import Optional
 
 import imgui
 from imgui.integrations.pygame import PygameRenderer
@@ -28,15 +29,14 @@ class OpenGlWrapper(object):
     The internal rendering order is: buffer first, imgui second.
     """
 
-    def __init__(self, main_screen: pygame.Surface):
+    def __init__(self, buffer_width: int, buffer_height: int, screen_width: int, screen_height: int,
+                 ini_file: Optional[str] = None, log_file: Optional[str] = None):
         """Initialize OpenGL and ImGui.
         """
-        self.screen = main_screen
-        self.size = main_screen.get_size()
-        self.buffer = pygame.Surface(self.size)
+        self.buffer = pygame.Surface((buffer_width, buffer_height))
 
         # Setup OpenGL Texture
-        OpenGL.GL.glViewport(0, 0, *self.size)
+        OpenGL.GL.glViewport(0, 0, screen_width, screen_height)
         OpenGL.GL.glDepthRange(0, 1)
         OpenGL.GL.glMatrixMode(OpenGL.GL.GL_PROJECTION)
         OpenGL.GL.glMatrixMode(OpenGL.GL.GL_MODELVIEW)
@@ -55,13 +55,15 @@ class OpenGlWrapper(object):
         imgui.create_context()
         self.impl = PygameRenderer()
         self.io = imgui.get_io()
-        self.io.display_size = self.size
+        self.io.display_size = (screen_width, screen_height)
+        self.io.ini_file_name = ini_file
+        self.io.log_file_name = log_file
 
     @staticmethod
     def get_display_flags() -> int:
         """Returns the required flags for the pygame display init.
         """
-        return pygame.DOUBLEBUF | pygame.OPENGL | pygame.RESIZABLE
+        return pygame.DOUBLEBUF | pygame.OPENGL
 
     def process_event(self, ev: pygame.event.Event) -> None:
         """Forwards events to ImGui.
@@ -78,8 +80,8 @@ class OpenGlWrapper(object):
         OpenGL.GL.glTexParameteri(OpenGL.GL.GL_TEXTURE_2D, OpenGL.GL.GL_TEXTURE_MIN_FILTER, OpenGL.GL.GL_NEAREST)
         OpenGL.GL.glTexParameteri(OpenGL.GL.GL_TEXTURE_2D, OpenGL.GL.GL_TEXTURE_WRAP_S, OpenGL.GL.GL_CLAMP)
         OpenGL.GL.glTexParameteri(OpenGL.GL.GL_TEXTURE_2D, OpenGL.GL.GL_TEXTURE_WRAP_T, OpenGL.GL.GL_CLAMP)
-        OpenGL.GL.glTexImage2D(OpenGL.GL.GL_TEXTURE_2D, 0, OpenGL.GL.GL_RGB, *self.size, 0, OpenGL.GL.GL_RGB,
-                               OpenGL.GL.GL_UNSIGNED_BYTE, rgb_surface)
+        OpenGL.GL.glTexImage2D(OpenGL.GL.GL_TEXTURE_2D, 0, OpenGL.GL.GL_RGB, *self.buffer.get_size(), 0,
+                               OpenGL.GL.GL_RGB, OpenGL.GL.GL_UNSIGNED_BYTE, rgb_surface)
         OpenGL.GL.glGenerateMipmap(OpenGL.GL.GL_TEXTURE_2D)
         OpenGL.GL.glBindTexture(OpenGL.GL.GL_TEXTURE_2D, 0)
 

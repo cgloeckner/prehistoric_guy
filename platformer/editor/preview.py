@@ -109,5 +109,6 @@ class PreviewState(state_machine.State, factory.EventListener):
         self.renderer.draw()
 
         # draw FPS
+        size = self.engine.get_pygame_size()
         fps_surface = self.font.render(f'FPS: {int(self.engine.num_fps):02d}', False, 'white')
-        self.engine.buffer.blit(fps_surface, (0, constants.RESOLUTION_Y - fps_surface.get_height()))
+        self.engine.buffer.blit(fps_surface, (0, size[1] - fps_surface.get_height()))

@@ -2,6 +2,7 @@ import pygame
 import imgui
 import pathlib
 from abc import abstractmethod, ABC
+from typing import Tuple
 
 from core import paths, translate
 from core.imgui_wrapper import OpenGlWrapper
@@ -17,10 +18,12 @@ class Engine(object):
         self.paths = paths.DataPath(pathlib.Path.cwd() / 'data')
         self.translate = translate.Match()
 
-        self.screen_size = (screen_width, screen_height)
-        self.screen = pygame.display.set_mode(self.screen_size, OpenGlWrapper.get_display_flags())
-        self.buffer = pygame.Surface(self.screen_size)
-        self.wrapper = OpenGlWrapper(self.screen)
+        # FIXME: scaling works but mouse coord mapping will be broken
+        screen_size = (screen_width, screen_height)
+        scaled_size = (screen_width, screen_height)
+        pygame.display.set_mode(scaled_size, OpenGlWrapper.get_display_flags())
+        self.wrapper = OpenGlWrapper(*screen_size, *scaled_size)
+        self.buffer = pygame.Surface(screen_size)
         self.clock = pygame.time.Clock()
 
         self.running = False
@@ -32,6 +35,12 @@ class Engine(object):
 
     def __del__(self):
         pygame.quit()
+
+    def get_pygame_size(self) -> Tuple[int, int]:
+        return self.buffer.get_size()
+
+    def get_opengl_size(self) -> Tuple[float, float]:
+        return self.wrapper.io.display_size
 
     def push(self, state) -> None:
         """Adds a state to the queue. The latest state is handled first (LIFO).
