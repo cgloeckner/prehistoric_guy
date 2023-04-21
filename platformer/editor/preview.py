@@ -9,9 +9,10 @@ from . import files
 
 
 class PreviewState(state_machine.State, factory.EventListener):
-    def __init__(self, engine: state_machine.Engine, src: physics.Context, pos: pygame.math.Vector2):
+    def __init__(self, engine: state_machine.Engine, src: physics.Context, pos: pygame.math.Vector2,
+                 tileset_index: int):
         super().__init__(engine)
-        self.cache = resources.Cache()
+        self.cache = resources.Cache(engine.paths)
         self.font = self.cache.get_font()
 
         # create minimal systems
@@ -25,13 +26,16 @@ class PreviewState(state_machine.State, factory.EventListener):
         self.camera = renderer.Camera(*engine.buffer.get_size())
         self.renderer = renderer.Renderer(self.camera, engine.buffer, self.physics_ctx, self.animations_ctx,
                                           self.renderer_ctx, self.cache)
+        self.renderer.load_fileset(tileset_index)
+
         self.players = controls.PlayersSystem(self.players_ctx, self.physics_ctx, self.animations_ctx)
 
         # load level
         files.apply_context(self.physics_ctx, src)
 
         # create player
-        generic_guy = self.cache.get_sprite_sheet('guy')
+        guy_path = self.engine.paths.sprite('guy')
+        generic_guy = self.cache.get_sprite_sheet(guy_path)
         self.physics_ctx.create_actor(1, x=pos.x, y=pos.y)
         self.animations_ctx.create_actor(1)
         self.renderer_ctx.create_actor(1, sprite_sheet=generic_guy)

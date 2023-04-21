@@ -1,8 +1,10 @@
+import tempfile
 import unittest
 import os
 import pygame
+import pathlib
 
-from core import constants, resources
+from core import constants, resources, paths
 
 from platformer import physics, animations
 from platformer.renderer import base, images
@@ -34,22 +36,32 @@ class ImageRendererTest(unittest.TestCase):
         pygame.init()
         self.buffer = pygame.Surface((self.cam.width, self.cam.height))
 
+        self.tempdir = tempfile.TemporaryDirectory()
+        root = pathlib.Path(self.tempdir.name)
+
         # create empty dummy surfaces of the correct sizes
-        self.cache = resources.Cache()
-        guy_path = self.cache.get_image_filename('guy')
+        data_paths = paths.DataPath(root)
+        self.cache = resources.Cache(data_paths)
+        guy_path = data_paths.sprite('guy')
+        guy_path.touch()
         self.cache.images[str(guy_path)] = pygame.Surface((constants.ANIMATION_NUM_FRAMES * constants.SPRITE_SCALE,
                                                            len(animations.Action) * constants.SPRITE_SCALE))
-        obj_path = self.cache.get_image_filename('object')
+        obj_path = data_paths('objects', 'png')
+        obj_path.touch()
         self.cache.images[str(obj_path)] = pygame.Surface((constants.OBJECT_NUM_VERSIONS * constants.OBJECT_SCALE,
                                                            len(constants.ObjectType) * constants.OBJECT_SCALE))
-        tile_path = self.cache.get_image_filename('tiles')
+        tile_path = data_paths.tile('grass')
+        tile_path.touch()
         self.cache.images[str(tile_path)] = pygame.Surface((images.NUM_FRAMES_PER_TILE * constants.WORLD_SCALE,
                                                             len(images.TileOffset) * 3 * constants.WORLD_SCALE))
 
-        self.sprite_ctx.create_actor(1, self.cache.get_image('guy'))
+        self.sprite_ctx.create_actor(1, self.cache.get_image(guy_path))
 
         self.renderer = images.ImageRenderer(self.cam, self.buffer, self.phy_ctx, self.ani_ctx, self.sprite_ctx,
                                              self.cache)
+
+    def tearDown(self) -> None:
+        self.tempdir.cleanup()
 
     # ------------------------------------------------------------------------------------------------------------------
 

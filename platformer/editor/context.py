@@ -33,6 +33,7 @@ class Context:
         self.mouse_pos = pygame.math.Vector2()
         self.mode = EditorMode.SELECT
         self.snap_enabled = True
+        self.tileset_index = 0
 
         self.preview_platform: Optional[physics.Platform] = None
         self.preview_ladder: Optional[physics.Ladder] = None

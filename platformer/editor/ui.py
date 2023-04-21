@@ -1,6 +1,5 @@
 import pygame
 import imgui
-from typing import List
 
 from core import constants, state_machine, resources
 from platformer import animations, renderer
@@ -16,7 +15,7 @@ class EditorState(state_machine.State, animations.EventListener):
 
         self.engine.translate.load_from_file(self.engine.paths.language('en'))
 
-        self.cache = resources.Cache()
+        self.cache = resources.Cache(engine.paths)
         self.animations_context = animations.Context()
         self.sprite_context = renderer.Context()
         self.animations = animations.AnimationSystem(self, self.animations_context, self.context.ctx)
@@ -79,6 +78,14 @@ class EditorState(state_machine.State, animations.EventListener):
                                     if imgui.radio_button(getattr(ui.editor, value.name.lower()),
                                                           self.context.mode == value):
                                         self.context.mode = value
+
+                        with imgui.begin_menu(ui.editor.tileset) as tileset_menu:
+                            if tileset_menu.opened:
+                                all_tiles = self.engine.paths.all_tiles()
+                                for index, value in enumerate(all_tiles):
+                                    if imgui.menu_item(getattr(ui.editor, value))[0]:
+                                        self.context.tileset_index = index
+                                        self.renderer.load_fileset(index)
 
                         _, self.context.snap_enabled = imgui.checkbox(ui.editor.snap, self.context.snap_enabled)
 
@@ -258,7 +265,7 @@ class EditorState(state_machine.State, animations.EventListener):
     def on_level_run(self) -> None:
         """Callback for preview running a level."""
         player_pos = pygame.math.Vector2(5, 5)
-        self.engine.push(preview.PreviewState(self.engine, self.context.ctx, player_pos))
+        self.engine.push(preview.PreviewState(self.engine, self.context.ctx, player_pos, self.context.tileset_index))
 
     def update_cam_move(self, elapsed_ms: int) -> None:
         """Handles the camera movement."""

@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from typing import Dict, Tuple, List, Optional
 
 from core.constants import *
+from core import paths
 
 
 @dataclass
@@ -85,10 +86,10 @@ class Cache(object):
     """Caches resources and eventually loads the image from a root directory.
     All images are supposed to be in PNG format with the file extension .png"""
 
-    def __init__(self, root='./data'):
+    def __init__(self, data_paths: paths.DataPath):
         """Initializes the cache with the given root directory.
         """
-        self.root = pathlib.Path(root)
+        self.paths = data_paths
 
         # regular resources
         self.images: Dict[str, pygame.Surface] = dict()
@@ -101,22 +102,19 @@ class Cache(object):
         self.hsl_transforms: Dict[Tuple[pygame.Surface, HSL_TUPLE, Optional[COLOR_TUPLE]]] = dict()
         self.rotated: Dict[Tuple[pygame.Surface, RECT_TUPLE, bool], List[pygame.Surface]] = dict()
 
-    def get_image_filename(self, filename: str) -> pathlib.Path:
-        """Returns full path object including file extension."""
-        return self.root / f'{filename}.png'
-
-    def get_image(self, filename: str) -> pygame.Surface:
+    def get_image(self, path: pathlib.Path) -> pygame.Surface:
         """Loads the image via filename. If already loaded, it's taken from the cache. Returns the image's surface."""
+        filename = str(path)
         if filename not in self.images:
-            path = self.get_image_filename(filename)
-            self.images[filename] = pygame.image.load(path)
+            self.images[filename] = pygame.image.load(filename)
 
         return self.images[filename]
 
-    def get_sprite_sheet(self, filename: str) -> pygame.Surface:
+    def get_sprite_sheet(self, path: pathlib.Path) -> pygame.Surface:
         """Adds the x-flipped sprites into the sprite sheet. Returns the finished sheet."""
+        filename = str(path)
         if filename not in self.sprites:
-            image = self.get_image(filename)
+            image = self.get_image(path)
             self.sprites[filename] = flip_sprite_sheet(image, SPRITE_SCALE)
 
         return self.sprites[filename]

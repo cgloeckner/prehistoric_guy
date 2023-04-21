@@ -62,9 +62,18 @@ class ImageRenderer(shapes.ShapeRenderer):
         self.sprite_context = sprite_context
         self.cache = cache
 
-        # resources
-        self.tiles = self.cache.get_image('tiles')
-        self.objects = self.cache.get_image('objects')
+        # load first tileset
+        self.tiles = None
+        self.load_fileset(0)
+
+        # load objects sheet
+        obj_path = self.cache.paths('objects', 'png')
+        self.objects = self.cache.get_image(obj_path)
+
+    def load_fileset(self, index: int) -> None:
+        tile_files = self.cache.paths.all_tiles()
+        tile_path = self.cache.paths.tile(tile_files[index])
+        self.tiles = self.cache.get_image(tile_path)
 
     @staticmethod
     def get_platform_clip(tileset_col: int) -> Platform:

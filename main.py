@@ -9,7 +9,7 @@ if __name__ == '__main__':
     game_engine = state_machine.Engine(constants.RESOLUTION_X, constants.RESOLUTION_Y)
     pygame.display.set_caption('Prehistoric Guy')
 
-    if '--editor' in sys.argv:
+    if '--editor' not in sys.argv:
         game_engine.push(editor.EditorState(game_engine))
     else:
         game_engine.push(game.GameState(game_engine))

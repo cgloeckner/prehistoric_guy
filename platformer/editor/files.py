@@ -4,7 +4,7 @@ import xml.etree.ElementTree as et
 from dataclasses import dataclass
 from typing import List
 
-from core import constants
+from core import constants, paths
 
 from platformer import physics
 
@@ -111,7 +111,7 @@ def from_file(path: pathlib.Path) -> et.Element:
 
 def get_level_files(path: pathlib.Path) -> List[str]:
     """Returns a list of all level files."""
-    return sorted([file.stem for file in path.glob('*.xml') if file.is_file()])
+    return paths.DataPath.get_files(path, 'xml')
 
 
 def load_level(path: pathlib.Path, target: physics.Context) -> None:

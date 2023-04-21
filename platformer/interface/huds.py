@@ -23,7 +23,8 @@ class HudSystem:
         self.target = target
         self.cache = cache
 
-        self.tileset = cache.get_image('hud')
+        hud_path = cache.paths('hud', 'png')
+        self.tileset = cache.get_image(hud_path)
 
     def draw_icons(self, actor: characters.Actor) -> None:
         # draw heart icon per hit point
