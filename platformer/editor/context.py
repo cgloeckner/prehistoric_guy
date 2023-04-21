@@ -1,7 +1,7 @@
 import pygame
 import pathlib
 import imgui
-from typing import List, Optional
+from typing import List, Optional, Tuple
 from enum import IntEnum, auto
 
 from core import paths, shapes, constants, translate
@@ -92,13 +92,30 @@ class Context:
         circ = shapes.Circ(*self.mouse_pos, MOUSE_SELECT_RADIUS)
         return circ.collideline(platform.get_line())
 
-    def snap_to_grid(self) -> bool:
-        """Snap to grid if enabled and not CTRL pressed OR disabled and CTRL pressed."""
-        invert = bool(pygame.key.get_mods() & pygame.KMOD_CTRL)
-        if self.snap_enabled:
-            return not invert
-        else:
-            return invert
+    def snap_pos(self, pos: pygame.math.Vector2) -> None:
+        """Snaps the pos inplace to grid if snapping is enabled.
+
+        Ctrl can be used to invert the snap mode setting.
+        If Shift is used, an element's x never snaps but the y always snaps.
+        """
+        mods = pygame.key.get_mods()
+        snap_x = snap_y = self.snap_enabled
+
+        # inverse snap mode
+        if mods & pygame.KMOD_CTRL > 0:
+            snap_x = not snap_x
+            snap_y = not snap_y
+
+        # override snap mode
+        if mods & pygame.KMOD_SHIFT > 0:
+            snap_x = False
+            snap_y = True
+
+        # snap coordinates
+        if snap_x:
+            pos.x = int(pos.x)
+        if snap_y:
+            pos.y = int(pos.y)
 
     def on_left_click(self, event: pygame.event.Event) -> None:
         """Place previewed element."""
@@ -223,9 +240,7 @@ class Context:
 
             # handle snap to grid
             pos = self.mouse_pos.copy()
-            if self.snap_to_grid():
-                pos.x = int(pos.x)
-                pos.y = int(pos.y)
+            self.snap_pos(pos)
 
             buttons = pygame.mouse.get_pressed()
             left_click = buttons[0]
