@@ -44,8 +44,8 @@ class ResourcesTest(unittest.TestCase):
                     # ignore transparent pixels
                     continue
 
-                hex = color_to_hex(surface.unmap_rgb(pixels[x, y]))
-                self.assertEqual(hex, hex_str)
+                hex_ = color_to_hex(surface.unmap_rgb(pixels[x, y]))
+                self.assertEqual(hex_, hex_str)
 
     # Case 2: all red and blue pixels are replaced
     def test__transform_image_hsl__2(self):
@@ -72,12 +72,12 @@ class ResourcesTest(unittest.TestCase):
                     # ignore transparent pixels
                     continue
 
-                hex = color_to_hex(surface.unmap_rgb(pixels[x, y]))
+                hex_ = color_to_hex(surface.unmap_rgb(pixels[x, y]))
                 if blue_rect.collidepoint(x, y) or red_rect.collidepoint(x, y):
-                    self.assertEqual(hex, hex_str)
+                    self.assertEqual(hex_, hex_str)
                 else:
                     # stayed green
-                    self.assertEqual(hex, '#00ff00')
+                    self.assertEqual(hex_, '#00ff00')
 
     # --- fill_pixels --------------------------------------------------------------------------------------------------
 
@@ -99,5 +99,5 @@ class ResourcesTest(unittest.TestCase):
                     # ignore transparent pixels
                     continue
 
-                hex = color_to_hex(surface.unmap_rgb(pixels[x, y]))
-                self.assertEqual(hex, hex_str)
+                hex_ = color_to_hex(surface.unmap_rgb(pixels[x, y]))
+                self.assertEqual(hex_, hex_str)

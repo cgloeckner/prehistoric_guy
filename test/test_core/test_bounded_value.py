@@ -75,7 +75,7 @@ class BoundedValueTest(unittest.TestCase):
         self.assertEqual(container.value, 0)
         self.assertEqual(container.max_value, 10)
 
-        # comparision
+        # comparison
         container.value = 4
         self.assertTrue(container == 4)
         self.assertFalse(container != 4)

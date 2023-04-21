@@ -1,6 +1,5 @@
 import pygame
 import math
-import imgui
 from typing import Optional
 
 from core import constants, resources, state_machine
@@ -32,8 +31,7 @@ class GameState(state_machine.State, factory.EventListener):
                                                             up_key=pygame.K_w, down_key=pygame.K_s,
                                                             attack_key=pygame.K_SPACE))
 
-        phys_actor = self.factory.ctx.physics.actors.get_by_id(player_char_actor.object_id)
-        #self.manager.camera.follow.append(phys_actor)
+        self.factory.ctx.physics.actors.get_by_id(player_char_actor.object_id)
 
         # --- create demo scene ---------------------------------------------------------------------------------------
         self.factory.create_enemy(sprite_sheet=grey_guy, x=6.5, y=6.5, max_hit_points=2, num_axes=0)
@@ -65,11 +63,6 @@ class GameState(state_machine.State, factory.EventListener):
         self.factory.ctx.physics.create_ladder(x=1.5, y=2, height=4)
         self.factory.ctx.physics.create_ladder(x=8.5, y=1, height=5)
         self.factory.ctx.physics.create_ladder(x=2.5, y=6, height=5)
-
-        #self.editor_ui = editor.SceneEditor(engine.buffer, self.factory)
-
-        #s = level.Scene(self.factory.ctx.physics)
-        #s.to_file('data/level01.xml')
 
     # ------------------------------------------------------------------------------------------------------------------
     # --- physics events ---
@@ -216,8 +209,6 @@ class GameState(state_machine.State, factory.EventListener):
         self.factory.players.process_event(event)
 
     def update(self, elapsed_ms: int) -> None:
-        #self.editor_ui.update()
-
         # --- Demo Camera movement -------------------------------------------------------------------------------------
         player_char_actor = self.factory.ctx.players.actors[0]
         phys_actor = self.factory.ctx.physics.actors.get_by_id(player_char_actor.object_id)

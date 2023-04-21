@@ -2,7 +2,6 @@ from dataclasses import dataclass
 
 from core import objectids
 from platformer import physics, animations, characters
-from . import controls
 
 
 @dataclass

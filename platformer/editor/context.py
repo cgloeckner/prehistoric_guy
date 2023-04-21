@@ -1,7 +1,7 @@
 import pygame
 import pathlib
 import imgui
-from typing import List, Optional, Tuple
+from typing import List, Optional
 from enum import IntEnum, auto
 
 from core import paths, shapes, constants, translate
@@ -20,6 +20,7 @@ class EditorMode(IntEnum):
     CREATE_OBJECT = auto()
 
 
+# noinspection SpellCheckingInspection
 class Context:
     def __init__(self, width: int, height: int, p: paths.DataPath, t: translate.Match):
         self.new_filename = ''
@@ -85,7 +86,7 @@ class Context:
         return self.paths.level(self.file_status.filename)
 
     def mouse_over_platform(self, platform: physics.Platform) -> bool:
-        """"Tests whether the mouse position is at the given platform."""
+        """Tests whether the mouse position is at the given platform."""
         if platform.contains_point(self.mouse_pos):
             return True
 
@@ -307,9 +308,6 @@ class Context:
             pos = self.mouse_pos.copy()
             self.snap_pos(pos)
 
-            buttons = pygame.mouse.get_pressed()
-            left_click = buttons[0]
-
             if self.mode == EditorMode.CREATE_PLATFORM:
                 self.preview_ladder = None
                 self.preview_object = None
@@ -347,7 +345,7 @@ class Context:
                 self.object_tooltip(self.preview_object)
 
     def draw(self, render_api: renderer.Renderer) -> None:
-        """Draw additional things ontop."""
+        """Draw additional things on top."""
         # redraw hovered objects
         for platform in self.hovered_platforms:
             render_api.draw_platform(platform, use_mask=True)

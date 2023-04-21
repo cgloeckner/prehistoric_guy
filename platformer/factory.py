@@ -1,3 +1,5 @@
+from abc import ABCMeta
+
 import pygame
 import random
 from typing import Optional
@@ -7,7 +9,7 @@ from core import constants, resources, objectids
 from . import physics, animations, renderer, characters, controls, interface
 
 
-class EventListener(physics.EventListener, animations.EventListener, characters.EventListener):
+class EventListener(physics.EventListener, animations.EventListener, characters.EventListener, metaclass=ABCMeta):
     pass
 
 
@@ -48,15 +50,15 @@ class Factory:
         x = random.randrange(p.width)
 
         self.ctx.physics.create_object(x=p.pos.x + x, y=p.pos.y + 0.5,
-                                           object_type=random.choice(list(constants.ObjectType)))
+                                       object_type=random.choice(list(constants.ObjectType)))
 
     def create_projectile(self, x: float, y: float, from_actor: Optional[physics.Actor], speed: float,
                           object_type: constants.ObjectType) -> physics.Projectile:
         object_id = next(self.ctx.id_generator)
         physics_proj = self.ctx.physics.create_projectile(object_id=object_id, x=x, y=y, from_actor=from_actor,
-                                                              object_type=object_type)
+                                                          object_type=object_type)
         physics_proj.move.speed = speed
-        animations_proj = self.ctx.animations.create_projectile(object_id=object_id)
+        self.ctx.animations.create_projectile(object_id=object_id)
 
         return physics_proj
 
@@ -65,7 +67,7 @@ class Factory:
         object_id = next(self.ctx.id_generator)
 
         kwargs['object_id'] = object_id
-        phys_actor = self.ctx.physics.create_actor(**kwargs)
+        self.ctx.physics.create_actor(**kwargs)
         ani_actor = animations.Actor(object_id=object_id)
         render_actor = renderer.Actor(object_id=object_id, sprite_sheet=sprite_sheet)
 
@@ -88,7 +90,7 @@ class Factory:
         """Creates and returns a character """
         object_id = self.create_actor(sprite_sheet, x=x, y=y)
         character = self.ctx.characters.create_actor(object_id, max_hit_points=max_hit_points,
-                                                         num_axes=num_axes)
+                                                     num_axes=num_axes)
         return character
 
     def destroy_character(self, character: characters.Actor, keep_components: bool = False) -> None:

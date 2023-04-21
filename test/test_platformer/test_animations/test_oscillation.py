@@ -32,7 +32,7 @@ class OscillateAnimationTest(unittest.TestCase):
                 # most of them don't
                 actor = oscillation.OscillateAnimation()
                 actor.total_time_ms = 5
-                actor.update(10)
+                actor.update(action, 10)
 
                 self.assertEqual(actor.total_time_ms, 0)
                 self.assertAlmostEqual(actor.delta_y, 0.0)

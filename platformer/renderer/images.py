@@ -11,8 +11,8 @@ from . import base, shapes
 NUM_FRAMES_PER_TILE: int = 3
 
 # used by editor
-MASK_SETCOLOR = pygame.Color(255, 215, 0, 80)
-MASK_UNSETCOLOR = pygame.Color(0, 0, 0, 0)
+MASK_SET_COLOR = pygame.Color(255, 215, 0, 80)
+MASK_UNSET_COLOR = pygame.Color(0, 0, 0, 0)
 
 
 class TileOffset(IntEnum):
@@ -132,7 +132,7 @@ class ImageRenderer(shapes.ShapeRenderer):
         src = self.tiles
         if use_mask:
             super().draw_platform(platform)
-            src = pygame.mask.from_surface(src).to_surface(setcolor=MASK_SETCOLOR, unsetcolor=MASK_UNSETCOLOR)
+            src = pygame.mask.from_surface(src).to_surface(setcolor=MASK_SET_COLOR, unsetcolor=MASK_UNSET_COLOR)
 
         pos = self.get_platform_rect(platform)
         pos.h *= -1
@@ -168,7 +168,7 @@ class ImageRenderer(shapes.ShapeRenderer):
         src = self.tiles
         if use_mask:
             super().draw_ladder(ladder)
-            src = pygame.mask.from_surface(src).to_surface(setcolor=MASK_SETCOLOR, unsetcolor=MASK_UNSETCOLOR)
+            src = pygame.mask.from_surface(src).to_surface(setcolor=MASK_SET_COLOR, unsetcolor=MASK_UNSET_COLOR)
 
         pos = self.get_ladder_rect(ladder)
         clip = self.get_ladder_clip(tileset_col=0)
@@ -193,7 +193,7 @@ class ImageRenderer(shapes.ShapeRenderer):
         src = self.objects
         if use_mask:
             super().draw_object(obj)
-            src = pygame.mask.from_surface(src).to_surface(setcolor=MASK_SETCOLOR, unsetcolor=MASK_UNSETCOLOR)
+            src = pygame.mask.from_surface(src).to_surface(setcolor=MASK_SET_COLOR, unsetcolor=MASK_UNSET_COLOR)
 
         pos = self.get_object_rect(obj)
         clip = self.get_object_clip(object_type=obj.object_type, variation_col=0)
@@ -207,7 +207,7 @@ class ImageRenderer(shapes.ShapeRenderer):
 
         src = sprite_actor.sprite_sheet
         if use_mask:
-            src = pygame.mask.from_surface(src).to_surface(setcolor=MASK_SETCOLOR, unsetcolor=MASK_UNSETCOLOR)
+            src = pygame.mask.from_surface(src).to_surface(setcolor=MASK_SET_COLOR, unsetcolor=MASK_UNSET_COLOR)
 
         pos = self.get_actor_rect(actor)
         clip = self.get_actor_clip(face_x=actor.move.face_x, frame_id=ani_actor.frame.frame_id,
@@ -222,7 +222,7 @@ class ImageRenderer(shapes.ShapeRenderer):
     def draw_projectile(self, proj: physics.Projectile, use_mask: bool = False) -> None:
         src = self.objects
         if use_mask:
-            src = pygame.mask.from_surface(src).to_surface(setcolor=MASK_SETCOLOR, unsetcolor=MASK_UNSETCOLOR)
+            src = pygame.mask.from_surface(src).to_surface(setcolor=MASK_SET_COLOR, unsetcolor=MASK_UNSET_COLOR)
 
         # FIXME: allow for spinning animation
         """

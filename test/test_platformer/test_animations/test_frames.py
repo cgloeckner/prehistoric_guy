@@ -48,7 +48,7 @@ class FrameAnimationTest(unittest.TestCase):
         finished = actor.step_frame(40)
         self.assertFalse(finished)
         self.assertEqual(actor.action, actions.Action.ATTACK)
-        self.assertEqual(actor.frame_id,0)
+        self.assertEqual(actor.frame_id, 0)
         self.assertEqual(actor.duration_ms, 160)
 
         # go to next frame

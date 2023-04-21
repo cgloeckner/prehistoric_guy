@@ -3,8 +3,10 @@ import pygame
 from abc import ABC, abstractmethod
 
 
+# noinspection SpellCheckingInspection
 class Camera:
     def __init__(self, width: int, height: int):
+        # noinspection SpellCheckingInspection
         self.topleft = pygame.math.Vector2()
         self.width = width
         self.height = height
@@ -23,9 +25,10 @@ class Camera:
             (0 <= rect.top < self.height or 0 <= rect.bottom < self.height)
 
     def from_world_coord(self, pos: pygame.math.Vector2) -> pygame.math.Vector2:
+        # noinspection SpellCheckingInspection
         """Transforms coordinates form world to cam
-        Example: Camera (topleft) at (2|3) moves all coordinates using (-2|-3).
-        """
+                Example: Camera (top left) at (2|3) moves all coordinates using (-2|-3).
+                """
         x = pos.x - self.topleft.x
         y = pos.y - self.topleft.y
         return pygame.math.Vector2(x, y)

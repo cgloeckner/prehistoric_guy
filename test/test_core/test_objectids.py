@@ -10,7 +10,7 @@ class Demo:
     value: str
 
 
-class ObjectidTest(unittest.TestCase):
+class ObjectIdTest(unittest.TestCase):
 
     def test__object_id_generator(self):
         gen = objectids.object_id_generator()

@@ -53,12 +53,13 @@ def flip_sprite_sheet(src: pygame.Surface, tile_size: int) -> pygame.Surface:
     A new sprite sheet is returned which holds all sprites (left: original, right: flipped frames).
     """
     size = src.get_size()
-    mirr = pygame.transform.flip(src, flip_x=True, flip_y=False)
+    mirrored = pygame.transform.flip(src, flip_x=True, flip_y=False)
     dst = pygame.Surface((size[0] * 2, size[1]), flags=pygame.SRCALPHA)
 
     dst.blit(src, (0, 0))
     for column in range(src.get_width() // tile_size):
-        dst.blit(mirr, (size[0] + column * tile_size, 0), (size[0] - (column + 1) * tile_size, 0, tile_size, size[1]))
+        dst.blit(mirrored, (size[0] + column * tile_size, 0), (size[0] - (column + 1) * tile_size, 0, tile_size,
+                                                               size[1]))
 
     return dst
 
@@ -147,6 +148,7 @@ class Cache(object):
 
     def get_rotated_surface_clip(self, surface: pygame.Surface, rect: pygame.Rect, angle: float, flip: bool)\
             -> pygame.Surface:
+        # noinspection GrazieInspection
         """If not cached, a part of the surface, described by the given rect, is created and rotated. This copy is
         cached for each integer angle in [0; 360). Flipping the frame x-wise is also supported.
         Returns the rotated surface.

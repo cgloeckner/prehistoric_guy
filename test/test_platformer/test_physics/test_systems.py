@@ -1,7 +1,7 @@
 import unittest
 
 from core import constants
-from platformer.physics import actors, platforms, objects, projectiles, ladders, systems, context
+from platformer.physics import actors, platforms, objects, projectiles, systems, context
 
 
 class UnittestListener(context.EventListener):

@@ -1,5 +1,4 @@
 import unittest
-import pygame
 
 from core import shapes
 
@@ -124,17 +123,8 @@ class CircTest(unittest.TestCase):
         self.assertTrue(circ1.collidecirc(circ2))
         self.assertTrue(circ2.collidecirc(circ1))
 
-    # Case 3: circles touch (not a collision)
+    # Case 3: neither touch nor overlap
     def test__collidecirc__3(self):
-        circ1 = shapes.Circ(4, 2, 3.5)
-        circ2 = shapes.Circ(4+3.5+1.2, 2, 1.2)
-
-        # FIXME: fails due to floating point accuracy
-        # self.assertFalse(circ1.collidecirc(circ2))
-        # self.assertFalse(circ2.collidecirc(circ1))
-
-    # Case 4: neither touch nor overlap
-    def test__collidecirc__4(self):
         circ1 = shapes.Circ(4, 2, 3.5)
         circ2 = shapes.Circ(4+3.5+1.2, 2, 1.1)
 

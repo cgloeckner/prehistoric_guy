@@ -167,7 +167,7 @@ class ControlSystemTest(unittest.TestCase):
     def test_cannot_jump_down(self):
         actor = self.create_actor(1, 2.0, 1.0)
         phys_actor = self.phys_ctx.actors.get_by_id(actor.object_id)
-        ani_actor = self.ani_ctx.actors.get_by_id(actor.object_id)
+        self.ani_ctx.actors.get_by_id(actor.object_id)
 
         actor.state.delta.x = -1.0
         actor.state.delta.y = -1.0
@@ -200,7 +200,7 @@ class ControlSystemTest(unittest.TestCase):
 
     def test_can_jump_while_attacking(self):
         actor = self.create_actor(1, 2.0, 1.0)
-        phys_actor = self.phys_ctx.actors.get_by_id(actor.object_id)
+        self.phys_ctx.actors.get_by_id(actor.object_id)
         ani_actor = self.ani_ctx.actors.get_by_id(actor.object_id)
         ani_actor.frame.action = animations.Action.ATTACK
 

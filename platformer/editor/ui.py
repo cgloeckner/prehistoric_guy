@@ -24,18 +24,16 @@ class EditorState(state_machine.State):
 
         self.font = self.cache.get_font()
         self.quit = False
-        #self.reinit()
 
     def __del__(self):
-        #self.sleep()
         pass
 
     def reinit(self) -> None:
-        #pygame.event.set_grab(True)
+        # pygame.event.set_grab(True)
         pass
 
     def sleep(self) -> None:
-        #pygame.event.set_grab(False)
+        # pygame.event.set_grab(False)
         pass
 
     # ------------------------------------------------------------------------------------------------------------------
@@ -113,12 +111,11 @@ class EditorState(state_machine.State):
     # ------------------------------------------------------------------------------------------------------------------
 
     def setup_large_popup(self) -> None:
-        """Setup a large popup to be centered."""
+        """Sets up a large popup to be centered."""
         max_width, max_height = self.engine.get_opengl_size()
         w = max(constants.RESOLUTION_X, int(max_width * 0.8))
         h = max(constants.RESOLUTION_Y, int(max_height * 0.8))
         imgui.set_next_window_size(w, h)
-        #imgui.set_next_window_position(max_width // 2 - w // 2, max_height // 2 - h // 2)
 
     def popups(self):
         """Handles all popups with click events."""

@@ -1,3 +1,4 @@
+# noinspection SpellCheckingInspection
 """
 Based on
 - imgui's pygame-integration example
@@ -126,7 +127,7 @@ if __name__ == "__main__":
     size = 800, 600
 
     screen = pygame.display.set_mode(size, OpenGlWrapper.get_display_flags())
-    wrapper = OpenGlWrapper(screen)
+    wrapper = OpenGlWrapper(*screen.get_size(), *screen.get_size())
 
     background = pygame.image.load('../data/background.png')
 

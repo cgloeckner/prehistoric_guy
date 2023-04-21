@@ -38,10 +38,10 @@ def apply_landing(actor: Actor, physics_actor: physics.Actor) -> Tuple[animation
     delta_h = get_falling_height(actor, physics_actor.pos)
     if not is_dangerous_height(delta_h):
         # safe height, IDLE is fine
-        return (animations.Action.IDLE, 0)
+        return animations.Action.IDLE, 0
 
     damage = get_falling_damage(delta_h)
     if damage > 0:
         actor.hit_points -= damage
 
-    return (animations.Action.LANDING, damage)
+    return animations.Action.LANDING, damage

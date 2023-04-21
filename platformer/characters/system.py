@@ -1,9 +1,8 @@
-import pygame
 from typing import Optional
 
 from platformer import physics, animations
 from . import Actor, EventListener, Context
-from . import falling, combat
+from . import combat
 
 
 class CharacterSystem:

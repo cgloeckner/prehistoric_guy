@@ -124,8 +124,7 @@ class ProjectileSystem(object):
         Returns the previous position.
         """
         projectile.move.apply_gravity(elapsed_ms)
-        old_pos = projectile.move.apply_movement(projectile.pos, elapsed_ms,
-                                                     gravity_weight=projectiles.GRAVITY_WEIGHT)
+        old_pos = projectile.move.apply_movement(projectile.pos, elapsed_ms, gravity_weight=projectiles.GRAVITY_WEIGHT)
         return old_pos
 
     def handle_platform_collision(self, projectile: projectiles.Projectile, old_pos: pygame.math.Vector2) -> None:
