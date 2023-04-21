@@ -184,8 +184,6 @@ class GameState(state_machine.State, factory.EventListener):
             # FIXME: pygame.display.toggle_fullscreen() does not work correctly when leaving fullscreen
             pass
 
-        self.factory.players.process_event(event)
-
     def update(self, elapsed_ms: int) -> None:
         # --- Demo Camera movement -------------------------------------------------------------------------------------
         player_char_actor = self.factory.ctx.players.actors[0]

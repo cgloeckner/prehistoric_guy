@@ -27,10 +27,11 @@ class Keybinding:
     right_key: int = pygame.K_RIGHT
     up_key: int = pygame.K_UP
     down_key: int = pygame.K_DOWN
-    attack_key: int = pygame.K_SPACE  # also for throwing
+    attack_key: int = pygame.K_SPACE
+    throw_key: int = pygame.K_RETURN
 
     def get_movement(self, query: KeysQuery) -> pygame.math.Vector2:
-        """Queries the keyboard"""
+        """Queries movement vector."""
         delta = pygame.math.Vector2()
 
         if query(self.left_key):
@@ -43,6 +44,17 @@ class Keybinding:
             delta.y -= 1
 
         return delta
+
+    def get_action(self, query: KeysQuery) -> Action:
+        """Queries action."""
+        if query(self.attack_key):
+            return Action.ATTACK
+
+        elif query(self.throw_key):
+            return Action.THROW
+
+        else:
+            return Action.NONE
 
 
 @dataclass
@@ -61,36 +73,6 @@ class InputState:
     def reset(self):
         self.delta = pygame.math.Vector2()
         self.action = Action.NONE
-
-    def process_event(self, binding: Keybinding, event: pygame.event.Event) -> None:
-        """Handles inputs events and sets the action accordingly."""
-        if event.type == pygame.KEYDOWN and event.key == binding.attack_key:
-            self.attack_held_ms = 0
-            return
-
-        elif event.type == pygame.KEYUP and event.key == binding.attack_key:
-            if self.attack_held_ms >= THROW_THRESHOLD:
-                self.action = Action.THROW
-            else:
-                self.action = Action.ATTACK
-            self.attack_held_ms = -1
-            return
-
-    def get_throwing_progress(self) -> float:
-        """Returns a float in [0.0; 1.0] that yields the percentage of the keydown-for-throwing duration."""
-        if self.attack_held_ms == -1:
-            return 0.0
-
-        return min(1.0, self.attack_held_ms / THROW_THRESHOLD)
-
-    def update_action(self, elapsed_ms: int) -> None:
-        """Grabs the movement vector and whether it's an attack, throw or none."""
-        # count how long the attack key is held
-        if self.attack_held_ms >= 0:
-            self.attack_held_ms += elapsed_ms
-            if self.attack_held_ms >= THROW_THRESHOLD:
-                self.action = Action.THROW
-                self.attack_held_ms = 0
 
     def get_next_animation(self, is_on_ladder: bool, is_on_platform: bool) -> animations.Action:
         """Returns the related animation action or None if falling without an action-"""

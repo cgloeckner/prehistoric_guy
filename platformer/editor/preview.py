@@ -35,9 +35,7 @@ class PreviewState(state_machine.State, factory.EventListener):
         self.physics_ctx.create_actor(1, x=pos.x, y=pos.y)
         self.animations_ctx.create_actor(1)
         self.renderer_ctx.create_actor(1, sprite_sheet=generic_guy)
-        player = self.players_ctx.create_actor(1)
-        player.keys = controls.Keybinding(left_key=pygame.K_LEFT, right_key=pygame.K_RIGHT, up_key=pygame.K_UP,
-                                          down_key=pygame.K_DOWN, attack_key=pygame.K_SPACE)
+        self.players_ctx.create_actor(1)
 
     # ------------------------------------------------------------------------------------------------------------------
 
@@ -92,8 +90,6 @@ class PreviewState(state_machine.State, factory.EventListener):
     def process_event(self, event: pygame.event.Event) -> None:
         if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
             self.engine.pop()
-
-        self.players.process_event(event)
 
     def update(self, elapsed_ms: int) -> None:
         # let camera follow player

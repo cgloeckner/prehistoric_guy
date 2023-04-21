@@ -38,11 +38,6 @@ class HudSystem:
         for i in range(actor.num_axes.value):
             self.target.blit(self.tileset, (i * constants.OBJECT_SCALE, constants.OBJECT_SCALE), weapon_clip)
 
-    def draw_throw_progress(self, actor: controls.Player, screen_pos: pygame.math.Vector2) -> None:
-        value = actor.state.get_throwing_progress()
-        if value > 0.5:
-            ui.progress_bar(self.target, int(screen_pos.x), int(screen_pos.y), 15, 3, value)
-
     def draw_hud(self, actor: controls.Player):
         char_actor = self.characters_context.actors.get_by_id(actor.object_id)
         self.draw_icons(char_actor)
@@ -52,8 +47,6 @@ class HudSystem:
         # FIXME needs Renderer's method instead to account for scale
         screen_pos = self.camera.from_world_coord(phys_actor.pos)
         screen_pos *= constants.WORLD_SCALE
-
-        self.draw_throw_progress(actor, screen_pos)
 
     def draw(self):
         for actor in self.players_context.actors:

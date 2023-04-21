@@ -37,39 +37,28 @@ class InputStateTest(unittest.TestCase):
     def test__process_event_action(self):
         state = binding.InputState()
 
+        action = self.bind.get_action(self.keys_test)
+        self.assertEqual(action, binding.Action.NONE)
+
         # press attack key
-        event = pygame.event.Event(pygame.KEYDOWN, key=self.bind.attack_key)
-        state.process_event(self.bind, event)
-        self.assertEqual(state.attack_held_ms, 0)
-        self.assertEqual(state.action, binding.Action.NONE)
+        self.keys.add(self.bind.attack_key)
+        action = self.bind.get_action(self.keys_test)
+        self.assertEqual(action, binding.Action.ATTACK)
 
-        # held key
-        event = pygame.event.Event(pygame.KEYDOWN, key=self.bind.attack_key)
-        state.process_event(self.bind, event)
-        self.assertEqual(state.attack_held_ms, 0)
+        # press throw key
+        self.keys.add(self.bind.throw_key)
+        action = self.bind.get_action(self.keys_test)
+        self.assertEqual(action, binding.Action.ATTACK)
 
-        state.attack_held_ms += 150
-        # release key for short time -> attack
-        event = pygame.event.Event(pygame.KEYUP, key=self.bind.attack_key)
-        state.process_event(self.bind, event)
-        self.assertEqual(state.attack_held_ms, -1)
-        self.assertEqual(state.action, binding.Action.ATTACK)
+        # release attack key
+        self.keys.remove(self.bind.attack_key)
+        action = self.bind.get_action(self.keys_test)
+        self.assertEqual(action, binding.Action.THROW)
 
-        state.attack_held_ms = binding.THROW_THRESHOLD
-        # release key for longer timer -> throw
-        event = pygame.event.Event(pygame.KEYUP, key=self.bind.attack_key)
-        state.process_event(self.bind, event)
-        self.assertEqual(state.attack_held_ms, -1)
-        self.assertEqual(state.action, binding.Action.THROW)
-
-        # another key up does hit release attack
-        state.reset()
-        event = pygame.event.Event(pygame.KEYDOWN, key=self.bind.attack_key)
-        state.process_event(self.bind, event)
-        state.attack_held_ms = 13
-        event = pygame.event.Event(pygame.KEYUP, key=self.bind.up_key)
-        state.process_event(self.bind, event)
-        self.assertEqual(state.attack_held_ms, 13)
+        # release throw key
+        self.keys.remove(self.bind.throw_key)
+        action = self.bind.get_action(self.keys_test)
+        self.assertEqual(action, binding.Action.NONE)
 
     def test__process_event_movement(self):
         # press attack key (no effect)
@@ -153,63 +142,6 @@ class InputStateTest(unittest.TestCase):
         delta = self.bind.get_movement(self.keys_test)
         self.assertEqual(delta.x, -1)
         self.assertEqual(delta.y, 1)
-
-    def test__get_throwing_progress(self):
-        state = binding.InputState()
-
-        # key not pressed
-        progress = state.get_throwing_progress()
-        self.assertAlmostEqual(progress, 0.0, places=2)
-
-        # key just pressed
-        state.attack_held_ms = 0
-        progress = state.get_throwing_progress()
-        self.assertAlmostEqual(progress, 0.0, places=2)
-
-        # pressed some ms ago
-        state.attack_held_ms = 25
-        progress = state.get_throwing_progress()
-        self.assertAlmostEqual(progress, 0.052, places=2)
-
-        # close to finish
-        state.attack_held_ms += 250
-        progress = state.get_throwing_progress()
-        self.assertAlmostEqual(progress, 0.573, places=2)
-
-        # finished
-        state.attack_held_ms = binding.THROW_THRESHOLD
-        progress = state.get_throwing_progress()
-        self.assertAlmostEqual(progress, 1.0, places=2)
-
-        # way beyond finish
-        state.attack_held_ms += 250
-        self.assertAlmostEqual(progress, 1.0, places=2)
-
-    def test__update(self):
-        state = binding.InputState()
-
-        # default: no attack held
-        state.update_action(15)
-        self.assertEqual(state.attack_held_ms, -1)
-
-        # step attack held a bit
-        state.attack_held_ms = 0
-        state.update_action(15)
-        self.assertEqual(state.attack_held_ms, 15)
-        self.assertEqual(state.action, binding.Action.NONE)
-
-        # complete throw threshold without releasing
-        state.attack_held_ms = binding.THROW_THRESHOLD - 1
-        state.update_action(1)
-        self.assertEqual(state.attack_held_ms, 0)
-        self.assertEqual(state.action, binding.Action.THROW)
-
-        # exceed threshold resets because it fires
-        state.action = binding.Action.NONE
-        state.attack_held_ms = binding.THROW_THRESHOLD + 7
-        state.update_action(15)
-        self.assertEqual(state.attack_held_ms, 0)
-        self.assertEqual(state.action, binding.Action.THROW)
 
     # ------------------------------------------------------------------------------------------------------------------
 

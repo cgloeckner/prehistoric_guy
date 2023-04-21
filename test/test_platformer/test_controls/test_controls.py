@@ -1,4 +1,3 @@
-import pygame
 import unittest
 
 from platformer import physics, animations
@@ -24,20 +23,6 @@ class ControlSystemTest(unittest.TestCase):
         self.phys_ctx.create_actor(object_id=object_id, x=x, y=y)
         self.ani_ctx.create_actor(object_id=object_id)
         return actor
-
-    def test__process_event(self):
-        actor1 = self.create_actor(1, 2.0, 1.0)
-        actor2 = self.create_actor(1, 2.0, 1.0)
-
-        # propagate attack
-        event = pygame.event.Event(pygame.KEYDOWN, key=pygame.K_SPACE)
-        self.sys.process_event(event)
-        self.sys.process_event(event)
-        event = pygame.event.Event(pygame.KEYUP, key=pygame.K_SPACE)
-        self.sys.process_event(event)
-
-        self.assertAlmostEqual(actor1.state.action, binding.Action.ATTACK)
-        self.assertAlmostEqual(actor2.state.action, binding.Action.ATTACK)
 
     # ------------------------------------------------------------------------------------------------------------------
 

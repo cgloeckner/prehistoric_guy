@@ -14,12 +14,9 @@ class Player:
     keys: binding.Keybinding = field(default_factory=binding.Keybinding)
     state: binding.InputState = field(default_factory=binding.InputState)
 
-    def process_event(self, event: pygame.event.Event) -> None:
-        self.state.process_event(self.keys, event)
-
     def update(self, elapsed_ms: int, query: binding.KeysQuery) -> None:
         self.state.delta = self.keys.get_movement(query)
-        self.state.update_action(elapsed_ms)
+        self.state.action = self.keys.get_action(query)
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -47,10 +44,6 @@ class PlayersSystem:
         self.players_context = players_context
         self.physics_context = physics_context
         self.animations_context = animations_context
-
-    def process_event(self, event: pygame.event.Event) -> None:
-        for actor in self.players_context.actors:
-            actor.process_event(event)
 
     def apply_input(self, actor: Player) -> None:
         phys_actor = self.physics_context.actors.get_by_id(actor.object_id)
