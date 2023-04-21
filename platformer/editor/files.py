@@ -2,6 +2,7 @@ import pathlib
 import xml.dom.minidom
 import xml.etree.ElementTree as et
 from dataclasses import dataclass
+from typing import List
 
 from core import constants
 
@@ -106,3 +107,13 @@ def to_file(root: et.Element, path: pathlib.Path) -> None:
 
 def from_file(path: pathlib.Path) -> et.Element:
     return et.parse(path).getroot()
+
+
+def get_level_files(path: pathlib.Path) -> List[str]:
+    """Returns a list of all level files."""
+    return sorted([file.stem for file in path.glob('*.xml') if file.is_file()])
+
+
+def load_level(path: pathlib.Path, target: physics.Context) -> None:
+    tmp = from_xml(from_file(path))
+    apply_context(target, tmp)

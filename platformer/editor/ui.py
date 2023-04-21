@@ -5,7 +5,7 @@ from typing import List
 from core import constants, state_machine, resources
 from platformer import animations, renderer
 
-from . import preview, context
+from . import preview, context, files
 
 
 class EditorState(state_machine.State, animations.EventListener):
@@ -129,7 +129,7 @@ class EditorState(state_machine.State, animations.EventListener):
     def popups(self):
         """Handles all popups with click events."""
         ui = self.engine.translate
-        level_files = self.get_level_files()
+        level_files = files.get_level_files(self.engine.paths.level())
 
         next_popup = ''
 
@@ -228,11 +228,6 @@ class EditorState(state_machine.State, animations.EventListener):
                     imgui.close_current_popup()
 
     # ------------------------------------------------------------------------------------------------------------------
-
-    def get_level_files(self) -> List[str]:
-        """Returns a list of all level files."""
-        path = self.engine.paths.level()
-        return sorted([file.stem for file in path.glob('*.xml') if file.is_file()])
 
     def process_event(self, event: pygame.event.Event) -> None:
         """Handles pygame events."""

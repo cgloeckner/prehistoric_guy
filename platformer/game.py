@@ -4,9 +4,8 @@ from typing import Optional
 
 from core import constants, resources, state_machine
 
-from platformer import animations, characters
+from platformer import animations, characters, controls, physics, editor
 from platformer import factory
-from platformer import controls, physics
 
 
 class GameState(state_machine.State, factory.EventListener):
@@ -24,6 +23,11 @@ class GameState(state_machine.State, factory.EventListener):
 
         # --- setup object manager with player character ---------------------------------------------------------------
         self.factory = factory.Factory(self, self.cache, engine.buffer)
+
+        level_files = editor.get_level_files(self.engine.paths.level())
+        filename = self.engine.paths.level(level_files[-1])
+        editor.load_level(filename, self.factory.ctx.physics)
+
         player_char_actor = self.factory.create_character(sprite_sheet=blue_guy, x=2, y=5, max_hit_points=5,
                                                           num_axes=10)
         self.factory.create_player(player_char_actor,
@@ -36,33 +40,6 @@ class GameState(state_machine.State, factory.EventListener):
         # --- create demo scene ---------------------------------------------------------------------------------------
         self.factory.create_enemy(sprite_sheet=grey_guy, x=6.5, y=6.5, max_hit_points=2, num_axes=0)
         self.factory.create_enemy(sprite_sheet=grey_guy, x=6.5, y=4.5, max_hit_points=2, num_axes=0)
-
-        # horizontal platforms
-        self.factory.ctx.physics.create_platform(x=1, y=1, width=3, height=1)
-        self.factory.ctx.physics.create_platform(x=1, y=6, width=3)
-        self.factory.ctx.physics.create_platform(x=7, y=2, width=3, height=2)
-        self.factory.ctx.physics.create_platform(x=2, y=2, width=2)
-        self.factory.ctx.physics.create_platform(x=0, y=4, width=3)
-        self.factory.ctx.physics.create_platform(x=6, y=1, width=3)
-        for i in range(10):
-            self.factory.ctx.physics.create_platform(x=10 + i, y=0, width=1, height=1 + i)
-        self.factory.ctx.physics.create_platform(x=5, y=6, width=4)
-
-        self.factory.ctx.physics.create_platform(x=3, y=7, width=1, hover=physics.Hovering(x=math.cos, amplitude=-2))
-
-        self.factory.ctx.physics.create_platform(x=1, y=11, width=12)
-
-        self.factory.create_random_object()
-        self.factory.ctx.physics.create_object(x=1, y=1, object_type=constants.ObjectType.FOOD)
-
-        self.factory.ctx.physics.create_platform(x=-12, y=0, width=15)
-        self.factory.ctx.physics.create_platform(x=-8, y=1, width=5, height=5)
-        self.factory.ctx.physics.create_platform(x=-12, y=0, width=3, height=10)
-
-        # ladders
-        self.factory.ctx.physics.create_ladder(x=1.5, y=2, height=4)
-        self.factory.ctx.physics.create_ladder(x=8.5, y=1, height=5)
-        self.factory.ctx.physics.create_ladder(x=2.5, y=6, height=5)
 
     # ------------------------------------------------------------------------------------------------------------------
     # --- physics events ---
@@ -175,7 +152,8 @@ class GameState(state_machine.State, factory.EventListener):
         actor = self.factory.ctx.characters.actors.get_by_id(ani_actor.object_id)
         proj = characters.throw_object(actor, 3.0, constants.ObjectType.WEAPON, self.factory.ctx.physics,
                                        self.factory.create_projectile)
-        proj.move.force.y = 1.0
+        if proj is not None:
+            proj.move.force.y = 1.0
 
     def on_died(self, ani_actor: animations.Actor) -> None:
         """Triggered when a dying animation finished."""
@@ -219,8 +197,8 @@ class GameState(state_machine.State, factory.EventListener):
         # --- Demo: limit pos to screen --------------------------------------------------------------------------------
         for player in self.factory.ctx.players.actors:
             phys_actor = self.factory.ctx.physics.actors.get_by_id(player.object_id)
-            if phys_actor.pos.y < 0:
-                phys_actor.pos.y += constants.RESOLUTION_Y // constants.WORLD_SCALE
+            if phys_actor.pos.y < -10:
+                self.engine.pop()
 
     def draw(self) -> None:
         self.factory.draw()
