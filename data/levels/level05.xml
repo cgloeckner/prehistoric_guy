@@ -1,6 +1,6 @@
 <?xml version="1.0" ?>
 <level>
-	<platform x="0.0" y="0.0" width="20"/>
+	<platform x="-1.0000001192092896" y="-1.0000001192092896" width="40" height="1"/>
 	<platform x="2.0" y="1.0" width="1"/>
 	<platform x="8.0" y="1.0" width="1"/>
 	<platform x="14.0" y="1.0" width="1"/>

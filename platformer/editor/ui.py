@@ -23,6 +23,7 @@ class EditorState(state_machine.State):
                                           self.sprite_context, self.cache)
 
         self.font = self.cache.get_font()
+        self.quit = False
         #self.reinit()
 
     def __del__(self):
@@ -96,19 +97,12 @@ class EditorState(state_machine.State):
             self.context.new_filename = self.context.file_status.get_filename()
             imgui.open_popup(ui.editor.save)
 
-        elif menu_action == 'quit':
-            ui = self.engine.translate
-
-            if self.context.file_status.unsaved_changes:
-                imgui.open_popup(ui.editor.discard)
-            else:
-                imgui.open_popup(ui.editor.leave)
-
         keys = pygame.key.get_pressed()
         if keys[pygame.K_F5]:
             self.on_level_run()
 
-        if keys[pygame.K_ESCAPE]:
+        if keys[pygame.K_ESCAPE] or menu_action == 'quit' or self.quit:
+            self.quit = False
             ui = self.engine.translate
 
             if self.context.file_status.unsaved_changes:
@@ -121,8 +115,8 @@ class EditorState(state_machine.State):
     def setup_large_popup(self) -> None:
         """Setup a large popup to be centered."""
         max_width, max_height = self.engine.get_opengl_size()
-        w = max(constants.RESOLUTION_X, max_width * 0.8)
-        h = max(constants.RESOLUTION_Y, max_height * 0.8)
+        w = max(constants.RESOLUTION_X, int(max_width * 0.8))
+        h = max(constants.RESOLUTION_Y, int(max_height * 0.8))
         imgui.set_next_window_size(w, h)
         #imgui.set_next_window_position(max_width // 2 - w // 2, max_height // 2 - h // 2)
 
@@ -237,7 +231,7 @@ class EditorState(state_machine.State):
     def process_event(self, event: pygame.event.Event) -> None:
         """Handles pygame events."""
         if event.type == pygame.QUIT:
-            self.engine.pop()
+            self.quit = True
 
         if not self.engine.wrapper.io.want_capture_mouse:
             if event.type == pygame.MOUSEWHEEL:
@@ -289,6 +283,8 @@ class EditorState(state_machine.State):
             self.context.mouse_pos = self.renderer.to_world_coord(pos)
 
             self.context.update_mouse(elapsed_ms)
+
+        self.context.update(elapsed_ms)
 
         # handle imgui
         self.main_menu()

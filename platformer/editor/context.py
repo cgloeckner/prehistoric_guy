@@ -188,14 +188,88 @@ class Context:
             imgui.text(f'{self.translate.editor.position}: {obj.pos}')
             imgui.text(f'{self.translate.editor.type}: {getattr(self.translate.editor, obj.object_type.name)}')
 
-    def platform_editor(self, platform: physics.Platform) -> None:
-        pass
+    def position_editor(self, pos: pygame.math.Vector2) -> bool:
+        changed_x, pos.x = imgui.input_float(f'{self.translate.editor.position} x', pos.x, 0.1, 1.0)
+        changed_y, pos.y = imgui.input_float(f'{self.translate.editor.position} y', pos.y, 0.1, 1.0)
+        return changed_x or changed_y
 
-    def ladder_editor(self, ladder: physics.Ladder) -> None:
-        pass
+    def platform_editor(self) -> None:
+        imgui.set_next_window_size(300, 150)
+        with imgui.begin(self.translate.editor.platform):
+            has_changed = self.position_editor(self.selected_platform.pos)
 
-    def object_editor(self, obj: physics.Object) -> None:
-        pass
+            changed, value = imgui.input_int(self.translate.editor.width, self.selected_platform.width, 1)
+            if changed:
+                if value <= 0:
+                    value = 1
+                self.selected_platform.width = value
+                has_changed = True
+
+            changed, value = imgui.input_int(self.translate.editor.height, self.selected_platform.height, 1)
+            if changed:
+                if value < 0:
+                    value = 0
+                self.selected_platform.height = value
+                has_changed = True
+
+            if imgui.button(self.translate.editor.delete):
+                self.ctx.platforms.remove(self.selected_platform)
+                self.selected_platform = None
+                has_changed = True
+
+        if has_changed:
+            self.file_status.unsaved_changes = True
+
+    def ladder_editor(self) -> None:
+        imgui.set_next_window_size(300, 125)
+        with imgui.begin(self.translate.editor.ladder):
+            has_changed = self.position_editor(self.selected_ladder.pos)
+
+            changed, value = imgui.input_int(self.translate.editor.height, self.selected_ladder.height, 1)
+            if changed:
+                if value < 0:
+                    value = 0
+                self.selected_ladder.height = value
+                has_changed = True
+
+            if imgui.button(self.translate.editor.delete):
+                self.ctx.ladders.remove(self.selected_ladder)
+                self.selected_ladder = None
+                has_changed = True
+
+        if has_changed:
+            self.file_status.unsaved_changes = True
+
+    def object_editor(self) -> None:
+        imgui.set_next_window_size(300, 125)
+        with imgui.begin(self.translate.editor.object):
+            has_changed = self.position_editor(self.selected_object.pos)
+
+            type_list = [value for value in constants.ObjectType.__members__]
+            clicked, index = imgui.combo(self.translate.editor.type, self.selected_object.object_type, type_list)
+            if clicked:
+                self.selected_object.object_type = constants.ObjectType(index)
+                has_changed = True
+
+            if imgui.button(self.translate.editor.delete):
+                self.ctx.objects.remove(self.selected_object)
+                self.selected_object = None
+                has_changed = True
+        
+        if has_changed:
+            self.file_status.unsaved_changes = True
+
+    def update(self, elapsed_ms: int) -> None:
+        if self.mode == EditorMode.SELECT:
+
+            if self.selected_object is not None:
+                self.object_editor()
+
+            elif self.selected_ladder is not None:
+                self.ladder_editor()
+
+            elif self.selected_platform is not None:
+                self.platform_editor()
 
     def update_mouse(self, elapsed_ms: int) -> None:
         """Update mouse-related stuff."""
@@ -219,15 +293,6 @@ class Context:
 
             elif len(self.hovered_ladders) > 0:
                 self.ladder_tooltip(self.hovered_ladders[0])
-
-            elif self.selected_object is not None:
-                self.object_editor(self.selected_object)
-
-            elif self.selected_ladder is not None:
-                self.ladder_editor(self.selected_ladder)
-
-            elif self.selected_platform is not None:
-                self.platform_editor(self.selected_platform)
 
         else:
             self.selected_platform = None
