@@ -7,7 +7,7 @@ from enum import IntEnum, auto
 from core import paths, shapes, constants, translate
 from platformer import physics, renderer
 
-from . import files
+from . import files, widgets
 
 
 MOUSE_SELECT_RADIUS: float = 0.2
@@ -189,29 +189,11 @@ class Context:
             imgui.text(f'{self.translate.editor.position}: {obj.pos}')
             imgui.text(f'{self.translate.editor.type}: {getattr(self.translate.editor, obj.object_type.name)}')
 
-    def position_editor(self, pos: pygame.math.Vector2) -> bool:
-        changed_x, pos.x = imgui.input_float(f'{self.translate.editor.position} x', pos.x, 0.1, 1.0)
-        changed_y, pos.y = imgui.input_float(f'{self.translate.editor.position} y', pos.y, 0.1, 1.0)
-        return changed_x or changed_y
-
     def platform_editor(self) -> None:
         imgui.set_next_window_size(300, 150)
         with imgui.begin(self.translate.editor.platform):
-            has_changed = self.position_editor(self.selected_platform.pos)
-
-            changed, value = imgui.input_int(self.translate.editor.width, self.selected_platform.width, 1)
-            if changed:
-                if value <= 0:
-                    value = 1
-                self.selected_platform.width = value
-                has_changed = True
-
-            changed, value = imgui.input_int(self.translate.editor.height, self.selected_platform.height, 1)
-            if changed:
-                if value < 0:
-                    value = 0
-                self.selected_platform.height = value
-                has_changed = True
+            has_changed = widgets.platform_editor(self.selected_platform, self.translate.editor.position,
+                                                  self.translate.editor.width, self.translate.editor.height)
 
             if imgui.button(self.translate.editor.delete):
                 self.ctx.platforms.remove(self.selected_platform)
@@ -224,14 +206,8 @@ class Context:
     def ladder_editor(self) -> None:
         imgui.set_next_window_size(300, 125)
         with imgui.begin(self.translate.editor.ladder):
-            has_changed = self.position_editor(self.selected_ladder.pos)
-
-            changed, value = imgui.input_int(self.translate.editor.height, self.selected_ladder.height, 1)
-            if changed:
-                if value < 0:
-                    value = 0
-                self.selected_ladder.height = value
-                has_changed = True
+            has_changed = widgets.ladder_editor(self.selected_ladder, self.translate.editor.position,
+                                                self.translate.editor.height)
 
             if imgui.button(self.translate.editor.delete):
                 self.ctx.ladders.remove(self.selected_ladder)
@@ -244,13 +220,8 @@ class Context:
     def object_editor(self) -> None:
         imgui.set_next_window_size(300, 125)
         with imgui.begin(self.translate.editor.object):
-            has_changed = self.position_editor(self.selected_object.pos)
-
-            type_list = [value for value in constants.ObjectType.__members__]
-            clicked, index = imgui.combo(self.translate.editor.type, self.selected_object.object_type, type_list)
-            if clicked:
-                self.selected_object.object_type = constants.ObjectType(index)
-                has_changed = True
+            has_changed = widgets.object_editor(self.selected_object, self.translate.editor.position,
+                                                self.translate.editor.type)
 
             if imgui.button(self.translate.editor.delete):
                 self.ctx.objects.remove(self.selected_object)
