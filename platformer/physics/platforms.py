@@ -1,35 +1,51 @@
 import pygame
 import math
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Optional, Tuple, Callable, Sequence, List
+from enum import IntEnum
 
 from core import shapes
 
 
-HoverFunc = Callable[[float], float]
+class HoverType(IntEnum):
+    NONE = 0
+    SIN = 1
+    COS = 2
 
 
 @dataclass
 class Hovering:
-    x: HoverFunc = None
-    y: HoverFunc = None
-    index: int = 0
+    x: HoverType = HoverType.NONE
+    y: HoverType = HoverType.NONE
     amplitude: float = 1.0
 
-    def get_hover_delta(self, elapsed_ms: int) -> pygame.math.Vector2:
-        """Updates the hovering information and yields by how much hovering is caused.
-        Returns a tuple of delta float x and y.
-        """
+    index: int = 0
+    delta: pygame.math.Vector2 = field(default_factory=pygame.math.Vector2)
+
+    @staticmethod
+    def get_hover_func(value: HoverType) -> Callable[[float], float]:
+        if value == HoverType.SIN:
+            return math.sin
+
+        if value == HoverType.COS:
+            return math.cos
+
+        return lambda x: 0.0
+
+    def does_move(self) -> bool:
+        return self.x != HoverType.NONE or self.y != HoverType.NONE
+
+    def update(self, elapsed_ms: int) -> None:
+        """Updates the hovering information and yields by how much hovering is caused."""
         # calculate movement delta
         self.index += 1
         angle = 2 * math.pi * self.index / 360.0
-        delta = pygame.math.Vector2()
-        if self.x is not None:
-            delta.x = self.x(angle) * elapsed_ms / 1000.0
-        if self.y is not None:
-            delta.y = self.y(angle) * elapsed_ms / 1000.0
-        delta *= self.amplitude
-        return delta
+
+        self.delta = pygame.math.Vector2()
+        self.delta.x = self.get_hover_func(self.x)(angle) * elapsed_ms / 1000.0
+        self.delta.y = self.get_hover_func(self.y)(angle) * elapsed_ms / 1000.0
+
+        self.delta *= self.amplitude
 
 
 @dataclass
@@ -37,24 +53,12 @@ class Platform:
     pos: pygame.math.Vector2  # bottom left
     width: int
     height: int = 0
-    hover: Optional[Hovering] = None
+    hover: Hovering = field(default_factory=Hovering)
 
     def get_line(self) -> shapes.Line:
         """Returns the platform's top edge."""
         y_top = self.pos.y + self.height
         return shapes.Line(self.pos.x, y_top, self.pos.x + self.width, y_top)
-
-    def apply_hovering(self, elapsed_ms: int) -> pygame.math.Vector2:
-        """Moves the platform using the provided hovering data.
-        Returns the direction vector that can be applied to all actors who stand on this platform afterward.
-        """
-        if self.hover is None:
-            return pygame.math.Vector2()
-
-        delta = self.hover.get_hover_delta(elapsed_ms)
-        self.pos += delta
-
-        return delta
 
     def contains_point(self, pos: pygame.math.Vector2) -> bool:
         """Test whether the position is inside the platform. Inside includes all edges except for the top edge.

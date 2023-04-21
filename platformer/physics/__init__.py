@@ -1,4 +1,4 @@
-from .platforms import Hovering, Platform
+from .platforms import HoverType, Hovering, Platform
 from .ladders import Ladder
 from .objects import Object
 from .movement import FaceDirection

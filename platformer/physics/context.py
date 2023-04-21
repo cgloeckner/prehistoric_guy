@@ -15,9 +15,8 @@ class Context:
         self.actors = objectids.IdList[actors.Actor]()
         self.projectiles: List[projectiles.Projectile] = list()
 
-    def create_platform(self, x: float, y: float, width: int, height: int = 0,
-                        hover: Optional[platforms.Hovering] = None) -> platforms.Platform:
-        p = platforms.Platform(pos=pygame.math.Vector2(x, y), width=width, height=height, hover=hover)
+    def create_platform(self, x: float, y: float, width: int, height: int = 0) -> platforms.Platform:
+        p = platforms.Platform(pos=pygame.math.Vector2(x, y), width=width, height=height)
         self.platforms.append(p)
         return p
 

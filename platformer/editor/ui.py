@@ -8,7 +8,7 @@ from platformer import animations, renderer
 from . import preview, context
 
 
-class EditorState(state_machine.State):
+class EditorState(state_machine.State, animations.EventListener):
 
     def __init__(self, engine: state_machine.Engine):
         super().__init__(engine)
@@ -19,6 +19,7 @@ class EditorState(state_machine.State):
         self.cache = resources.Cache()
         self.animations_context = animations.Context()
         self.sprite_context = renderer.Context()
+        self.animations = animations.AnimationSystem(self, self.animations_context, self.context.ctx)
         self.renderer = renderer.Renderer(self.context.cam, engine.buffer, self.context.ctx, self.animations_context,
                                           self.sprite_context, self.cache)
 
@@ -35,6 +36,14 @@ class EditorState(state_machine.State):
     def sleep(self) -> None:
         # pygame.event.set_grab(False)
         pass
+
+    # --- required to initialize animations system (for platform hovering) ---------------------------------------------
+
+    def on_step(self, ani: animations.Actor) -> None: ...
+    def on_climb(self, ani: animations.Actor) -> None: ...
+    def on_attack(self, ani: animations.Actor) -> None: ...
+    def on_throw(self, ani: animations.Actor) -> None: ...
+    def on_died(self, ani: animations.Actor) -> None: ...
 
     # ------------------------------------------------------------------------------------------------------------------
 
@@ -270,6 +279,7 @@ class EditorState(state_machine.State):
 
     def update(self, elapsed_ms: int) -> None:
         """Update various things."""
+        self.animations.update(elapsed_ms)
         self.renderer.update(elapsed_ms)
 
         if not self.engine.wrapper.io.want_capture_keyboard:

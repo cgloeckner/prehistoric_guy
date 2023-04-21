@@ -117,6 +117,25 @@ class ShapeRenderer(base.Renderer):
         c = pygame.Color(self.mapping.projectile)
         pygame.gfxdraw.circle(self.target, *pos.center, r, c)
 
+    def draw_position(self, pos: pygame.math.Vector2) -> None:
+        pos = self.from_world_coord(pos)
+        x = int(pos.x)
+        y = int(pos.y)
+        r = int(constants.OBJECT_RADIUS * constants.WORLD_SCALE) // 2
+        c = pygame.Color(self.mapping.platform)
+        pygame.gfxdraw.line(self.target, x - r, y - r, x + r, y + r, c)
+        pygame.gfxdraw.line(self.target, x - r, y + r, x + r, y - r, c)
+
+    def draw_line(self, start_point: pygame.math.Vector2, end_point: pygame.math.Vector2) -> None:
+        start_point = self.from_world_coord(start_point)
+        end_point = self.from_world_coord(end_point)
+        x1 = int(start_point.x)
+        y1 = int(start_point.y)
+        x2 = int(end_point.x)
+        y2 = int(end_point.y)
+        c = pygame.Color(self.mapping.platform)
+        pygame.gfxdraw.line(self.target, x1, y1, x2, y2, c)
+
     def draw(self) -> None:
         for platform in self.physics_context.platforms:
             self.draw_platform(platform)

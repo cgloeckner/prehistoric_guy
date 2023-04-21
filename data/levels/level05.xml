@@ -2,13 +2,13 @@
 <level>
 	<platform x="-1.0000001192092896" y="-1.0000001192092896" width="40" height="1"/>
 	<platform x="2.0" y="1.0" width="1"/>
-	<platform x="8.0" y="1.0" width="1"/>
 	<platform x="14.0" y="1.0" width="1"/>
+	<platform x="9.607358082721287" y="1.6129246406165596" width="1" hover_x="sin" hover_y="cos"/>
 	<platform x="10.0" y="2.0" width="4"/>
-	<platform x="1.0" y="2.0" width="1"/>
+	<platform x="-0.6809123448116017" y="2.500561358950056" width="1" hover_x="sin" hover_y="cos" amplitude="-1.0"/>
 	<platform x="0.0" y="3.0" width="1"/>
 	<platform x="2.0" y="4.0" width="4"/>
-	<platform x="7.0" y="4.0" width="1"/>
+	<platform x="7.2884285931451185" y="4.638159015745375" width="1" hover_x="sin" hover_y="cos"/>
 	<platform x="8.0" y="5.0" width="1"/>
 	<platform x="0.0" y="6.0" width="4"/>
 	<platform x="0.0" y="6.0" width="4"/>

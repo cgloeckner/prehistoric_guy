@@ -190,10 +190,11 @@ class Context:
             imgui.text(f'{self.translate.editor.type}: {getattr(self.translate.editor, obj.object_type.name)}')
 
     def platform_editor(self) -> None:
-        imgui.set_next_window_size(300, 150)
+        imgui.set_next_window_size(350, 250)
         with imgui.begin(self.translate.editor.platform):
             has_changed = widgets.platform_editor(self.selected_platform, self.translate.editor.position,
-                                                  self.translate.editor.width, self.translate.editor.height)
+                                                  self.translate.editor.width, self.translate.editor.height,
+                                                  self.translate.editor.hover, self.translate.editor.amplitude)
 
             if imgui.button(self.translate.editor.delete):
                 self.ctx.platforms.remove(self.selected_platform)
@@ -332,3 +333,8 @@ class Context:
             render_api.draw_ladder(self.preview_ladder)
         if self.preview_object is not None:
             render_api.draw_object(self.preview_object)
+
+        if self.selected_platform is not None and self.selected_platform.hover.does_move() and \
+                hasattr(self.selected_platform, 'original_pos'):
+            render_api.draw_position(self.selected_platform.original_pos)
+            render_api.draw_line(self.selected_platform.original_pos, self.selected_platform.pos)

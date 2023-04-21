@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 
 from core import objectids
 
-from . import actions, frames, oscillation
+from . import actions, frames, oscillation, hover
 from platformer import physics
 
 
@@ -92,7 +92,7 @@ class AnimationSystem(object):
         physics_actor = self.physics_context.actors.get_by_id(actor.object_id)
         physics_actor.can_climb = actor.frame.action not in actions.BUSY_ANIMATIONS
 
-    def update_actor(self, actor: Actor, elapsed_ms) -> None:
+    def update_actor(self, actor: Actor, elapsed_ms: int) -> None:
         """Updates the actor using all related sub-animations."""
         # frame animation
         if actor.frame.step_frame(elapsed_ms):
@@ -104,9 +104,22 @@ class AnimationSystem(object):
         # oscillation animation
         actor.oscillate.update(actor.frame.action, elapsed_ms)
 
+    def update_platform(self, platform: physics.Platform, elapsed_ms: int) -> None:
+        """Updates the platform's hovering."""
+        platform.hover.update(elapsed_ms)
+        if platform.hover.delta.magnitude_squared() == 0.0:
+            # no motion
+            return
+
+        platform.pos += platform.hover.delta
+        hover.update_actors(platform, self.physics_context.actors)
+
     def update(self, elapsed_ms: int) -> None:
         """Updates all animations' frame durations. It automatically switches frames and loops/returns/freezes the
         animation once finished.
         """
         for actor in self.context.actors:
             self.update_actor(actor, elapsed_ms)
+
+        for platform in self.physics_context.platforms:
+            self.update_platform(platform, elapsed_ms)

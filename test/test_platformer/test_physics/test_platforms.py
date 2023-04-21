@@ -1,5 +1,4 @@
 import unittest
-import math
 import pygame
 from typing import List
 
@@ -8,67 +7,80 @@ from platformer.physics import platforms
 
 class PlatformPhysicsTest(unittest.TestCase):
 
-    # Case 1: no hovering functions yields no movement
-    def test__get_hover_delta__1(self):
+    def test__does_move(self):
         hover = platforms.Hovering()
-        delta = hover.get_hover_delta(25)
+        self.assertFalse(hover.does_move())
+
+        hover = platforms.Hovering(x=platforms.HoverType.SIN)
+        self.assertTrue(hover.does_move())
+
+        hover = platforms.Hovering(y=platforms.HoverType.COS)
+        self.assertTrue(hover.does_move())
+
+        hover = platforms.Hovering(x=platforms.HoverType.COS, y=platforms.HoverType.SIN)
+        self.assertTrue(hover.does_move())
+
+    # ------------------------------------------------------------------------------------------------------------------
+
+    # Case 1: no hovering functions yields no movement
+    def test__update__1(self):
+        hover = platforms.Hovering()
+        hover.update(25)
 
         self.assertEqual(hover.index, 1)
-        self.assertAlmostEqual(delta.x, 0.0)
-        self.assertAlmostEqual(delta.y, 0.0)
+        self.assertAlmostEqual(hover.delta.x, 0.0)
+        self.assertAlmostEqual(hover.delta.y, 0.0)
 
     # Case 2: hovering can be either or in both directions
-    def test__get_hover_delta__2(self):
-        hover = platforms.Hovering(x=math.sin)
-        delta = hover.get_hover_delta(25)
+    def test__update__2(self):
+        hover = platforms.Hovering(x=platforms.HoverType.SIN)
+        hover.update(25)
 
         self.assertEqual(hover.index, 1)
-        self.assertGreater(delta.x, 0.0)
-        self.assertAlmostEqual(delta.y, 0.0)
+        self.assertGreater(hover.delta.x, 0.0)
+        self.assertAlmostEqual(hover.delta.y, 0.0)
 
-        hover = platforms.Hovering(y=math.sin)
-        delta = hover.get_hover_delta(25)
-
-        self.assertEqual(hover.index, 1)
-        self.assertAlmostEqual(delta.x, 0.0)
-        self.assertGreater(delta.y, 0.0)
-
-        hover = platforms.Hovering(x=math.cos, y=math.sin)
-        delta = hover.get_hover_delta(25)
+        hover = platforms.Hovering(y=platforms.HoverType.SIN)
+        hover.update(25)
 
         self.assertEqual(hover.index, 1)
-        self.assertGreater(delta.x, 0.0)
-        self.assertGreater(delta.y, 0.0)
+        self.assertAlmostEqual(hover.delta.x, 0.0)
+        self.assertGreater(hover.delta.y, 0.0)
+
+        hover = platforms.Hovering(x=platforms.HoverType.COS, y=platforms.HoverType.SIN)
+        hover.update(25)
+
+        self.assertEqual(hover.index, 1)
+        self.assertGreater(hover.delta.x, 0.0)
+        self.assertGreater(hover.delta.y, 0.0)
 
     # Case 3: hovering with zero amplitude yields no movement
-    def test__get_hover_delta__3(self):
-        hover = platforms.Hovering(x=math.sin, y=math.cos, amplitude=0.0)
-        delta = hover.get_hover_delta(25)
+    def test__update__3(self):
+        hover = platforms.Hovering(x=platforms.HoverType.SIN, y=platforms.HoverType.COS, amplitude=0.0)
+        hover.update(25)
 
         self.assertEqual(hover.index, 1)
-        self.assertAlmostEqual(delta.x, 0.0)
-        self.assertAlmostEqual(delta.y, 0.0)
+        self.assertAlmostEqual(hover.delta.x, 0.0)
+        self.assertAlmostEqual(hover.delta.y, 0.0)
 
     # ------------------------------------------------------------------------------------------------------------------
 
     def test__apply_hovering(self):
-        hover = platforms.Hovering(x=math.sin, y=math.cos)
+        # no hovering yields no motion
+        hover = platforms.Hovering()
         platform = platforms.Platform(pygame.math.Vector2(3, 1), width=3)
 
-        # no hovering yields no motion
-        delta = platform.apply_hovering(10)
-        self.assertAlmostEqual(delta.x, 0.0)
-        self.assertAlmostEqual(delta.y, 0.0)
+        hover.update(10)
+        old_pos = platform.pos.copy()
+        self.assertEqual(platform.pos, old_pos + hover.delta)
 
         # hovering yields some motion
-        hover_copy = platforms.Hovering(x=math.sin, y=math.cos)
+        hover_copy = platforms.Hovering(x=platforms.HoverType.SIN, y=platforms.HoverType.COS)
         platform.hover = hover
-        delta = platform.apply_hovering(10)
-        expected = hover_copy.get_hover_delta(10)
-        self.assertAlmostEqual(delta.x, expected.x)
-        self.assertAlmostEqual(delta.y, expected.y)
-        self.assertAlmostEqual(platform.pos.x, 3 + delta.x)
-        self.assertAlmostEqual(platform.pos.y, 1 + delta.y)
+
+        hover.update(10)
+        old_pos = platform.pos.copy()
+        self.assertEqual(platform.pos, old_pos + hover.delta)
 
     # ------------------------------------------------------------------------------------------------------------------
 

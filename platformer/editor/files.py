@@ -41,6 +41,12 @@ def to_xml(ctx: physics.Context) -> et.Element:
         elem.set('width', str(platform.width))
         if platform.height > 0:
             elem.set('height', str(platform.height))
+        if platform.hover.x != physics.HoverType.NONE:
+            elem.set('hover_x', platform.hover.x.name.lower())
+        if platform.hover.y != physics.HoverType.NONE:
+            elem.set('hover_y', platform.hover.y.name.lower())
+        if platform.hover.amplitude != 1.0:
+            elem.set('amplitude', str(platform.hover.amplitude))
 
     for ladder in ctx.ladders:
         elem = et.SubElement(root, 'ladder')
@@ -52,7 +58,7 @@ def to_xml(ctx: physics.Context) -> et.Element:
         elem = et.SubElement(root, 'object')
         elem.set('x', str(obj.pos.x))
         elem.set('y', str(obj.pos.y))
-        elem.set('object_type', obj.object_type.name)
+        elem.set('object_type', obj.object_type.name.lower())
 
     return root
 
@@ -68,7 +74,12 @@ def from_xml(root: et.Element) -> physics.Context:
         if child.tag == 'platform':
             width = int(child.attrib['width'])
             height = int(child.attrib['height']) if 'height' in child.attrib else 0
-            ctx.create_platform(x=x, y=y, width=width, height=height)
+            p = ctx.create_platform(x=x, y=y, width=width, height=height)
+            if 'hover_x' in child.attrib:
+                p.hover.x = physics.HoverType.__members__[child.attrib['hover_x'].upper()]
+            if 'hover_y' in child.attrib:
+                p.hover.y = physics.HoverType.__members__[child.attrib['hover_y'].upper()]
+            p.hover.amplitude = float(child.attrib['amplitude']) if 'amplitude' in child.attrib else 1.0
 
         elif child.tag == 'ladder':
             height = int(child.attrib['height'])
