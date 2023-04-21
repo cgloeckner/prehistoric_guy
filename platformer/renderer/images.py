@@ -8,8 +8,6 @@ from .. import animations, physics
 from . import base, shapes
 
 
-NUM_FRAMES_PER_TILE: int = 3
-
 # used by editor
 MASK_SET_COLOR = pygame.Color(255, 215, 0, 80)
 MASK_UNSET_COLOR = pygame.Color(0, 0, 0, 0)
@@ -76,39 +74,32 @@ class ImageRenderer(shapes.ShapeRenderer):
         self.tiles = self.cache.get_image(tile_path)
 
     @staticmethod
-    def get_platform_clip(tileset_col: int) -> Platform:
+    def get_platform_clip() -> Platform:
         left_clip_rect = pygame.Rect(0, 0, constants.WORLD_SCALE, constants.WORLD_SCALE)
-        left_clip_rect.topleft = (NUM_FRAMES_PER_TILE * tileset_col * constants.WORLD_SCALE,
-                                  TileOffset.PLATFORM * constants.WORLD_SCALE)
+        left_clip_rect.topleft = (0, TileOffset.PLATFORM * constants.WORLD_SCALE)
 
         top_clip_rect = pygame.Rect(0, 0, constants.WORLD_SCALE, constants.WORLD_SCALE)
-        top_clip_rect.topleft = ((NUM_FRAMES_PER_TILE * tileset_col + 1) * constants.WORLD_SCALE,
-                                 TileOffset.PLATFORM * constants.WORLD_SCALE)
+        top_clip_rect.topleft = (constants.WORLD_SCALE, TileOffset.PLATFORM * constants.WORLD_SCALE)
 
         right_clip_rect = pygame.Rect(0, 0, constants.WORLD_SCALE, constants.WORLD_SCALE)
-        right_clip_rect.topleft = ((NUM_FRAMES_PER_TILE * tileset_col + 2) * constants.WORLD_SCALE,
-                                   TileOffset.PLATFORM * constants.WORLD_SCALE)
+        right_clip_rect.topleft = (2 * constants.WORLD_SCALE, TileOffset.PLATFORM * constants.WORLD_SCALE)
 
         tex_clip_rect = pygame.Rect(0, 0, constants.WORLD_SCALE, constants.WORLD_SCALE)
-        tex_clip_rect.topleft = ((NUM_FRAMES_PER_TILE * tileset_col + 1) * constants.WORLD_SCALE,
-                                 TileOffset.TEXTURE * constants.WORLD_SCALE)
+        tex_clip_rect.topleft = (constants.WORLD_SCALE, TileOffset.TEXTURE * constants.WORLD_SCALE)
 
         return Platform(left_clip_rect=left_clip_rect, top_clip_rect=top_clip_rect, right_clip_rect=right_clip_rect,
                         tex_clip_rect=tex_clip_rect)
 
     @staticmethod
-    def get_ladder_clip(tileset_col: int) -> Ladder:
+    def get_ladder_clip() -> Ladder:
         top_clip_rect = pygame.Rect(0, 0, constants.WORLD_SCALE, constants.WORLD_SCALE)
-        top_clip_rect.topleft = (NUM_FRAMES_PER_TILE * tileset_col * constants.WORLD_SCALE,
-                                 TileOffset.LADDER * constants.WORLD_SCALE)
+        top_clip_rect.topleft = (0, TileOffset.LADDER * constants.WORLD_SCALE)
 
         mid_clip_rect = pygame.Rect(0, 0, constants.WORLD_SCALE, constants.WORLD_SCALE)
-        mid_clip_rect.topleft = ((NUM_FRAMES_PER_TILE * tileset_col + 1) * constants.WORLD_SCALE,
-                                 TileOffset.LADDER * constants.WORLD_SCALE)
+        mid_clip_rect.topleft = (constants.WORLD_SCALE, TileOffset.LADDER * constants.WORLD_SCALE)
 
         bottom_clip_rect = pygame.Rect(0, 0, constants.WORLD_SCALE, constants.WORLD_SCALE)
-        bottom_clip_rect.topleft = ((NUM_FRAMES_PER_TILE * tileset_col + 2) * constants.WORLD_SCALE,
-                                    TileOffset.LADDER * constants.WORLD_SCALE)
+        bottom_clip_rect.topleft = (2 * constants.WORLD_SCALE, TileOffset.LADDER * constants.WORLD_SCALE)
 
         return Ladder(top_clip_rect=top_clip_rect, mid_clip_rect=mid_clip_rect, bottom_clip_rect=bottom_clip_rect)
 
@@ -145,7 +136,7 @@ class ImageRenderer(shapes.ShapeRenderer):
 
         pos = self.get_platform_rect(platform)
         pos.h *= -1
-        clip = self.get_platform_clip(tileset_col=0)
+        clip = self.get_platform_clip()
 
         # draw textures
         pos_tmp = pos.copy()
@@ -180,7 +171,7 @@ class ImageRenderer(shapes.ShapeRenderer):
             src = pygame.mask.from_surface(src).to_surface(setcolor=MASK_SET_COLOR, unsetcolor=MASK_UNSET_COLOR)
 
         pos = self.get_ladder_rect(ladder)
-        clip = self.get_ladder_clip(tileset_col=0)
+        clip = self.get_ladder_clip()
 
         # draw upper part of the ladder
         pos.y -= constants.WORLD_SCALE
