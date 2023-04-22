@@ -11,7 +11,11 @@ NUM_SCALE_DOUBLE: int = 1
 RESOLUTION_X: int = WORLD_SCALE * 10 * 2 ** NUM_SCALE_DOUBLE
 RESOLUTION_Y: int = int(RESOLUTION_X * 0.625)  # 320x200 aspect ratio
 
-SPRITE_CLOTHES_COLORS = ['#ff0000', '#800000', '#bf0000']
+SPRITE_CLOTHES_COLORS = ['#42200f', '#834222', '#9d633d']
+SNOW_CLOTHES_COLORS = ['#8996c6', '#aac2ff', '#a5acc4']
+GRASS_CLOTHES_COLOR = ['#0c2618', '#123924', '#266e48']
+STONE_CLOTHES_COLOR = ['#4a4a4a', '#8c8c8c', '#adadad']
+EMBER_CLOTHES_COLOR = ['#ad0021', '#ef6221', '#efce21']
 
 
 class ObjectType(IntEnum):

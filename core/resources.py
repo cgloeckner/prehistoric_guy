@@ -1,50 +1,28 @@
 import pygame
 import pathlib
-from dataclasses import dataclass
 from typing import Dict, Tuple, List, Optional
 
 from core.constants import *
 from core import paths
 
 
-@dataclass
-class HslTransform:
-    """
-    hue: [0; 360)
-    saturation: [0; 100]
-    lightness: [0; 100]
-    """
-    hue: Optional[float] = None
-    saturation: Optional[float] = None
-    lightness: Optional[float] = None
-
-
-def transform_image_hsl(surface: pygame.Surface, transform: HslTransform, color_strings: List[str] = None) -> None:
+def transform_color_replace(surface: pygame.Surface, color_str_dict: Dict[str, str]) -> None:
     """Rotates a surface's colors in place. Only pixels are modified whose color is in the given list. The alteration
     is based on the given delta tuple: hue, saturation, lightness. Transparent pixels are ignored.
     """
     pixels = pygame.PixelArray(surface)
-    matching = [pygame.Color(c) for c in color_strings] if color_strings is not None else []
+    mapping = dict()
+    for color_str in color_str_dict:
+        mapping[tuple(pygame.Color(color_str))] = pygame.Color(color_str_dict[color_str])
 
     for y in range(surface.get_height()):
         for x in range(surface.get_width()):
             if pixels[x, y] & 0xff000000 == 0:
                 continue
 
-            color = surface.unmap_rgb(pixels[x, y])
-            if len(matching) > 0 and color not in matching:
-                continue
-
-            # change pixel's hue (rotated) and saturation / lightness (bound)
-            hue, sat, light, alpha = color.hsla
-            if transform.hue is not None:
-                hue = transform.hue % 360.0
-            if transform.saturation is not None:
-                sat = max(0.0, min(100.0, transform.saturation))
-            if transform.lightness is not None:
-                light = max(0.0, min(100.0, transform.lightness))
-            color.hsla = hue, sat, light, alpha
-            pixels[x, y] = surface.map_rgb(color)
+            color_key = tuple(surface.unmap_rgb(pixels[x, y]))
+            if color_key in mapping:
+                pixels[x, y] = mapping[color_key]
 
     pixels.close()
 
@@ -77,6 +55,26 @@ def fill_pixels(surface: pygame.Surface, color: pygame.Color):
     pixels.close()
 
 
+def add_outline(surface: pygame.Surface, color: pygame.Color):
+    """Adds a thin outline around each non-transparent pixel."""
+    pixels = pygame.PixelArray(surface)
+    w, h = surface.get_size()
+    mask = pygame.mask.from_surface(surface)
+
+    for y in range(h):
+        for x in range(w):
+            if mask.get_at((x, y)) == 1:
+                continue
+
+            if x-1 >= 0 and mask.get_at((x-1, y)) == 1 or \
+                x+1 < w and mask.get_at((x+1, y)) == 1 or \
+                y-1 >= 0 and mask.get_at((x, y-1)) == 1 or \
+                y+1 < h and mask.get_at((x, y+1)) == 1:
+                pixels[x, y] = color
+
+    pixels.close()
+
+
 COLOR_TUPLE = Tuple[int, int, int]
 RECT_TUPLE = Tuple[int, int, int, int]
 HSL_TUPLE = Tuple[float, float, float]
@@ -96,7 +94,7 @@ class Cache(object):
         self.fonts: Dict[str, pygame.font.Font] = dict()
 
         # sprites include their flipped frames
-        self.sprites: Dict[str, pygame.Surface] = dict()
+        self.sprites: Dict[str, COLOR_TUPLE] = dict()
 
         # hsl-transformed and rotated surfaces
         self.hsl_transforms: Dict[Tuple[pygame.Surface, HSL_TUPLE, Optional[COLOR_TUPLE]]] = dict()
@@ -110,14 +108,20 @@ class Cache(object):
 
         return self.images[filename]
 
-    def get_sprite_sheet(self, path: pathlib.Path) -> pygame.Surface:
+    def get_sprite_sheet(self, path: pathlib.Path, outline_color: Optional[pygame.Color] = None) -> pygame.Surface:
         """Adds the x-flipped sprites into the sprite sheet. Returns the finished sheet."""
         filename = str(path)
-        if filename not in self.sprites:
+        color_tuple = tuple(outline_color) if outline_color is not None else None
+        key = (filename, color_tuple)
+        if key not in self.sprites:
             image = self.get_image(path)
-            self.sprites[filename] = flip_sprite_sheet(image, SPRITE_SCALE)
+            surface = flip_sprite_sheet(image, SPRITE_SCALE)
+            if outline_color is not None:
+                add_outline(surface, outline_color)
 
-        return self.sprites[filename]
+            self.sprites[key] = surface
+
+        return self.sprites[key]
 
     def get_font(self, fontname: str = '', font_size: int = 18) -> pygame.font.Font:
         """Loads a SysFont via filename and size. Returns the font object."""
@@ -126,23 +130,6 @@ class Cache(object):
 
         # FIXME: implement font loading
         raise NotImplementedError()
-
-    def get_hsl_transformed(self, surface: pygame.Surface, hsl: HslTransform, colors: List[str] = None)\
-            -> pygame.Surface:
-        """If not cached, a copy of the given surface is created and all non-transparent pixels are replaced with the
-        given color. If cached, the existing copy is used.
-        Only colors specified are altered.
-        Returns the colored surface.
-        """
-        hsl_tuple = (hsl.hue, hsl.saturation, hsl.lightness)
-        color_tuple = tuple(colors) if colors is not None else None
-        key = (surface, hsl_tuple, color_tuple)
-        if key not in self.hsl_transforms:
-            copy = surface.copy()
-            transform_image_hsl(copy, hsl, colors)
-            self.hsl_transforms[key] = copy
-
-        return self.hsl_transforms[key]
 
     def get_rotated_surface_clip(self, surface: pygame.Surface, rect: pygame.Rect, angle: float, flip: bool)\
             -> pygame.Surface:

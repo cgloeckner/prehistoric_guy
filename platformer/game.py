@@ -16,12 +16,7 @@ class GameState(state_machine.State, factory.EventListener):
         # --- loading some resources ----------------------------------------------------------------------------------
         self.font = self.cache.get_font()
         guy_path = self.engine.paths.sprite('guy')
-        generic_guy = self.cache.get_sprite_sheet(guy_path)
-        blue_guy = self.cache.get_hsl_transformed(generic_guy, resources.HslTransform(hue=216),
-                                                  constants.SPRITE_CLOTHES_COLORS)
-        grey_guy = self.cache.get_hsl_transformed(generic_guy, resources.HslTransform(saturation=0),
-                                                  constants.SPRITE_CLOTHES_COLORS)
-
+        player_guy = self.cache.get_sprite_sheet(guy_path)
         # --- setup object manager with player character ---------------------------------------------------------------
         self.factory = factory.Factory(self, self.cache, engine.buffer)
         self.engine.fill_color = self.factory.parallax.get_fill_color()
@@ -30,7 +25,7 @@ class GameState(state_machine.State, factory.EventListener):
         filename = self.engine.paths.level(level_files[-1])
         editor.load_level(filename, self.factory.ctx.physics)
 
-        player_char_actor = self.factory.create_character(sprite_sheet=blue_guy, x=2, y=5, max_hit_points=5,
+        player_char_actor = self.factory.create_character(sprite_sheet=player_guy, x=2, y=1.5, max_hit_points=5,
                                                           num_axes=10)
         self.factory.create_player(player_char_actor,
                                    keys=controls.Keybinding(left_key=pygame.K_a, right_key=pygame.K_d,
@@ -40,8 +35,11 @@ class GameState(state_machine.State, factory.EventListener):
         self.factory.ctx.physics.actors.get_by_id(player_char_actor.object_id)
 
         # --- create demo scene ---------------------------------------------------------------------------------------
-        self.factory.create_enemy(sprite_sheet=grey_guy, x=6.5, y=6.5, max_hit_points=2, num_axes=0)
-        self.factory.create_enemy(sprite_sheet=grey_guy, x=6.5, y=4.5, max_hit_points=2, num_axes=0)
+        for value, color_set in enumerate([constants.SNOW_CLOTHES_COLORS, constants.GRASS_CLOTHES_COLOR,
+                                           constants.STONE_CLOTHES_COLOR, constants.EMBER_CLOTHES_COLOR]):
+            enemy_guy = player_guy.copy()
+            resources.transform_color_replace(enemy_guy, dict(zip(constants.SPRITE_CLOTHES_COLORS, color_set)))
+            self.factory.create_enemy(sprite_sheet=enemy_guy, x=6.25 + value, y=1.5, max_hit_points=3, num_axes=0)
 
     # ------------------------------------------------------------------------------------------------------------------
     # --- physics events ---
