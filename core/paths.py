@@ -10,11 +10,13 @@ class DataPath(object):
         self.language_ext = 'ini'
         self.tile_ext = 'png'
         self.sprite_ext = 'png'
+        self.background_ext = 'png'
 
         self._ensure(self.level())
         self._ensure(self.language())
         self._ensure(self.tile())
         self._ensure(self.sprite())
+        self._ensure(self.background())
 
     @staticmethod
     def _ensure(directory: pathlib.Path):
@@ -39,6 +41,9 @@ class DataPath(object):
     def sprite(self, filename: str = '') -> pathlib.Path:
         return self._combine('sprites', filename, self.sprite_ext)
 
+    def background(self, filename: str = '') -> pathlib.Path:
+        return self._combine('backgrounds', filename, self.background_ext)
+
     def __call__(self, filename: str, ext: str) -> pathlib.Path:
         return self.root / f'{filename}.{ext}'
 
@@ -57,3 +62,6 @@ class DataPath(object):
 
     def all_sprites(self) -> List[str]:
         return DataPath.get_files(self.sprite(), self.sprite_ext)
+
+    def all_backgrounds(self) -> List[str]:
+        return DataPath.get_files(self.background(), self.background_ext)

@@ -8,8 +8,8 @@ from platformer import physics
 def position_editor(pos: pygame.math.Vector2, label: str) -> bool:
     """Provides editor UI for a position vector and returns whether it was changed.
     """
-    changed_x, pos.x = imgui.input_float(f'{label} x', pos.x, 0.1, 1.0)
-    changed_y, pos.y = imgui.input_float(f'{label} y', pos.y, 0.1, 1.0)
+    changed_x, pos.x = imgui.input_float(f'{label} x', pos.x, 1.0, 2.0)
+    changed_y, pos.y = imgui.input_float(f'{label} y', pos.y, 1.0, 2.0)
     return changed_x or changed_y
 
 

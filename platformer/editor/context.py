@@ -63,7 +63,7 @@ class Context:
         self.ctx.objects.clear()
 
         # reset camera
-        self.cam.topleft = pygame.math.Vector2(0, 0)
+        self.cam.reset_pos()
 
     def load(self):
         """Loads the level from file."""
@@ -74,7 +74,7 @@ class Context:
         files.apply_context(self.ctx, ctx)
 
         # reset camera
-        self.cam.topleft = pygame.math.Vector2(-1, -1)
+        self.cam.reset_pos()
 
     def save(self):
         """Saves the level to file."""
@@ -124,7 +124,8 @@ class Context:
         if self.mode == EditorMode.CREATE_PLATFORM and self.preview_platform is not None:
             self.ctx.create_platform(x=self.preview_platform.pos.x,
                                      y=self.preview_platform.pos.y,
-                                     width=self.preview_platform.width)
+                                     width=self.preview_platform.width,
+                                     height=self.preview_platform.height)
 
         elif self.mode == EditorMode.CREATE_LADDER and self.preview_ladder is not None:
             self.ctx.create_ladder(x=self.preview_ladder.pos.x,
@@ -168,6 +169,19 @@ class Context:
             # change object type within bounds
             new_value = (self.preview_obj_type + event.y) % len(constants.ObjectType.__members__)
             self.preview_obj_type = constants.ObjectType(new_value)
+
+    def on_key_pressed(self, key: int) -> None:
+        """Handles pygame.KEYDOWN"""
+        if self.preview_platform is not None:
+            if key in [pygame.K_KP_PLUS, pygame.K_PLUS]:
+                self.preview_platform.height += 1
+                if self.preview_platform.height > 10:
+                    self.preview_platform.height = 10
+
+            elif key in [pygame.K_KP_MINUS, pygame.K_MINUS]:
+                self.preview_platform.height -= 1
+                if self.preview_platform.height < 0:
+                    self.preview_platform.height = 0
 
     def platform_tooltip(self, platform: physics.Platform) -> None:
         """Show platform information as tooltip."""

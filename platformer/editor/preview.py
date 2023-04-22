@@ -27,6 +27,7 @@ class PreviewState(state_machine.State, factory.EventListener):
         self.renderer = renderer.Renderer(self.camera, engine.buffer, self.physics_ctx, self.animations_ctx,
                                           self.renderer_ctx, self.cache)
         self.renderer.load_fileset(tileset_index)
+        self.parallax = renderer.ParallaxRenderer(self.camera, engine.buffer, self.cache)
 
         self.players = controls.PlayersSystem(self.players_ctx, self.physics_ctx, self.animations_ctx)
 
@@ -98,7 +99,7 @@ class PreviewState(state_machine.State, factory.EventListener):
     def update(self, elapsed_ms: int) -> None:
         # let camera follow player
         phys_actor = self.physics_ctx.actors.get_by_id(1)
-        self.camera.set_center(phys_actor.pos, constants.WORLD_SCALE)
+        self.camera.set_center_x(phys_actor.pos.x, constants.WORLD_SCALE)
 
         self.physics.update(elapsed_ms)
         self.animations.update(elapsed_ms)
@@ -106,6 +107,7 @@ class PreviewState(state_machine.State, factory.EventListener):
         self.players.update(elapsed_ms)
 
     def draw(self) -> None:
+        self.parallax.draw()
         self.renderer.draw()
 
         # draw FPS

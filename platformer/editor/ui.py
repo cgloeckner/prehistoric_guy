@@ -22,8 +22,11 @@ class EditorState(state_machine.State, animations.EventListener):
         self.renderer = renderer.Renderer(self.context.cam, engine.buffer, self.context.ctx, self.animations_context,
                                           self.sprite_context, self.cache)
 
+        self.parallax = renderer.ParallaxRenderer(self.context.cam, engine.buffer, self.cache)
+
         self.font = self.cache.get_font()
         self.quit = False
+        self.engine.fill_color = pygame.Color('#aac2ff')
 
     def __del__(self):
         pass
@@ -250,6 +253,10 @@ class EditorState(state_machine.State, animations.EventListener):
                 elif event.button == 3:
                     self.context.on_right_click(event)
 
+        if not self.engine.wrapper.io.want_capture_keyboard:
+            if event.type == pygame.KEYDOWN:
+                self.context.on_key_pressed(event.key)
+
     def on_level_new(self) -> None:
         """Callback for creating a new level."""
         self.context.reset()
@@ -274,10 +281,6 @@ class EditorState(state_machine.State, animations.EventListener):
             self.context.cam.topleft.x -= 0.01 * elapsed_ms
         if keys[pygame.K_RIGHT]:
             self.context.cam.topleft.x += 0.01 * elapsed_ms
-        if keys[pygame.K_UP]:
-            self.context.cam.topleft.y += 0.01 * elapsed_ms
-        if keys[pygame.K_DOWN]:
-            self.context.cam.topleft.y -= 0.01 * elapsed_ms
 
     def update(self, elapsed_ms: int) -> None:
         """Update various things."""
@@ -301,5 +304,6 @@ class EditorState(state_machine.State, animations.EventListener):
 
     def draw(self) -> None:
         """Draw scene and things the like."""
+        self.parallax.draw()
         self.renderer.draw()
         self.context.draw(self.renderer)

@@ -43,3 +43,11 @@ class DataPathTest(unittest.TestCase):
 
             sprite_file = d.sprite('bob')
             self.assertEqual(sprite_file.suffix, '.png')
+
+            # data/backgrounds
+            background_path = d.background()
+            self.assertTrue(background_path.exists())
+            self.assertTrue(background_path.is_dir())
+
+            background_file = d.background('epic')
+            self.assertEqual(background_file.suffix, '.png')
