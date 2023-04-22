@@ -31,6 +31,8 @@ class PreviewState(state_machine.State, factory.EventListener):
 
         self.players = controls.PlayersSystem(self.players_ctx, self.physics_ctx, self.animations_ctx)
 
+        self.engine.fill_color = self.parallax.get_fill_color()
+
         # load level
         files.apply_context(self.physics_ctx, src)
 
@@ -103,6 +105,7 @@ class PreviewState(state_machine.State, factory.EventListener):
 
         self.physics.update(elapsed_ms)
         self.animations.update(elapsed_ms)
+        self.parallax.update(elapsed_ms)
         self.renderer.update(elapsed_ms)
         self.players.update(elapsed_ms)
 

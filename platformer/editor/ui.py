@@ -26,7 +26,7 @@ class EditorState(state_machine.State, animations.EventListener):
 
         self.font = self.cache.get_font()
         self.quit = False
-        self.engine.fill_color = pygame.Color('#aac2ff')
+        self.engine.fill_color = self.parallax.get_fill_color()
 
     def __del__(self):
         pass
@@ -285,6 +285,7 @@ class EditorState(state_machine.State, animations.EventListener):
     def update(self, elapsed_ms: int) -> None:
         """Update various things."""
         self.animations.update(elapsed_ms)
+        self.parallax.update(elapsed_ms)
         self.renderer.update(elapsed_ms)
 
         if not self.engine.wrapper.io.want_capture_keyboard:

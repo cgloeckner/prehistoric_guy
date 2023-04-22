@@ -1,5 +1,5 @@
 import pygame
-from typing import List
+import math
 
 from core import constants, resources
 
@@ -7,6 +7,11 @@ from . import base
 
 
 PARALLAX_SPEED: float = 7.5
+
+CLOUD_LAYER: int = 0
+CLOUD_SPEED: float = 0.5
+CLOUD_DELTA_Y: float = CLOUD_SPEED * 5
+CLOUD_PERIOD_LENGTH: float = 15.0
 
 
 class ParallaxRenderer:
@@ -19,6 +24,9 @@ class ParallaxRenderer:
         self.background = None
         self.load_background(0)
 
+        self.clouds_offset = 0
+        self.cloud_speed = 1.0
+
     def load_background(self, index: int) -> None:
         """Loads the nth set of background images."""
         background_files = self.cache.paths.all_backgrounds()
@@ -28,6 +36,10 @@ class ParallaxRenderer:
         # upscale as necessary
         for i in range(constants.NUM_SCALE_DOUBLE):
             self.background = pygame.transform.scale2x(self.background)
+
+    def get_fill_color(self) -> pygame.Color:
+        """Grab first pixels color."""
+        return self.background.get_at((0, 0))
 
     def get_num_layers(self) -> int:
         """Returns how many layers with a height of RESOLUTION_Y fit inside the loaded background."""
@@ -41,21 +53,24 @@ class ParallaxRenderer:
         width = self.background.get_width()
         return pygame.Rect(0, index * constants.RESOLUTION_Y, width, constants.RESOLUTION_Y)
 
-    @staticmethod
-    def get_layer_speed(index: int) -> float:
-        return index + 0.5
+    def get_layer_speed(self, index: int) -> float:
+        return (index + 1) / self.get_num_layers() * 2
 
-    def draw_layer(self, x: int, clip: pygame.Rect) -> None:
+    def draw_layer(self, x: int, y: int, clip: pygame.Rect) -> None:
         """Draws the background from the clipping rectangle at given position."""
         width = self.background.get_width()
-        self.target.blit(self.background, (-x % width - width, 0), clip)
-        self.target.blit(self.background, (-x % width, 0), clip)
+        self.target.blit(self.background, (-x % width - width, y), clip)
+        self.target.blit(self.background, (-x % width, y), clip)
 
     def draw(self) -> None:
         for index in range(self.get_num_layers()):
             x = int(self.camera.topleft.x * self.get_layer_speed(index) * PARALLAX_SPEED)
+            y = 0
+            if index == CLOUD_LAYER:
+                x += self.clouds_offset * CLOUD_SPEED * self.cloud_speed
+                y -= math.cos(self.clouds_offset / CLOUD_PERIOD_LENGTH) * CLOUD_DELTA_Y * self.cloud_speed
             clip = self.get_layer_rect(index)
-            self.draw_layer(x, clip)
+            self.draw_layer(x, y, clip)
 
     def update(self, elapsed_ms: int) -> None:
-        pass
+        self.clouds_offset += elapsed_ms * 0.025
