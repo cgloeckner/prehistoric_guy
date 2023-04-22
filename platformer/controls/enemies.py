@@ -54,8 +54,8 @@ class EnemiesSystem:
             return
 
         # move around
-        left_bound = phys_enemy.on_platform.pos.x + phys_enemy.on_platform.width * 0.05
-        right_bound = phys_enemy.on_platform.pos.x + phys_enemy.on_platform.width * 0.95
+        left_bound = phys_enemy.on_platform.pos.x + phys_enemy.on_platform.width * 0.1
+        right_bound = phys_enemy.on_platform.pos.x + phys_enemy.on_platform.width * 0.9
         if phys_enemy.pos.x < left_bound:
             phys_enemy.move.face_x = 1.0
         elif phys_enemy.pos.x > right_bound:

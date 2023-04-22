@@ -17,6 +17,7 @@ class Actor:
     on_ladder: Optional[ladders.Ladder] = None
     on_platform: Optional[platforms.Platform] = None
     can_climb: bool = True
+    can_collide: bool = True
 
     def can_fall(self) -> bool:
         """Returns True if the actor is neither at a ladder nor on a platform, else False."""

@@ -6,11 +6,29 @@ from platformer.renderer import base
 
 class CameraTest(unittest.TestCase):
 
+    def test__set_center_x(self):
+        scale = 10
+        cam = base.Camera(320, 200)  # 32 x 20
+        cam.topleft.y = 15
+        w_pos = pygame.math.Vector2(1.5, 0.75)
+        cam.set_center_x(w_pos.x, scale)
+        self.assertEqual(cam.topleft.x, 1.5 - 16)
+        self.assertEqual(cam.topleft.y, 15)
+
+    def test__set_center_y(self):
+        scale = 10
+        cam = base.Camera(320, 200)  # 32 x 20
+        cam.topleft.x = 15
+        w_pos = pygame.math.Vector2(1.5, 0.75)
+        cam.set_center_y(w_pos.y, scale)
+        self.assertEqual(cam.topleft.x, 15)
+        self.assertEqual(cam.topleft.y, 0.75 - 10)
+
     def test__set_center(self):
         scale = 10
         cam = base.Camera(320, 200)  # 32 x 20
         w_pos = pygame.math.Vector2(1.5, 0.75)
-        cam.set_center(w_pos, scale)
+        cam.set_center(w_pos.x, w_pos.y, scale)
         self.assertEqual(cam.topleft.x, 1.5 - 16)
         self.assertEqual(cam.topleft.y, 0.75 - 10)
 

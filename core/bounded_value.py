@@ -41,10 +41,10 @@ class Int:
     def __le__(self, other: int) -> bool:
         return self._value <= other
 
-    def __ge__(self, other: int) -> bool:
+    def __gt__(self, other: int) -> bool:
         return self._value > other
 
-    def __gt__(self, other: int) -> bool:
+    def __ge__(self, other: int) -> bool:
         return self._value >= other
 
     def __repr__(self) -> str:

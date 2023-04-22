@@ -24,7 +24,7 @@ class Projectile:
         return shapes.Circ(*self.pos, self.radius)
 
     def can_hit(self, actor: actors.Actor) -> bool:
-        return self.from_actor is None or self.from_actor != actor
+        return actor.can_collide and (self.from_actor is None or self.from_actor != actor)
 
     def land_on_platform(self, platform: platforms.Platform, old_pos: pygame.math.Vector2) -> None:
         """Handles landing on a platform by calculating a landing point, resetting the force vector and similar

@@ -37,6 +37,7 @@ class Factory:
         self.camera = renderer.Camera(*target.get_size())
         self.renderer = renderer.Renderer(self.camera, target, self.ctx.physics, self.ctx.animations,
                                           self.ctx.renderer, cache)
+        self.parallax = renderer.ParallaxRenderer(self.camera, target, cache)
         self.characters = characters.CharacterSystem(listener, self.ctx.characters, self.ctx.animations)
         self.players = controls.PlayersSystem(self.ctx.players, self.ctx.physics, self.ctx.animations)
         self.enemies = controls.EnemiesSystem(self.ctx.enemies, self.ctx.physics, self.ctx.animations,
@@ -128,6 +129,7 @@ class Factory:
         """Update all related systems."""
         self.physics.update(elapsed_ms)
         self.animation.update(elapsed_ms)
+        self.parallax.update(elapsed_ms)
         self.renderer.update(elapsed_ms)
         self.characters.update(elapsed_ms)
         self.players.update(elapsed_ms)
@@ -135,5 +137,6 @@ class Factory:
 
     def draw(self) -> None:
         """Draw scene and HUD."""
+        self.parallax.draw()
         self.renderer.draw()
         self.huds.draw()

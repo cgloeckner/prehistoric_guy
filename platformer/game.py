@@ -24,6 +24,7 @@ class GameState(state_machine.State, factory.EventListener):
 
         # --- setup object manager with player character ---------------------------------------------------------------
         self.factory = factory.Factory(self, self.cache, engine.buffer)
+        self.engine.fill_color = self.factory.parallax.get_fill_color()
 
         level_files = editor.get_level_files(self.engine.paths.level())
         filename = self.engine.paths.level(level_files[-1])
@@ -173,7 +174,7 @@ class GameState(state_machine.State, factory.EventListener):
         ani_actor.frame.start(animations.Action.DIE)
 
         phys_actor = self.factory.ctx.physics.actors.get_by_id(char_actor.object_id)
-        phys_actor.force_x = 0.0
+        phys_actor.move.force.x = 0.0
         phys_actor.can_collide = False
 
     def process_event(self, event: pygame.event.Event) -> None:
@@ -189,7 +190,7 @@ class GameState(state_machine.State, factory.EventListener):
         # --- Demo Camera movement -------------------------------------------------------------------------------------
         player_char_actor = self.factory.ctx.players.actors[0]
         phys_actor = self.factory.ctx.physics.actors.get_by_id(player_char_actor.object_id)
-        self.factory.camera.set_center(phys_actor.pos, constants.WORLD_SCALE)
+        self.factory.camera.set_center_x(phys_actor.pos.x, constants.WORLD_SCALE)
 
         self.factory.update(elapsed_ms)
 
