@@ -75,13 +75,13 @@ class ImageRenderer(shapes.ShapeRenderer):
 
     @staticmethod
     def get_platform_clip() -> Platform:
-        left_clip_rect = pygame.Rect(0, 0, constants.WORLD_SCALE, constants.WORLD_SCALE)
+        left_clip_rect = pygame.Rect(0, 0, constants.WORLD_SCALE, constants.WORLD_SCALE * 2)
         left_clip_rect.topleft = (0, TileOffset.PLATFORM * constants.WORLD_SCALE)
 
-        top_clip_rect = pygame.Rect(0, 0, constants.WORLD_SCALE, constants.WORLD_SCALE)
+        top_clip_rect = pygame.Rect(0, 0, constants.WORLD_SCALE, constants.WORLD_SCALE * 2)
         top_clip_rect.topleft = (constants.WORLD_SCALE, TileOffset.PLATFORM * constants.WORLD_SCALE)
 
-        right_clip_rect = pygame.Rect(0, 0, constants.WORLD_SCALE, constants.WORLD_SCALE)
+        right_clip_rect = pygame.Rect(0, 0, constants.WORLD_SCALE, constants.WORLD_SCALE * 2)
         right_clip_rect.topleft = (2 * constants.WORLD_SCALE, TileOffset.PLATFORM * constants.WORLD_SCALE)
 
         tex_clip_rect = pygame.Rect(0, 0, constants.WORLD_SCALE, constants.WORLD_SCALE)

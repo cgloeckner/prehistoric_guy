@@ -70,17 +70,17 @@ class ImageRendererTest(unittest.TestCase):
         self.assertEqual(clip.left_clip_rect.x, 0)
         self.assertEqual(clip.left_clip_rect.y, images.TileOffset.PLATFORM * constants.WORLD_SCALE)
         self.assertEqual(clip.left_clip_rect.width, constants.WORLD_SCALE)
-        self.assertEqual(clip.left_clip_rect.height, constants.WORLD_SCALE)
+        self.assertEqual(clip.left_clip_rect.height, constants.WORLD_SCALE * 2)
 
         self.assertEqual(clip.top_clip_rect.x, constants.WORLD_SCALE)
         self.assertEqual(clip.top_clip_rect.y, images.TileOffset.PLATFORM * constants.WORLD_SCALE)
         self.assertEqual(clip.top_clip_rect.width, constants.WORLD_SCALE)
-        self.assertEqual(clip.top_clip_rect.height, constants.WORLD_SCALE)
+        self.assertEqual(clip.top_clip_rect.height, constants.WORLD_SCALE * 2)
 
         self.assertEqual(clip.right_clip_rect.x, 2 * constants.WORLD_SCALE)
         self.assertEqual(clip.right_clip_rect.y, images.TileOffset.PLATFORM * constants.WORLD_SCALE)
         self.assertEqual(clip.right_clip_rect.width, constants.WORLD_SCALE)
-        self.assertEqual(clip.right_clip_rect.height, constants.WORLD_SCALE)
+        self.assertEqual(clip.right_clip_rect.height, constants.WORLD_SCALE * 2)
 
         self.assertEqual(clip.tex_clip_rect.x, constants.WORLD_SCALE)
         self.assertEqual(clip.tex_clip_rect.y, images.TileOffset.TEXTURE * constants.WORLD_SCALE)

@@ -106,7 +106,7 @@ class Cache(object):
         """Loads the image via filename. If already loaded, it's taken from the cache. Returns the image's surface."""
         filename = str(path)
         if filename not in self.images:
-            self.images[filename] = pygame.image.load(filename)
+            self.images[filename] = pygame.image.load(filename).convert_alpha()
 
         return self.images[filename]
 

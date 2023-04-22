@@ -50,7 +50,9 @@ class Context:
         self.selected_ladder: Optional[physics.Ladder] = None
         self.selected_object: Optional[physics.Object] = None
 
-        self.reset()
+        # load first level
+        self.file_status.filename = files.get_level_files(self.paths.level())[0]
+        self.load()
 
     def reset(self):
         """Resets the level to a blank one."""
