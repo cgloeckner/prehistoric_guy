@@ -9,7 +9,7 @@ SPRITE_SCALE: int = WORLD_SCALE * 2
 ANIMATION_NUM_FRAMES: int = 4
 
 RESOLUTION_X: int = WORLD_SCALE * 20
-RESOLUTION_Y: int = int(RESOLUTION_X * 0.625)  # 320x200 aspect ratio
+RESOLUTION_Y: int = int(RESOLUTION_X * 0.625)  # 640x400 aspect ratio
 
 SPRITE_CLOTHES_COLORS = ['#42200f', '#834222', '#9d633d']
 SNOW_CLOTHES_COLORS = ['#8996c6', '#aac2ff', '#a5acc4']

@@ -154,7 +154,8 @@ class ImageRenderer(shapes.ShapeRenderer):
             # left edge
             pos_tmp.x = pos.x
             pos_tmp.x -= constants.WORLD_SCALE
-            self.target.blit(src, pos_tmp, clip.tex_left_clip_rect)
+            if self.camera.rect_is_visible(pos_tmp):
+                self.target.blit(src, pos_tmp, clip.tex_left_clip_rect)
             # repeated tex
             for x in range(platform.width):
                 pos_tmp.x += constants.WORLD_SCALE
@@ -162,7 +163,8 @@ class ImageRenderer(shapes.ShapeRenderer):
                     self.target.blit(src, pos_tmp, clip.tex_clip_rect)
             # right edge
             pos_tmp.x += constants.WORLD_SCALE
-            self.target.blit(src, pos_tmp, clip.tex_right_clip_rect)
+            if self.camera.rect_is_visible(pos_tmp):
+                self.target.blit(src, pos_tmp, clip.tex_right_clip_rect)
             pos_tmp.y -= constants.WORLD_SCALE
 
         # draw platform

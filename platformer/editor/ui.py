@@ -131,7 +131,7 @@ class EditorState(state_machine.State, animations.EventListener):
 
     def setup_large_popup(self) -> None:
         """Sets up a large popup to be centered."""
-        max_width, max_height = self.engine.get_opengl_size()
+        max_width, max_height = pygame.display.get_window_size()
         w = max(constants.RESOLUTION_X, int(max_width * 0.8))
         h = max(constants.RESOLUTION_Y, int(max_height * 0.8))
         imgui.set_next_window_size(w, h)
@@ -196,7 +196,7 @@ class EditorState(state_machine.State, animations.EventListener):
                         self.on_level_save()
                     imgui.next_column()
 
-        max_width, max_height = self.engine.get_opengl_size()
+        max_width, max_height = pygame.display.get_window_size()
         w = 200
         h = 100
 

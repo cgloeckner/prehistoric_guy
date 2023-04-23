@@ -30,14 +30,24 @@ class OpenGlWrapper(object):
     The internal rendering order is: buffer first, imgui second.
     """
 
-    def __init__(self, buffer_width: int, buffer_height: int, screen_width: int, screen_height: int,
-                 ini_file: Optional[str] = None, log_file: Optional[str] = None):
+    def __init__(self, buffer: pygame.Surface, ini_file: Optional[str] = None, log_file: Optional[str] = None):
         """Initialize OpenGL and ImGui.
         """
-        self.buffer = pygame.Surface((buffer_width, buffer_height))
+        self.buffer = buffer
+        self.tex_id = None
+        self.impl = None
+        self.io = None
+
+        self.post_init()
+
+        self.io.ini_file_name = ini_file
+        self.io.log_file_name = log_file
+
+    def post_init(self):
+        width, height = pygame.display.get_window_size()
 
         # Setup OpenGL Texture
-        OpenGL.GL.glViewport(0, 0, screen_width, screen_height)
+        OpenGL.GL.glViewport(0, 0, width, height)
         OpenGL.GL.glDepthRange(0, 1)
         OpenGL.GL.glMatrixMode(OpenGL.GL.GL_PROJECTION)
         OpenGL.GL.glMatrixMode(OpenGL.GL.GL_MODELVIEW)
@@ -56,32 +66,31 @@ class OpenGlWrapper(object):
         imgui.create_context()
         self.impl = PygameRenderer()
         self.io = imgui.get_io()
-        self.io.display_size = (screen_width, screen_height)
-        self.io.ini_file_name = ini_file
-        self.io.log_file_name = log_file
+        self.io.display_size = (width, height)
 
     @staticmethod
     def get_display_flags() -> int:
         """Returns the required flags for the pygame display init.
         """
-        return pygame.DOUBLEBUF | pygame.OPENGL
+        flags = pygame.DOUBLEBUF | pygame.OPENGL
+        return flags
 
-    def process_event(self, ev: pygame.event.Event) -> None:
+    def process_event(self, event: pygame.event.Event) -> None:
         """Forwards events to ImGui.
         """
-        self.impl.process_event(ev)
+        self.impl.process_event(event)
 
-    def render(self) -> None:
+    def render(self, source: pygame.Surface) -> None:
         """Transforms the given surface into a texture, renders it and draws ImGui widgets on top.
         """
         # upload buffer to texture
-        rgb_surface = pygame.image.tostring(self.buffer, 'RGB')
+        rgb_surface = pygame.image.tostring(source, 'RGB')
         OpenGL.GL.glBindTexture(OpenGL.GL.GL_TEXTURE_2D, self.tex_id)
         OpenGL.GL.glTexParameteri(OpenGL.GL.GL_TEXTURE_2D, OpenGL.GL.GL_TEXTURE_MAG_FILTER, OpenGL.GL.GL_NEAREST)
         OpenGL.GL.glTexParameteri(OpenGL.GL.GL_TEXTURE_2D, OpenGL.GL.GL_TEXTURE_MIN_FILTER, OpenGL.GL.GL_NEAREST)
         OpenGL.GL.glTexParameteri(OpenGL.GL.GL_TEXTURE_2D, OpenGL.GL.GL_TEXTURE_WRAP_S, OpenGL.GL.GL_CLAMP)
         OpenGL.GL.glTexParameteri(OpenGL.GL.GL_TEXTURE_2D, OpenGL.GL.GL_TEXTURE_WRAP_T, OpenGL.GL.GL_CLAMP)
-        OpenGL.GL.glTexImage2D(OpenGL.GL.GL_TEXTURE_2D, 0, OpenGL.GL.GL_RGB, *self.buffer.get_size(), 0,
+        OpenGL.GL.glTexImage2D(OpenGL.GL.GL_TEXTURE_2D, 0, OpenGL.GL.GL_RGB, *source.get_size(), 0,
                                OpenGL.GL.GL_RGB, OpenGL.GL.GL_UNSIGNED_BYTE, rgb_surface)
         OpenGL.GL.glGenerateMipmap(OpenGL.GL.GL_TEXTURE_2D)
         OpenGL.GL.glBindTexture(OpenGL.GL.GL_TEXTURE_2D, 0)
@@ -127,27 +136,28 @@ if __name__ == "__main__":
     size = 800, 600
 
     screen = pygame.display.set_mode(size, OpenGlWrapper.get_display_flags())
-    wrapper = OpenGlWrapper(*screen.get_size(), *screen.get_size())
+    buffer = pygame.Surface(screen.get_size())
+    wrapper = OpenGlWrapper(buffer)
 
-    background = pygame.image.load('../data/background.png')
+    background = pygame.image.load('../data/backgrounds/mountains.png')
 
     running = True
     while running:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
+        for ev in pygame.event.get():
+            if ev.type == pygame.QUIT:
                 running = False
                 break
 
-            wrapper.process_event(event)
+            wrapper.process_event(ev)
 
         demo_ui()
 
         # regular pygame blit etc.
-        wrapper.buffer.fill('black')
-        wrapper.buffer.blit(background, (0, 0))
+        buffer.fill('black')
+        buffer.blit(background, (0, 0))
 
         # draws buffer and ImGui to screen
-        wrapper.render()
+        wrapper.render(buffer)
 
         # as usual
         pygame.display.flip()

@@ -23,7 +23,7 @@ class PreviewState(state_machine.State, factory.EventListener):
 
         self.physics = physics.System(self, self.physics_ctx)
         self.animations = animations.AnimationSystem(self, self.animations_ctx, self.physics_ctx)
-        self.camera = renderer.Camera(*engine.buffer.get_size())
+        self.camera = renderer.Camera()
         self.renderer = renderer.Renderer(self.camera, engine.buffer, self.physics_ctx, self.animations_ctx,
                                           self.renderer_ctx, self.cache)
         self.renderer.load_fileset(tileset_index)
@@ -101,7 +101,7 @@ class PreviewState(state_machine.State, factory.EventListener):
     def update(self, elapsed_ms: int) -> None:
         # let camera follow player
         phys_actor = self.physics_ctx.actors.get_by_id(1)
-        self.camera.set_center_x(phys_actor.pos.x, constants.WORLD_SCALE)
+        self.camera.set_center_x(phys_actor.pos.x)
 
         self.physics.update(elapsed_ms)
         self.animations.update(elapsed_ms)
@@ -114,6 +114,6 @@ class PreviewState(state_machine.State, factory.EventListener):
         self.renderer.draw()
 
         # draw FPS
-        size = self.engine.get_pygame_size()
+        size = pygame.display.get_window_size()
         fps_surface = self.font.render(f'FPS: {int(self.engine.num_fps):02d}', False, 'white')
         self.engine.buffer.blit(fps_surface, (0, size[1] - fps_surface.get_height()))

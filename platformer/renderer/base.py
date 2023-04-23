@@ -5,30 +5,27 @@ from abc import ABC, abstractmethod
 from core import constants
 
 
-# noinspection SpellCheckingInspection
 class Camera:
-    def __init__(self, width: int, height: int):
-        # noinspection SpellCheckingInspection
+    def __init__(self):
         self.topleft = pygame.math.Vector2()
-        self.width = width
-        self.height = height
+        self.width, self.height = pygame.display.get_window_size()
 
     def reset_pos(self) -> None:
         """Reset camera position to (0, 0)."""
         self.topleft = pygame.math.Vector2()
 
-    def set_center_x(self, x: float, scale: int) -> None:
+    def set_center_x(self, x: float) -> None:
         """Sets the camera center x (world scale) to the given coordinate."""
-        self.topleft.x = x - (self.width // scale) // 2
+        self.topleft.x = x - (self.width // constants.WORLD_SCALE) // 2
 
-    def set_center_y(self, y: float, scale: int) -> None:
+    def set_center_y(self, y: float) -> None:
         """Sets the camera center y (world scale) to the given coordinate."""
-        self.topleft.y = y - (self.height // scale) // 2
+        self.topleft.y = y - (self.height // constants.WORLD_SCALE) // 2
 
-    def set_center(self, x: float, y: float, scale: int) -> None:
+    def set_center(self, x: float, y: float) -> None:
         """Sets the camera center (world scale) to the given point."""
-        self.set_center_x(x, scale)
-        self.set_center_y(y, scale)
+        self.set_center_x(x)
+        self.set_center_y(y)
 
     def rect_is_visible(self, rect: pygame.Rect) -> bool:
         """Returns whether the given rect is within the visible area. This assumes its position is already relative to

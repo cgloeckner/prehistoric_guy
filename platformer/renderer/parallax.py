@@ -35,7 +35,7 @@ class ParallaxRenderer:
 
     def get_fill_color(self) -> pygame.Color:
         """Grab first pixels color."""
-        return '#727da3' #  self.background.get_at((0, 0))
+        return self.background.get_at((0, 0))
 
     def get_num_layers(self) -> int:
         """Returns how many layers with a height of RESOLUTION_Y fit inside the loaded background."""
@@ -55,13 +55,18 @@ class ParallaxRenderer:
     def draw_layer(self, x: int, y: int, clip: pygame.Rect) -> None:
         """Draws the background from the clipping rectangle at given position."""
         width = self.background.get_width()
+        num_repeats = pygame.display.get_window_size()[0] / width
+
         self.target.blit(self.background, (-x % width - width, y), clip)
-        self.target.blit(self.background, (-x % width, y), clip)
+        for i in range(int(num_repeats+1)):
+            self.target.blit(self.background, (-x % width + i * width, y), clip)
 
     def draw(self) -> None:
+        y0 = pygame.display.get_window_size()[1] - constants.RESOLUTION_Y
+
         for index in range(self.get_num_layers()):
             x = int(self.camera.topleft.x * self.get_layer_speed(index) * PARALLAX_SPEED)
-            y = 0
+            y = y0
             if index == CLOUD_LAYER:
                 x += self.clouds_offset * CLOUD_SPEED * self.cloud_speed
                 y -= math.cos(self.clouds_offset / CLOUD_PERIOD_LENGTH) * CLOUD_DELTA_Y * self.cloud_speed

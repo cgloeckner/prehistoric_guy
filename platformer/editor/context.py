@@ -26,7 +26,7 @@ class Context:
         self.new_filename = ''
         self.file_status = files.FileStatus()
         self.ctx = physics.Context()
-        self.cam = renderer.Camera(width, height)
+        self.cam = renderer.Camera()
         self.paths = p
         self.translate = t
 

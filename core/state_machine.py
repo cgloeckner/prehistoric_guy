@@ -18,12 +18,10 @@ class Engine(object):
         self.paths = paths.DataPath(pathlib.Path.cwd() / 'data')
         self.translate = translate.Match()
 
-        # FIXME: scaling works but mouse coord mapping will be broken
         screen_size = (screen_width, screen_height)
-        scaled_size = (screen_width, screen_height)
-        pygame.display.set_mode(scaled_size, OpenGlWrapper.get_display_flags())
-        self.wrapper = OpenGlWrapper(*screen_size, *scaled_size)
+        pygame.display.set_mode(screen_size, OpenGlWrapper.get_display_flags())
         self.buffer = pygame.Surface(screen_size)
+        self.wrapper = OpenGlWrapper(self.buffer)
         self.clock = pygame.time.Clock()
 
         self.running = False
@@ -35,12 +33,6 @@ class Engine(object):
 
     def __del__(self):
         pygame.quit()
-
-    def get_pygame_size(self) -> Tuple[int, int]:
-        return self.buffer.get_size()
-
-    def get_opengl_size(self) -> Tuple[float, float]:
-        return self.wrapper.io.display_size
 
     def push(self, state) -> None:
         """Adds a state to the queue. The latest state is handled first (LIFO).
@@ -86,8 +78,7 @@ class Engine(object):
             state.draw()
 
             # render onto OpenGL window
-            self.wrapper.buffer.blit(self.buffer, (0, 0))
-            self.wrapper.render()
+            self.wrapper.render(self.buffer)
             pygame.display.flip()
 
             # limit fps
