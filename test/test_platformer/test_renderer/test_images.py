@@ -28,7 +28,7 @@ class ImageRendererTest(unittest.TestCase):
 
         self.sprite_ctx = images.Context()
 
-        self.cam = base.Camera(320, 192)
+        self.cam = base.Camera((320, 192))
         self.cam.topleft.x = -1.5
         self.cam.topleft.y = -0.5
 

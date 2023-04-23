@@ -1,14 +1,15 @@
 import pygame
-
+from typing import Optional, Tuple
 from abc import ABC, abstractmethod
 
 from core import constants
 
 
 class Camera:
-    def __init__(self):
+    def __init__(self, size: Optional[Tuple[int, int]] = None, scale: Optional[int] = None):
         self.topleft = pygame.math.Vector2()
-        self.width, self.height = pygame.display.get_window_size()
+        self.width, self.height = pygame.display.get_window_size() if size is None else size
+        self.scale = constants.WORLD_SCALE if scale is None else scale
 
     def reset_pos(self) -> None:
         """Reset camera position to (0, 0)."""
@@ -16,11 +17,11 @@ class Camera:
 
     def set_center_x(self, x: float) -> None:
         """Sets the camera center x (world scale) to the given coordinate."""
-        self.topleft.x = x - (self.width // constants.WORLD_SCALE) // 2
+        self.topleft.x = x - (self.width // self.scale) // 2
 
     def set_center_y(self, y: float) -> None:
         """Sets the camera center y (world scale) to the given coordinate."""
-        self.topleft.y = y - (self.height // constants.WORLD_SCALE) // 2
+        self.topleft.y = y - (self.height // self.scale) // 2
 
     def set_center(self, x: float, y: float) -> None:
         """Sets the camera center (world scale) to the given point."""

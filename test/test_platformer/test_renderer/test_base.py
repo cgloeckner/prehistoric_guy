@@ -7,33 +7,30 @@ from platformer.renderer import base
 class CameraTest(unittest.TestCase):
 
     def test__set_center_x(self):
-        scale = 10
-        cam = base.Camera(320, 200)  # 32 x 20
+        cam = base.Camera((320, 200), 10)  # 32 x 20
         cam.topleft.y = 15
         w_pos = pygame.math.Vector2(1.5, 0.75)
-        cam.set_center_x(w_pos.x, scale)
+        cam.set_center_x(w_pos.x)
         self.assertEqual(cam.topleft.x, 1.5 - 16)
         self.assertEqual(cam.topleft.y, 15)
 
     def test__set_center_y(self):
-        scale = 10
-        cam = base.Camera(320, 200)  # 32 x 20
+        cam = base.Camera((320, 200), 10)  # 32 x 20
         cam.topleft.x = 15
         w_pos = pygame.math.Vector2(1.5, 0.75)
-        cam.set_center_y(w_pos.y, scale)
+        cam.set_center_y(w_pos.y)
         self.assertEqual(cam.topleft.x, 15)
         self.assertEqual(cam.topleft.y, 0.75 - 10)
 
     def test__set_center(self):
-        scale = 10
-        cam = base.Camera(320, 200)  # 32 x 20
+        cam = base.Camera((320, 200), 10)  # 32 x 20
         w_pos = pygame.math.Vector2(1.5, 0.75)
-        cam.set_center(w_pos.x, w_pos.y, scale)
+        cam.set_center(w_pos.x, w_pos.y)
         self.assertEqual(cam.topleft.x, 1.5 - 16)
         self.assertEqual(cam.topleft.y, 0.75 - 10)
 
     def test__from_world_coord(self):
-        cam = base.Camera(320, 200)
+        cam = base.Camera((320, 200))
         cam.topleft.x = 1.5
         cam.topleft.y = -0.75
         w_pos = pygame.math.Vector2(7.5, 2.5)
@@ -48,7 +45,7 @@ class CameraTest(unittest.TestCase):
         self.assertAlmostEqual(pos.y, w_pos.y)
 
     def test__screen_to_world_coord__1(self):
-        cam = base.Camera(320, 200)
+        cam = base.Camera((320, 200))
         cam.topleft.x = -7.2
         cam.topleft.y = -3.9
         s_pos = pygame.math.Vector2(4.5, 9.7)

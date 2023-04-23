@@ -18,7 +18,7 @@ class AsciiRendererTest(unittest.TestCase):
         self.ctx.create_actor(1, x=8.5, y=5)
         self.ctx.create_projectile(2, x=6.5, y=5.5)
 
-        self.cam = base.Camera(10, 6)
+        self.cam = base.Camera((10, 6))
         self.cam.topleft.x = -1.0
 
         self.renderer = ascii.AsciiRenderer(self.cam, self.ctx)
