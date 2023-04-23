@@ -55,20 +55,20 @@ def fill_pixels(surface: pygame.Surface, color: pygame.Color):
 
 
 def add_outline(surface: pygame.Surface, color: pygame.Color):
-    """Adds a thin outline around each non-transparent pixel."""
+    """Adds a thin outline around each non-transparent pixel without enlarging the art."""
     pixels = pygame.PixelArray(surface)
     w, h = surface.get_size()
     mask = pygame.mask.from_surface(surface)
 
     for y in range(h):
         for x in range(w):
-            if mask.get_at((x, y)) == 1:
+            if mask.get_at((x, y)) == 0:
                 continue
 
-            if x-1 >= 0 and mask.get_at((x-1, y)) == 1 or \
-                x+1 < w and mask.get_at((x+1, y)) == 1 or \
-                y-1 >= 0 and mask.get_at((x, y-1)) == 1 or \
-                y+1 < h and mask.get_at((x, y+1)) == 1:
+            if x-1 >= 0 and mask.get_at((x-1, y)) == 0 or \
+                x+1 < w and mask.get_at((x+1, y)) == 0 or \
+                y-1 >= 0 and mask.get_at((x, y-1)) == 0 or \
+                y+1 < h and mask.get_at((x, y+1)) == 0:
                 pixels[x, y] = color
 
     pixels.close()

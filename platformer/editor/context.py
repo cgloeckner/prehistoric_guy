@@ -337,11 +337,11 @@ class Context:
         """Draw additional things on top."""
         # redraw hovered objects
         for platform in self.hovered_platforms:
-            render_api.draw_platform(platform, use_mask=True)
+            render_api.draw_platform(platform, add_outline=True)
         for ladder in self.hovered_ladders:
-            render_api.draw_ladder(ladder, use_mask=True)
+            render_api.draw_ladder(ladder, add_outline=True)
         for obj in self.hovered_objects:
-            render_api.draw_object(obj, use_mask=True)
+            render_api.draw_object(obj, add_outline=True)
 
         # redraw preview objects
         if self.preview_platform is not None:

@@ -137,11 +137,11 @@ class ImageRenderer(shapes.ShapeRenderer):
 
         return clip_rect
 
-    def draw_platform(self, platform: physics.Platform, use_mask: bool = False) -> None:
+    def draw_platform(self, platform: physics.Platform, add_outline: bool = False) -> None:
         src = self.tiles
-        if use_mask:
-            super().draw_platform(platform)
-            src = pygame.mask.from_surface(src).to_surface(setcolor=MASK_SET_COLOR, unsetcolor=MASK_UNSET_COLOR)
+        if add_outline:
+            src = src.copy()
+            resources.add_outline(src, pygame.Color('yellow'))
 
         pos = self.get_platform_rect(platform)
         pos.h *= -1
@@ -182,11 +182,11 @@ class ImageRenderer(shapes.ShapeRenderer):
         if self.camera.rect_is_visible(pos_tmp):
             self.target.blit(src, pos_tmp, clip.left_clip_rect)
 
-    def draw_ladder(self, ladder: physics.Ladder, use_mask: bool = False) -> None:
+    def draw_ladder(self, ladder: physics.Ladder, add_outline: bool = False) -> None:
         src = self.tiles
-        if use_mask:
-            super().draw_ladder(ladder)
-            src = pygame.mask.from_surface(src).to_surface(setcolor=MASK_SET_COLOR, unsetcolor=MASK_UNSET_COLOR)
+        if add_outline:
+            src = src.copy()
+            resources.add_outline(src, pygame.Color('yellow'))
 
         pos = self.get_ladder_rect(ladder)
         clip = self.get_ladder_clip()
@@ -207,11 +207,11 @@ class ImageRenderer(shapes.ShapeRenderer):
         if self.camera.rect_is_visible(pos):
             self.target.blit(src, pos, clip.bottom_clip_rect)
 
-    def draw_object(self, obj: physics.Object, use_mask: bool = False) -> None:
+    def draw_object(self, obj: physics.Object, add_outline: bool = False) -> None:
         src = self.objects
-        if use_mask:
-            super().draw_object(obj)
-            src = pygame.mask.from_surface(src).to_surface(setcolor=MASK_SET_COLOR, unsetcolor=MASK_UNSET_COLOR)
+        if add_outline:
+            src = src.copy()
+            resources.add_outline(src, pygame.Color('yellow'))
 
         pos = self.get_object_rect(obj)
         clip = self.get_object_clip(object_type=obj.object_type, variation_col=0)
@@ -219,13 +219,14 @@ class ImageRenderer(shapes.ShapeRenderer):
         if self.camera.rect_is_visible(pos):
             self.target.blit(src, pos, clip)
 
-    def draw_actor(self, actor: physics.Actor, use_mask: bool = False) -> None:
+    def draw_actor(self, actor: physics.Actor, add_outline: bool = False) -> None:
         sprite_actor = self.sprite_context.actors.get_by_id(actor.object_id)
         ani_actor = self.ani_context.actors.get_by_id(actor.object_id)
 
         src = sprite_actor.sprite_sheet
-        if use_mask:
-            src = pygame.mask.from_surface(src).to_surface(setcolor=MASK_SET_COLOR, unsetcolor=MASK_UNSET_COLOR)
+        if add_outline:
+            src = src.copy()
+            resources.add_outline(src, pygame.Color('yellow'))
 
         pos = self.get_actor_rect(actor)
         clip = self.get_actor_clip(face_x=actor.move.face_x, frame_id=ani_actor.frame.frame_id,
@@ -237,10 +238,11 @@ class ImageRenderer(shapes.ShapeRenderer):
         if self.camera.rect_is_visible(pos):
             self.target.blit(src, pos, clip)
 
-    def draw_projectile(self, proj: physics.Projectile, use_mask: bool = False) -> None:
+    def draw_projectile(self, proj: physics.Projectile, add_outline: bool = False) -> None:
         src = self.objects
-        if use_mask:
-            src = pygame.mask.from_surface(src).to_surface(setcolor=MASK_SET_COLOR, unsetcolor=MASK_UNSET_COLOR)
+        if add_outline:
+            src = src.copy()
+            resources.add_outline(src, pygame.Color('yellow'))
 
         # FIXME: allow for spinning animation
         """
