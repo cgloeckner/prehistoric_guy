@@ -34,7 +34,7 @@ class Factory:
 
         self.physics = physics.System(listener, self.ctx.physics)
         self.animation = animations.AnimationSystem(listener, self.ctx.animations, self.ctx.physics)
-        self.camera = renderer.Camera(*target.get_size())
+        self.camera = renderer.Camera()
         self.renderer = renderer.Renderer(self.camera, target, self.ctx.physics, self.ctx.animations,
                                           self.ctx.renderer, cache)
         self.parallax = renderer.ParallaxRenderer(self.camera, target, cache)

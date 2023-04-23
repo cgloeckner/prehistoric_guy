@@ -73,19 +73,7 @@ class PreviewState(state_machine.State, factory.EventListener):
     def on_touch_actor(self, proj: physics.Projectile, phys_actor: physics.Actor) -> None:
         pass
 
-    def on_climb(self, ani: animations.Actor) -> None:
-        pass
-
-    def on_step(self, ani: animations.Actor) -> None:
-        pass
-
-    def on_attack(self, ani: animations.Actor) -> None:
-        pass
-
-    def on_throw(self, ani_actor: animations.Actor) -> None:
-        pass
-
-    def on_died(self, ani_actor: animations.Actor) -> None:
+    def on_animation_finish(self, ani_actor: animations.Actor) -> None:
         pass
 
     def on_char_damaged(self, actor: characters.Actor, damage: int, cause: Optional[characters.Actor]) -> None:

@@ -40,7 +40,6 @@ class GameState(state_machine.State, factory.EventListener):
             enemy_guy = player_guy.copy()
             resources.transform_color_replace(enemy_guy, dict(zip(constants.SPRITE_CLOTHES_COLORS, color_set)))
             self.factory.create_enemy(sprite_sheet=enemy_guy, x=6.25 + value, y=1.5, max_hit_points=3, num_axes=0)
-
     # ------------------------------------------------------------------------------------------------------------------
     # --- physics events ---
 
@@ -127,37 +126,27 @@ class GameState(state_machine.State, factory.EventListener):
     # ------------------------------------------------------------------------------------------------------------------
     # --- Animation Events -
 
-    def on_climb(self, ani: animations.Actor) -> None:
-        pass
-
-    def on_step(self, ani: animations.Actor) -> None:
-        pass
-
-    def on_attack(self, ani: animations.Actor) -> None:
+    def on_animation_finish(self, ani: animations.Actor) -> None:
         """Triggered when an attack animation finished."""
         actor = self.factory.ctx.characters.actors.get_by_id(ani.object_id)
         if actor is None:
             return
 
-        victims = characters.query_melee_range(actor, self.factory.ctx.characters, self.factory.ctx.physics)
-        for victim in victims:
-            characters.attack_enemy(1, victim)
-            if victim.hit_points == 0:
-                self.on_char_died(victim, 1, actor)
-            else:
-                self.on_char_damaged(victim, 1, actor)
+        if ani.frame.action == animations.Action.ATTACK:
+            victims = characters.query_melee_range(actor, self.factory.ctx.characters, self.factory.ctx.physics)
+            for victim in victims:
+                characters.attack_enemy(1, victim)
+                if victim.hit_points == 0:
+                    self.on_char_died(victim, 1, actor)
+                else:
+                    self.on_char_damaged(victim, 1, actor)
 
-    def on_throw(self, ani_actor: animations.Actor) -> None:
-        """Triggered when an attack animation finished."""
-        actor = self.factory.ctx.characters.actors.get_by_id(ani_actor.object_id)
-        proj = characters.throw_object(actor, 3.0, constants.ObjectType.WEAPON, self.factory.ctx.physics,
-                                       self.factory.create_projectile)
-        if proj is not None:
-            proj.move.force.y = 1.0
-
-    def on_died(self, ani_actor: animations.Actor) -> None:
-        """Triggered when a dying animation finished."""
-        pass
+        elif ani.frame.action == animations.Action.THROW:
+            actor = self.factory.ctx.characters.actors.get_by_id(ani.object_id)
+            proj = characters.throw_object(actor, 3.0, constants.ObjectType.WEAPON, self.factory.ctx.physics,
+                                           self.factory.create_projectile)
+            if proj is not None:
+                proj.move.force.y = 1.0
 
     # ------------------------------------------------------------------------------------------------------------------
     # --- Character events
@@ -188,7 +177,7 @@ class GameState(state_machine.State, factory.EventListener):
         # --- Demo Camera movement -------------------------------------------------------------------------------------
         player_char_actor = self.factory.ctx.players.actors[0]
         phys_actor = self.factory.ctx.physics.actors.get_by_id(player_char_actor.object_id)
-        self.factory.camera.set_center_x(phys_actor.pos.x, constants.WORLD_SCALE)
+        self.factory.camera.set_center_x(phys_actor.pos.x)
 
         self.factory.update(elapsed_ms)
 

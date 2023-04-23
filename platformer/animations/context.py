@@ -41,50 +41,21 @@ class Context:
 class EventListener(ABC):
 
     @abstractmethod
-    def on_step(self, ani: Actor) -> None:
-        """Triggered when a cycle of a move animation finished."""
-        pass
-
-    @abstractmethod
-    def on_climb(self, ani: Actor) -> None:
-        """Triggered when a cycle of a climbing animation finished."""
-        pass
-
-    @abstractmethod
-    def on_attack(self, ani: Actor) -> None:
-        """Triggered when an attack animation finished."""
-        pass
-
-    @abstractmethod
-    def on_throw(self, ani: Actor) -> None:
-        """Triggered when a throwing animation finished."""
-        pass
-
-    @abstractmethod
-    def on_died(self, ani: Actor) -> None:
-        """Triggered when a dying animation finished."""
+    def on_animation_finish(self, ani: Actor) -> None:
+        """Triggered when a cycle of an animation is finished."""
         pass
 
 
 class AnimationSystem(object):
     """Handles all frame set animations."""
     def __init__(self, animation_listener: EventListener, context: Context, physics_context: physics.Context):
-        self.event_listener = animation_listener
+        self.listener = animation_listener
         self.context = context
         self.physics_context = physics_context
 
     def notify_finished(self, ani: Actor) -> None:
         """Notify about a finished animation."""
-        if ani.frame.action == actions.Action.MOVE:
-            self.event_listener.on_step(ani)
-        if ani.frame.action == actions.Action.CLIMB:
-            self.event_listener.on_climb(ani)
-        elif ani.frame.action == actions.Action.ATTACK:
-            self.event_listener.on_attack(ani)
-        elif ani.frame.action == actions.Action.THROW:
-            self.event_listener.on_throw(ani)
-        elif ani.frame.action == actions.Action.DIE:
-            self.event_listener.on_died(ani)
+        self.listener.on_animation_finish(ani)
 
     def handle_allow_climb(self, actor: Actor) -> None:
         """Allowed the physics actor to climb or not, based on the animation.
