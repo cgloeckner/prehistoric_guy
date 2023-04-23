@@ -25,6 +25,8 @@ class Platform:
     right_clip_rect: pygame.Rect
     top_clip_rect: pygame.Rect
     tex_clip_rect: pygame.Rect
+    tex_left_clip_rect: pygame.Rect
+    tex_right_clip_rect: pygame.Rect
 
 
 @dataclass
@@ -87,8 +89,15 @@ class ImageRenderer(shapes.ShapeRenderer):
         tex_clip_rect = pygame.Rect(0, 0, constants.WORLD_SCALE, constants.WORLD_SCALE)
         tex_clip_rect.topleft = (constants.WORLD_SCALE, TileOffset.TEXTURE * constants.WORLD_SCALE)
 
+        tex_left_clip_rect = pygame.Rect(0, 0, constants.WORLD_SCALE, constants.WORLD_SCALE)
+        tex_left_clip_rect.topleft = (0, TileOffset.TEXTURE * constants.WORLD_SCALE)
+
+        tex_right_clip_rect = pygame.Rect(0, 0, constants.WORLD_SCALE, constants.WORLD_SCALE)
+        tex_right_clip_rect.topleft = (2 * constants.WORLD_SCALE, TileOffset.TEXTURE * constants.WORLD_SCALE)
+
         return Platform(left_clip_rect=left_clip_rect, top_clip_rect=top_clip_rect, right_clip_rect=right_clip_rect,
-                        tex_clip_rect=tex_clip_rect)
+                        tex_clip_rect=tex_clip_rect, tex_left_clip_rect=tex_left_clip_rect,
+                        tex_right_clip_rect=tex_right_clip_rect)
 
     @staticmethod
     def get_ladder_clip() -> Ladder:
@@ -142,11 +151,18 @@ class ImageRenderer(shapes.ShapeRenderer):
         pos_tmp = pos.copy()
         pos_tmp.y -= constants.WORLD_SCALE
         for y in range(platform.height):
+            # left edge
             pos_tmp.x = pos.x
+            pos_tmp.x -= constants.WORLD_SCALE
+            self.target.blit(src, pos_tmp, clip.tex_left_clip_rect)
+            # repeated tex
             for x in range(platform.width):
+                pos_tmp.x += constants.WORLD_SCALE
                 if self.camera.rect_is_visible(pos_tmp):
                     self.target.blit(src, pos_tmp, clip.tex_clip_rect)
-                pos_tmp.x += constants.WORLD_SCALE
+            # right edge
+            pos_tmp.x += constants.WORLD_SCALE
+            self.target.blit(src, pos_tmp, clip.tex_right_clip_rect)
             pos_tmp.y -= constants.WORLD_SCALE
 
         # draw platform

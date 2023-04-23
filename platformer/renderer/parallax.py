@@ -31,15 +31,11 @@ class ParallaxRenderer:
         """Loads the nth set of background images."""
         background_files = self.cache.paths.all_backgrounds()
         background_path = self.cache.paths.background(background_files[index])
-        self.background = self.cache.get_image(background_path)
-
-        # upscale as necessary
-        for i in range(constants.NUM_SCALE_DOUBLE):
-            self.background = pygame.transform.scale2x(self.background)
+        self.background = pygame.transform.scale_by(self.cache.get_image(background_path), 2)
 
     def get_fill_color(self) -> pygame.Color:
         """Grab first pixels color."""
-        return self.background.get_at((0, 0))
+        return '#727da3' #  self.background.get_at((0, 0))
 
     def get_num_layers(self) -> int:
         """Returns how many layers with a height of RESOLUTION_Y fit inside the loaded background."""

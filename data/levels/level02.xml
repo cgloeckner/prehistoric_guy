@@ -1,6 +1,6 @@
 <?xml version="1.0" ?>
 <level>
-	<platform x="2.0" y="1.0" width="4"/>
 	<platform x="4.0" y="0.0" width="3" height="1"/>
-	<ladder x="1.5" y="2.0" height="4"/>
+	<platform x="2.0" y="1.0" width="4"/>
+	<ladder x="3.5" y="1.0" height="4"/>
 </level>

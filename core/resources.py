@@ -2,8 +2,7 @@ import pygame
 import pathlib
 from typing import Dict, Tuple, List, Optional
 
-from core.constants import *
-from core import paths
+from core import constants, paths
 
 
 def transform_color_replace(surface: pygame.Surface, color_str_dict: Dict[str, str]) -> None:
@@ -94,7 +93,7 @@ class Cache(object):
         self.fonts: Dict[str, pygame.font.Font] = dict()
 
         # sprites include their flipped frames
-        self.sprites: Dict[str, COLOR_TUPLE] = dict()
+        self.sprites: Dict[Tuple[str, COLOR_TUPLE], pygame.Surface] = dict()
 
         # hsl-transformed and rotated surfaces
         self.hsl_transforms: Dict[Tuple[pygame.Surface, HSL_TUPLE, Optional[COLOR_TUPLE]]] = dict()
@@ -104,7 +103,10 @@ class Cache(object):
         """Loads the image via filename. If already loaded, it's taken from the cache. Returns the image's surface."""
         filename = str(path)
         if filename not in self.images:
-            self.images[filename] = pygame.image.load(filename).convert_alpha()
+            surface = pygame.image.load(filename)
+            if constants.DOES_SCALE_2X:
+                surface = pygame.transform.scale_by(surface, 2)
+            self.images[filename] = surface.convert_alpha()
 
         return self.images[filename]
 
@@ -115,7 +117,7 @@ class Cache(object):
         key = (filename, color_tuple)
         if key not in self.sprites:
             image = self.get_image(path)
-            surface = flip_sprite_sheet(image, SPRITE_SCALE)
+            surface = flip_sprite_sheet(image, constants.SPRITE_SCALE)
             if outline_color is not None:
                 add_outline(surface, outline_color)
 

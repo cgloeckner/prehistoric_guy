@@ -29,7 +29,7 @@ class Engine(object):
         self.running = False
         self.is_active = True
         self.fill_color = 'black'
-        self.max_fps = 60
+        self.max_fps = 600
         self.num_fps = 0
         self.queue = list()
 
