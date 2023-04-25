@@ -9,7 +9,7 @@ if __name__ == '__main__':
     args = sys.argv[1:]
 
     # debug
-    args.append('--editor')
+    #args.append('--editor')
 
     game_engine = state_machine.Engine(constants.RESOLUTION_X, constants.RESOLUTION_Y)
     pygame.display.set_caption('Prehistoric Guy')

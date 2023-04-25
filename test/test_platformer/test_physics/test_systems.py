@@ -208,6 +208,7 @@ class ActorSystemsTest(unittest.TestCase):
         self.assertEqual(actor.on_platform, platform)
         self.assertIsNone(self.listener.last)
 
+    # FIXME: function not used anymore, hence test not necessary
     def test__handle_platform_collision(self):
         actor = self.context.create_actor(1, x=2.0, y=1.0)
         old_pos = actor.pos.copy()

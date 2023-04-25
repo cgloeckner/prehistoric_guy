@@ -1,0 +1,13 @@
+<?xml version="1.0" ?>
+<level>
+	<platform x="17.0" y="5.0" width="1" height="1"/>
+	<platform x="6.0" y="4.0" width="4" height="1"/>
+	<platform x="16.0" y="4.0" width="3" height="1"/>
+	<platform x="5.0" y="3.0" width="6" height="1"/>
+	<platform x="15.0" y="3.0" width="5" height="1"/>
+	<platform x="14.0" y="0.0" width="7" height="3"/>
+	<platform x="4.0" y="2.0" width="8" height="1"/>
+	<platform x="0.0" y="0.0" width="16" height="2"/>
+	<ladder x="7.0" y="2.0" height="3"/>
+	<ladder x="17.403125" y="3.0" height="3"/>
+</level>

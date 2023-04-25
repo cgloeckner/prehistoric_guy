@@ -25,7 +25,8 @@ class GameState(state_machine.State, factory.EventListener):
         filename = self.engine.paths.level(level_files[-1])
         editor.load_level(filename, self.factory.ctx.physics)
 
-        player_char_actor = self.factory.create_character(sprite_sheet=player_guy, x=2, y=1.5, max_hit_points=5,
+        pos = pygame.math.Vector2(5, 5)
+        player_char_actor = self.factory.create_character(sprite_sheet=player_guy, x=pos.x, y=pos.y, max_hit_points=5,
                                                           num_axes=10)
         self.factory.create_player(player_char_actor,
                                    keys=controls.Keybinding(left_key=pygame.K_a, right_key=pygame.K_d,
@@ -39,7 +40,7 @@ class GameState(state_machine.State, factory.EventListener):
                                            constants.STONE_CLOTHES_COLOR, constants.EMBER_CLOTHES_COLOR]):
             enemy_guy = player_guy.copy()
             resources.transform_color_replace(enemy_guy, dict(zip(constants.SPRITE_CLOTHES_COLORS, color_set)))
-            self.factory.create_enemy(sprite_sheet=enemy_guy, x=6.25 + value, y=1.5, max_hit_points=3, num_axes=0)
+            self.factory.create_enemy(sprite_sheet=enemy_guy, x=6.25 + value, y=5.5, max_hit_points=3, num_axes=0)
     # ------------------------------------------------------------------------------------------------------------------
     # --- physics events ---
 

@@ -52,7 +52,7 @@ class ImageRendererTest(unittest.TestCase):
                                                            len(constants.ObjectType) * constants.OBJECT_SCALE))
         tile_path = data_paths.tile('grass')
         tile_path.touch()
-        self.cache.images[str(tile_path)] = pygame.Surface((0, len(images.TileOffset) * 3 * constants.WORLD_SCALE))
+        self.cache.images[str(tile_path)] = pygame.Surface((0, 6 * constants.WORLD_SCALE))
 
         self.sprite_ctx.create_actor(1, self.cache.get_image(guy_path))
 
@@ -68,40 +68,62 @@ class ImageRendererTest(unittest.TestCase):
         clip = self.renderer.get_platform_clip()
 
         self.assertEqual(clip.left_clip_rect.x, 0)
-        self.assertEqual(clip.left_clip_rect.y, images.TileOffset.PLATFORM * constants.WORLD_SCALE)
+        self.assertEqual(clip.left_clip_rect.y, 0)
         self.assertEqual(clip.left_clip_rect.width, constants.WORLD_SCALE)
         self.assertEqual(clip.left_clip_rect.height, constants.WORLD_SCALE * 2)
 
         self.assertEqual(clip.top_clip_rect.x, constants.WORLD_SCALE)
-        self.assertEqual(clip.top_clip_rect.y, images.TileOffset.PLATFORM * constants.WORLD_SCALE)
+        self.assertEqual(clip.top_clip_rect.y, 0)
         self.assertEqual(clip.top_clip_rect.width, constants.WORLD_SCALE)
         self.assertEqual(clip.top_clip_rect.height, constants.WORLD_SCALE * 2)
 
         self.assertEqual(clip.right_clip_rect.x, 2 * constants.WORLD_SCALE)
-        self.assertEqual(clip.right_clip_rect.y, images.TileOffset.PLATFORM * constants.WORLD_SCALE)
+        self.assertEqual(clip.right_clip_rect.y, 0)
         self.assertEqual(clip.right_clip_rect.width, constants.WORLD_SCALE)
         self.assertEqual(clip.right_clip_rect.height, constants.WORLD_SCALE * 2)
 
         self.assertEqual(clip.tex_clip_rect.x, constants.WORLD_SCALE)
-        self.assertEqual(clip.tex_clip_rect.y, images.TileOffset.TEXTURE * constants.WORLD_SCALE)
+        self.assertEqual(clip.tex_clip_rect.y, constants.WORLD_SCALE * 2)
+        self.assertEqual(clip.tex_clip_rect.width, constants.WORLD_SCALE)
+        self.assertEqual(clip.tex_clip_rect.height, constants.WORLD_SCALE)
+
+        clip = self.renderer.get_platform_clip(alt_platform=True)
+
+        self.assertEqual(clip.left_clip_rect.x, 3 * constants.WORLD_SCALE)
+        self.assertEqual(clip.left_clip_rect.y, 0)
+        self.assertEqual(clip.left_clip_rect.width, constants.WORLD_SCALE)
+        self.assertEqual(clip.left_clip_rect.height, constants.WORLD_SCALE * 2)
+
+        self.assertEqual(clip.top_clip_rect.x, 4 * constants.WORLD_SCALE)
+        self.assertEqual(clip.top_clip_rect.y, 0)
+        self.assertEqual(clip.top_clip_rect.width, constants.WORLD_SCALE)
+        self.assertEqual(clip.top_clip_rect.height, constants.WORLD_SCALE * 2)
+
+        self.assertEqual(clip.right_clip_rect.x, 5 * constants.WORLD_SCALE)
+        self.assertEqual(clip.right_clip_rect.y, 0)
+        self.assertEqual(clip.right_clip_rect.width, constants.WORLD_SCALE)
+        self.assertEqual(clip.right_clip_rect.height, constants.WORLD_SCALE * 2)
+
+        self.assertEqual(clip.tex_clip_rect.x, constants.WORLD_SCALE)
+        self.assertEqual(clip.tex_clip_rect.y, constants.WORLD_SCALE * 2)
         self.assertEqual(clip.tex_clip_rect.width, constants.WORLD_SCALE)
         self.assertEqual(clip.tex_clip_rect.height, constants.WORLD_SCALE)
 
     def test__get_ladder_rect(self):
         clip = self.renderer.get_ladder_clip()
 
-        self.assertEqual(clip.top_clip_rect.x, 0)
-        self.assertEqual(clip.top_clip_rect.y, images.TileOffset.LADDER * constants.WORLD_SCALE)
+        self.assertEqual(clip.top_clip_rect.x, 3 * constants.WORLD_SCALE)
+        self.assertEqual(clip.top_clip_rect.y, 2 * constants.WORLD_SCALE)
         self.assertEqual(clip.top_clip_rect.width, constants.WORLD_SCALE)
         self.assertEqual(clip.top_clip_rect.height, constants.WORLD_SCALE)
 
-        self.assertEqual(clip.mid_clip_rect.x, constants.WORLD_SCALE)
-        self.assertEqual(clip.mid_clip_rect.y, images.TileOffset.LADDER * constants.WORLD_SCALE)
+        self.assertEqual(clip.mid_clip_rect.x, 4 * constants.WORLD_SCALE)
+        self.assertEqual(clip.mid_clip_rect.y, 2 * constants.WORLD_SCALE)
         self.assertEqual(clip.mid_clip_rect.width, constants.WORLD_SCALE)
         self.assertEqual(clip.mid_clip_rect.height, constants.WORLD_SCALE)
 
-        self.assertEqual(clip.bottom_clip_rect.x, 2 * constants.WORLD_SCALE)
-        self.assertEqual(clip.bottom_clip_rect.y, images.TileOffset.LADDER * constants.WORLD_SCALE)
+        self.assertEqual(clip.bottom_clip_rect.x, 5 * constants.WORLD_SCALE)
+        self.assertEqual(clip.bottom_clip_rect.y, 2 * constants.WORLD_SCALE)
         self.assertEqual(clip.bottom_clip_rect.width, constants.WORLD_SCALE)
         self.assertEqual(clip.bottom_clip_rect.height, constants.WORLD_SCALE)
 

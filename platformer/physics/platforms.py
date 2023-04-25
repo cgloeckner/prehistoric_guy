@@ -93,6 +93,7 @@ class Platform:
         return top.collideline(motion)
 
 
+# FIXME: This is not required anymore
 def get_platform_collision(pos: pygame.math.Vector2, platform_seq: Sequence[Platform]) -> Optional[Platform]:
     """Returns the next-best platform from the list that contains the given position, or None."""
     for platform in platform_seq:

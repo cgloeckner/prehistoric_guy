@@ -71,6 +71,7 @@ class ActorSystem(object):
 
     def handle_platform_collision(self, actor: actors.Actor, old_pos: pygame.math.Vector2) -> None:
         """Handles collision with platforms."""
+        # FIXME: This is not required anymore
         # platform collision
         platform = platforms.get_platform_collision(actor.pos, self.context.platforms)
         if platform is not None:
@@ -103,7 +104,7 @@ class ActorSystem(object):
 
             if actor.on_ladder is None:
                 self.handle_landing(actor, old_pos)
-                self.handle_platform_collision(actor, old_pos)
+                # self.handle_platform_collision(actor, old_pos)
 
             self.handle_object_collision(actor)
             self.handle_actor_collision(actor)
@@ -134,10 +135,11 @@ class ProjectileSystem(object):
             projectile.land_on_platform(platform, old_pos)
             self.listener.on_impact_platform(projectile, platform)
 
-        platform = platforms.get_platform_collision(projectile.pos, self.context.platforms)
-        if platform is not None:
-            projectile.collide_with_platform(old_pos)
-            self.listener.on_impact_platform(projectile, platform)
+        # FIXME: not used anymore
+        # platform = platforms.get_platform_collision(projectile.pos, self.context.platforms)
+        # if platform is not None:
+        #     projectile.collide_with_platform(old_pos)
+        #     self.listener.on_impact_platform(projectile, platform)
 
     def handle_actor_collision(self, projectile: projectiles.Projectile) -> None:
         """Finds and reports collisions between the projectile and all relevant actors."""

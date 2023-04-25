@@ -8,17 +8,6 @@ from .. import animations, physics
 from . import base, shapes
 
 
-# used by editor
-MASK_SET_COLOR = pygame.Color(255, 215, 0, 80)
-MASK_UNSET_COLOR = pygame.Color(0, 0, 0, 0)
-
-
-class TileOffset(IntEnum):
-    PLATFORM = 0
-    TEXTURE = 2
-    LADDER = 3
-
-
 @dataclass
 class Platform:
     left_clip_rect: pygame.Rect
@@ -76,24 +65,31 @@ class ImageRenderer(shapes.ShapeRenderer):
         self.tiles = self.cache.get_image(tile_path)
 
     @staticmethod
-    def get_platform_clip() -> Platform:
+    def get_platform_clip(alt_platform: bool = False) -> Platform:
         left_clip_rect = pygame.Rect(0, 0, constants.WORLD_SCALE, constants.WORLD_SCALE * 2)
-        left_clip_rect.topleft = (0, TileOffset.PLATFORM * constants.WORLD_SCALE)
+        left_clip_rect.topleft = (0, 0)
 
         top_clip_rect = pygame.Rect(0, 0, constants.WORLD_SCALE, constants.WORLD_SCALE * 2)
-        top_clip_rect.topleft = (constants.WORLD_SCALE, TileOffset.PLATFORM * constants.WORLD_SCALE)
+        top_clip_rect.topleft = (constants.WORLD_SCALE, 0)
 
         right_clip_rect = pygame.Rect(0, 0, constants.WORLD_SCALE, constants.WORLD_SCALE * 2)
-        right_clip_rect.topleft = (2 * constants.WORLD_SCALE, TileOffset.PLATFORM * constants.WORLD_SCALE)
+        right_clip_rect.topleft = (2 * constants.WORLD_SCALE, 0)
+
+        if alt_platform:
+            # shift
+            offset = 3 * constants.WORLD_SCALE
+            left_clip_rect.left += offset
+            top_clip_rect.left += offset
+            right_clip_rect.left += offset
 
         tex_clip_rect = pygame.Rect(0, 0, constants.WORLD_SCALE, constants.WORLD_SCALE)
-        tex_clip_rect.topleft = (constants.WORLD_SCALE, TileOffset.TEXTURE * constants.WORLD_SCALE)
+        tex_clip_rect.topleft = (constants.WORLD_SCALE, constants.WORLD_SCALE * 2)
 
         tex_left_clip_rect = pygame.Rect(0, 0, constants.WORLD_SCALE, constants.WORLD_SCALE)
-        tex_left_clip_rect.topleft = (0, TileOffset.TEXTURE * constants.WORLD_SCALE)
+        tex_left_clip_rect.topleft = (0, constants.WORLD_SCALE * 2)
 
         tex_right_clip_rect = pygame.Rect(0, 0, constants.WORLD_SCALE, constants.WORLD_SCALE)
-        tex_right_clip_rect.topleft = (2 * constants.WORLD_SCALE, TileOffset.TEXTURE * constants.WORLD_SCALE)
+        tex_right_clip_rect.topleft = (2 * constants.WORLD_SCALE, constants.WORLD_SCALE * 2)
 
         return Platform(left_clip_rect=left_clip_rect, top_clip_rect=top_clip_rect, right_clip_rect=right_clip_rect,
                         tex_clip_rect=tex_clip_rect, tex_left_clip_rect=tex_left_clip_rect,
@@ -101,14 +97,15 @@ class ImageRenderer(shapes.ShapeRenderer):
 
     @staticmethod
     def get_ladder_clip() -> Ladder:
+        offset = 3 * constants.WORLD_SCALE
         top_clip_rect = pygame.Rect(0, 0, constants.WORLD_SCALE, constants.WORLD_SCALE)
-        top_clip_rect.topleft = (0, TileOffset.LADDER * constants.WORLD_SCALE)
+        top_clip_rect.topleft = (offset, constants.WORLD_SCALE * 2)
 
         mid_clip_rect = pygame.Rect(0, 0, constants.WORLD_SCALE, constants.WORLD_SCALE)
-        mid_clip_rect.topleft = (constants.WORLD_SCALE, TileOffset.LADDER * constants.WORLD_SCALE)
+        mid_clip_rect.topleft = (offset + constants.WORLD_SCALE, constants.WORLD_SCALE * 2)
 
         bottom_clip_rect = pygame.Rect(0, 0, constants.WORLD_SCALE, constants.WORLD_SCALE)
-        bottom_clip_rect.topleft = (2 * constants.WORLD_SCALE, TileOffset.LADDER * constants.WORLD_SCALE)
+        bottom_clip_rect.topleft = (offset + 2 * constants.WORLD_SCALE, constants.WORLD_SCALE * 2)
 
         return Ladder(top_clip_rect=top_clip_rect, mid_clip_rect=mid_clip_rect, bottom_clip_rect=bottom_clip_rect)
 
@@ -145,7 +142,7 @@ class ImageRenderer(shapes.ShapeRenderer):
 
         pos = self.get_platform_rect(platform)
         pos.h *= -1
-        clip = self.get_platform_clip()
+        clip = self.get_platform_clip(alt_platform=platform.height == 1)
 
         # draw textures
         pos_tmp = pos.copy()
@@ -257,4 +254,4 @@ class ImageRenderer(shapes.ShapeRenderer):
             self.target.blit(src, pos, clip)
 
     def update(self, elapsed_ms: int) -> None:
-        self.physics_context.platforms.sort(key=lambda plat: plat.pos.y)
+        self.physics_context.platforms.sort(key=lambda plat: -plat.pos.y-plat.height)
