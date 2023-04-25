@@ -30,10 +30,9 @@ class OpenGlWrapper(object):
     The internal rendering order is: buffer first, imgui second.
     """
 
-    def __init__(self, buffer: pygame.Surface, ini_file: Optional[str] = None, log_file: Optional[str] = None):
+    def __init__(self, ini_file: Optional[str] = None, log_file: Optional[str] = None):
         """Initialize OpenGL and ImGui.
         """
-        self.buffer = buffer
         self.tex_id = None
         self.impl = None
         self.io = None

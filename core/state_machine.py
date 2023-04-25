@@ -21,7 +21,7 @@ class Engine(object):
         screen_size = (screen_width, screen_height)
         pygame.display.set_mode(screen_size, OpenGlWrapper.get_display_flags())
         self.buffer = pygame.Surface(screen_size)
-        self.wrapper = OpenGlWrapper(self.buffer)
+        self.wrapper = OpenGlWrapper()
         self.clock = pygame.time.Clock()
 
         self.running = False
