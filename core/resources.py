@@ -106,10 +106,16 @@ class Cache(object):
         """Loads the image via filename. If already loaded, it's taken from the cache. Returns the image's surface."""
         filename = str(path)
         if filename not in self.images:
-            surface = pygame.image.load(filename)
+            raw = pygame.image.load(filename)
+
+            # blit ontop of alpha key to convert per-pixel alpha to colorkey alpha
+            surface = raw.copy()
+            surface.fill(alpha_key)
+            surface.blit(raw, (0, 0))
+            surface.set_colorkey(alpha_key)
+
             if constants.DOES_SCALE_2X:
                 surface = pygame.transform.scale_by(surface, 2)
-            surface.set_colorkey(alpha_key)
             self.images[filename] = surface.convert()
 
         return self.images[filename]
