@@ -5,6 +5,9 @@ from typing import Dict, Tuple, List, Optional
 from core import constants, paths
 
 
+alpha_key = pygame.Color(255, 0, 215)
+
+
 def transform_color_replace(surface: pygame.Surface, color_str_dict: Dict[str, str]) -> None:
     """Rotates a surface's colors in place. Only pixels are modified whose color is in the given list. The alteration
     is based on the given delta tuple: hue, saturation, lightness. Transparent pixels are ignored.
@@ -106,7 +109,8 @@ class Cache(object):
             surface = pygame.image.load(filename)
             if constants.DOES_SCALE_2X:
                 surface = pygame.transform.scale_by(surface, 2)
-            self.images[filename] = surface.convert_alpha()
+            surface.set_colorkey(alpha_key)
+            self.images[filename] = surface.convert()
 
         return self.images[filename]
 
