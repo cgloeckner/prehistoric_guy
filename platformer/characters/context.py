@@ -31,10 +31,5 @@ class EventListener(ABC):
 
     @abstractmethod
     def on_char_damaged(self, actor: Actor, damage: int, cause: Optional[Actor]) -> None:
-        """Triggered when an actor got damaged."""
-        pass
-
-    @abstractmethod
-    def on_char_died(self, actor: Actor, damage: int, cause: Optional[Actor]) -> None:
-        """Triggered when an actor died. An optional cause can be provided."""
+        """Triggered when an actor got damaged (or even died)."""
         pass

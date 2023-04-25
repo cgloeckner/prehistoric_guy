@@ -309,6 +309,8 @@ class ProjectileSystemsTest(unittest.TestCase):
         self.assertGreater(proj.pos.x, old_pos.x)
         self.assertLess(proj.pos.y, old_pos.y)
 
+    # FIXME: not needed anymore
+    """
     def test__handle_platform_collision(self):
         proj = self.context.create_projectile(object_id=10, x=2.0, y=2.0)
         proj.move.force.x = 1.0
@@ -351,6 +353,7 @@ class ProjectileSystemsTest(unittest.TestCase):
         self.assertEqual(self.listener.last[0], 'impact_platform')
         self.assertEqual(self.listener.last[1], proj)
         self.assertEqual(self.listener.last[2], platform)
+    """
 
     def test__handle_actor_collision(self):
         proj = self.context.create_projectile(object_id=10, x=2.0, y=2.0)

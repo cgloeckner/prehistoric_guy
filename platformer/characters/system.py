@@ -15,10 +15,7 @@ class CharacterSystem:
         if not combat.attack_enemy(damage, victim):
             return
 
-        if victim.hit_points > 0:
-            self.listener.on_char_damaged(victim, damage, cause)
-        else:
-            self.listener.on_char_died(victim, damage, cause)
+        self.listener.on_char_damaged(victim, damage, cause)
 
     def apply_projectile_hit(self, victim: Actor, damage: int, proj: physics.Projectile) -> None:
         # try to find projectile's causing character

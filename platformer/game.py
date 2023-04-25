@@ -118,7 +118,8 @@ class GameState(state_machine.State, factory.EventListener):
         self.factory.ctx.physics.create_object(x=proj.pos.x, y=proj.pos.y - constants.OBJECT_RADIUS,
                                                object_type=proj.object_type)
 
-        self.factory.ctx.physics.projectiles.remove(proj)
+        if proj in self.factory.ctx.physics.projectiles:
+            self.factory.ctx.physics.projectiles.remove(proj)
 
     def on_touch_actor(self, proj: physics.Projectile, phys_actor: physics.Actor) -> None:
         """Triggered when an actor touches another actor."""
@@ -137,10 +138,7 @@ class GameState(state_machine.State, factory.EventListener):
             victims = characters.query_melee_range(actor, self.factory.ctx.characters, self.factory.ctx.physics)
             for victim in victims:
                 characters.attack_enemy(1, victim)
-                if victim.hit_points == 0:
-                    self.on_char_died(victim, 1, actor)
-                else:
-                    self.on_char_damaged(victim, 1, actor)
+                self.on_char_damaged(victim, 1, actor)
 
         elif ani.frame.action == animations.Action.THROW:
             actor = self.factory.ctx.characters.actors.get_by_id(ani.object_id)
@@ -152,12 +150,11 @@ class GameState(state_machine.State, factory.EventListener):
     # ------------------------------------------------------------------------------------------------------------------
     # --- Character events
 
-    def on_char_damaged(self, actor: characters.Actor, damage: int, cause: Optional[characters.Actor]) -> None:
+    def on_char_damaged(self, char_actor: characters.Actor, damage: int, cause: Optional[characters.Actor]) -> None:
         """Triggered when an actor got damaged."""
-        pass
+        if char_actor.hit_points > 0:
+            return
 
-    def on_char_died(self, char_actor: characters.Actor, damage: int, cause: Optional[characters.Actor]) -> None:
-        """Triggered when an actor died. An optional cause can be provided."""
         ani_actor = self.factory.ctx.animations.actors.get_by_id(char_actor.object_id)
         ani_actor.frame.start(animations.Action.DIE)
 
