@@ -1,6 +1,5 @@
 import pygame
 from dataclasses import dataclass
-from enum import IntEnum
 
 from core import constants, resources, objectids
 
