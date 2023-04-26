@@ -43,6 +43,8 @@ class ShapeRenderer(base.Renderer):
         p = pos.copy()
         p.y = screen_height - p.y
         p /= constants.WORLD_SCALE
+        if constants.SCALE_2X:
+            p /= 2
         p = self.camera.to_world_coord(p)
         return p
 

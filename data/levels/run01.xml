@@ -1,18 +1,20 @@
 <?xml version="1.0" ?>
 <level>
 	<platform x="65.0" y="8.0" width="13"/>
+	<platform x="-3.0" y="4.0" width="3" hover_y="sin"/>
 	<platform x="48.0" y="5.0" width="5"/>
 	<platform x="43.0" y="5.0" width="2"/>
 	<platform x="12.0" y="5.0" width="6"/>
 	<platform x="55.0" y="4.0" width="2" height="1"/>
+	<platform x="0.0" y="5.0" width="3" hover_x="sin"/>
 	<platform x="46.0" y="4.0" width="2"/>
 	<platform x="41.0" y="4.0" width="2"/>
 	<platform x="19.5" y="4.0" width="5"/>
 	<platform x="6.0" y="3.0" width="6" height="1"/>
 	<platform x="54.0" y="3.0" width="4" height="1"/>
 	<platform x="62.0" y="3.0" width="1" height="1"/>
-	<platform x="66.33577497038866" y="4.0" width="3" hover_x="sin" amplitude="10.0"/>
-	<platform x="73.68725535228366" y="4.0" width="3" hover_x="sin" amplitude="-10.0"/>
+	<platform x="82.38498893672956" y="4.0" width="3" hover_x="sin" amplitude="10.0"/>
+	<platform x="57.638041385943005" y="4.0" width="3" hover_x="sin" amplitude="-10.0"/>
 	<platform x="5.0" y="2.0" width="8" height="1"/>
 	<platform x="38.0" y="3.0" width="3"/>
 	<platform x="53.0" y="2.0" width="6" height="1"/>

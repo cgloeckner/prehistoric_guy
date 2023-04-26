@@ -39,6 +39,9 @@ def to_xml(ctx: physics.Context) -> et.Element:
         elem = et.SubElement(root, 'platform')
         elem.set('x', str(platform.pos.x))
         elem.set('y', str(platform.pos.y))
+        if hasattr(platform, 'original_pos'):
+            elem.set('x', str(platform.original_pos.x))
+            elem.set('y', str(platform.original_pos.y))
         elem.set('width', str(platform.width))
         if platform.height > 0:
             elem.set('height', str(platform.height))
@@ -76,6 +79,7 @@ def from_xml(root: et.Element) -> physics.Context:
             width = int(child.attrib['width'])
             height = int(child.attrib['height']) if 'height' in child.attrib else 0
             p = ctx.create_platform(x=x, y=y, width=width, height=height)
+            p.original_pos = p.pos.copy()
             if 'hover_x' in child.attrib:
                 p.hover.x = physics.HoverType.__members__[child.attrib['hover_x'].upper()]
             if 'hover_y' in child.attrib:

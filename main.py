@@ -9,7 +9,7 @@ if __name__ == '__main__':
     args = sys.argv[1:]
 
     # debug
-    # args.append('--editor')
+    args.append('--editor')
 
     constants.SCALE_2X = True
 
