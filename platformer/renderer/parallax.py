@@ -55,14 +55,20 @@ class ParallaxRenderer:
     def draw_layer(self, x: int, y: int, clip: pygame.Rect) -> None:
         """Draws the background from the clipping rectangle at given position."""
         width = self.background.get_width()
-        num_repeats = pygame.display.get_window_size()[0] / width
+        screen_width = pygame.display.get_window_size()[0]
+        if constants.SCALE_2X:
+            screen_width //= 2
+        num_repeats =  screen_width / width
 
         self.target.blit(self.background, (-x % width - width, y), clip)
         for i in range(int(num_repeats+1)):
             self.target.blit(self.background, (-x % width + i * width, y), clip)
 
     def draw(self) -> None:
-        y0 = pygame.display.get_window_size()[1] - constants.RESOLUTION_Y
+        screen_height = pygame.display.get_window_size()[1]
+        if constants.SCALE_2X:
+            screen_height //= 2
+        y0 = screen_height - constants.RESOLUTION_Y
 
         for index in range(self.get_num_layers()):
             x = int(self.camera.topleft.x * self.get_layer_speed(index) * PARALLAX_SPEED)

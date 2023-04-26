@@ -11,6 +11,8 @@ if __name__ == '__main__':
     # debug
     # args.append('--editor')
 
+    constants.SCALE_2X = True
+
     game_engine = state_machine.Engine(constants.RESOLUTION_X, constants.RESOLUTION_Y)
     pygame.display.set_caption('Prehistoric Guy')
 

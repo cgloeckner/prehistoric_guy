@@ -114,8 +114,6 @@ class Cache(object):
             surface.blit(raw, (0, 0))
             surface.set_colorkey(alpha_key)
 
-            if constants.DOES_SCALE_2X:
-                surface = pygame.transform.scale_by(surface, 2)
             self.images[filename] = surface.convert()
 
         return self.images[filename]

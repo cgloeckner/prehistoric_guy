@@ -1,8 +1,8 @@
 from enum import IntEnum
 
-DOES_SCALE_2X: bool = True
+SCALE_2X: bool = False
 
-WORLD_SCALE: int = 32 * 2 ** DOES_SCALE_2X
+WORLD_SCALE: int = 32
 OBJECT_SCALE: int = WORLD_SCALE // 2
 SPRITE_SCALE: int = WORLD_SCALE * 2
 

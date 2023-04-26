@@ -27,6 +27,7 @@ class ShapeRendererTest(unittest.TestCase):
 
         os.environ["SDL_VIDEODRIVER"] = "dummy"
         pygame.init()
+        self.screen = pygame.display.set_mode((self.cam.width, self.cam.height))
         self.buffer = pygame.Surface((self.cam.width, self.cam.height))
 
         self.renderer = shapes.ShapeRenderer(self.cam, self.buffer, self.ctx)

@@ -4,7 +4,7 @@ import pathlib
 from abc import abstractmethod, ABC
 from typing import Tuple
 
-from core import paths, translate
+from core import paths, translate, constants
 from core.imgui_wrapper import OpenGlWrapper
 
 
@@ -18,16 +18,20 @@ class Engine(object):
         self.paths = paths.DataPath(pathlib.Path.cwd() / 'data')
         self.translate = translate.Match()
 
-        screen_size = (screen_width, screen_height)
+        buffer_size = (screen_width, screen_height)
+        if constants.SCALE_2X:
+            screen_size = (screen_width * 2, screen_height * 2)
+        else:
+            screen_size = buffer_size
         pygame.display.set_mode(screen_size, OpenGlWrapper.get_display_flags())
-        self.buffer = pygame.Surface(screen_size)
+        self.buffer = pygame.Surface(buffer_size)
         self.wrapper = OpenGlWrapper()
         self.clock = pygame.time.Clock()
 
         self.running = False
         self.is_active = True
         self.fill_color = 'black'
-        self.max_fps = 150
+        self.max_fps = 600
         self.num_fps = 0
         self.queue = list()
 

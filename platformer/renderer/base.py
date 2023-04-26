@@ -9,6 +9,9 @@ class Camera:
     def __init__(self, size: Optional[Tuple[int, int]] = None, scale: Optional[int] = None):
         self.topleft = pygame.math.Vector2()
         self.width, self.height = pygame.display.get_window_size() if size is None else size
+        if constants.SCALE_2X:
+            self.width //= 2
+            self.height //= 2
         self.scale = constants.WORLD_SCALE if scale is None else scale
 
     def reset_pos(self) -> None:
@@ -45,8 +48,12 @@ class Camera:
 
     def to_world_coord(self, pos: pygame.math.Vector2) -> pygame.math.Vector2:
         """Transforms coordinates from cam/screen to world."""
-        x = pos.x + self.topleft.x
-        y = pos.y + self.topleft.y
+        x, y = pos.xy
+        if constants.SCALE_2X:
+            x //= 2
+            y //= 2
+        x = x + self.topleft.x
+        y = y + self.topleft.y
         return pygame.math.Vector2(x, y)
 
 

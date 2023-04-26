@@ -39,8 +39,9 @@ class ShapeRenderer(base.Renderer):
 
     def to_world_coord(self, pos: pygame.math.Vector2) -> pygame.math.Vector2:
         """Translates screen coordinates into world coordinates. Returns a vector of float coordinates."""
+        screen_height = pygame.display.get_window_size()[1]
         p = pos.copy()
-        p.y = self.target.get_height() - p.y
+        p.y = screen_height - p.y
         p /= constants.WORLD_SCALE
         p = self.camera.to_world_coord(p)
         return p
