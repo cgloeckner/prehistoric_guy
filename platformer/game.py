@@ -22,7 +22,7 @@ class GameState(state_machine.State, factory.EventListener):
         self.engine.fill_color = self.factory.parallax.get_fill_color()
 
         level_files = editor.get_level_files(self.engine.paths.level())
-        filename = self.engine.paths.level(level_files[-1])
+        filename = self.engine.paths.level(level_files[0])
         editor.load_level(filename, self.factory.ctx.physics)
 
         pos = pygame.math.Vector2(5, 5)
@@ -73,10 +73,7 @@ class GameState(state_machine.State, factory.EventListener):
         ani_actor = self.factory.ctx.animations.actors.get_by_id(phys_actor.object_id)
 
         if damage > 0:
-            if actor.hit_points == 0:
-                self.on_char_died(actor, damage, None)
-            else:
-                self.on_char_damaged(actor, damage, None)
+            self.on_char_damaged(actor, damage, None)
 
         else:
             ani_actor.frame.start(action)

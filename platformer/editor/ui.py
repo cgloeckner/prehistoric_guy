@@ -304,3 +304,5 @@ class EditorState(state_machine.State, animations.EventListener):
         self.parallax.draw()
         self.renderer.draw()
         self.context.draw(self.renderer)
+
+        pygame.display.set_caption(f'Editor - {int(self.engine.num_fps):02d} FPS')

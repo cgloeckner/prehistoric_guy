@@ -101,7 +101,4 @@ class PreviewState(state_machine.State, factory.EventListener):
         self.parallax.draw()
         self.renderer.draw()
 
-        # draw FPS
-        size = pygame.display.get_window_size()
-        fps_surface = self.font.render(f'FPS: {int(self.engine.num_fps):02d}', False, 'white')
-        self.engine.buffer.blit(fps_surface, (0, size[1] - fps_surface.get_height()))
+        pygame.display.set_caption(f'Preview - {int(self.engine.num_fps):02d} FPS')
